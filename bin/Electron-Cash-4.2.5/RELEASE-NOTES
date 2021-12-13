@@ -1,0 +1,1212 @@
+Electron Cash is a fork of the open source Electrum Bitcoin wallet (www.electrum.org) for Bitcoin Cash.  The current
+release is based on the Electrum 2.9.0 codebase with patches to
+
+- handle Bitcoin Cash difficulty adjustment algorithm
+- sign transactions the Bitcoin Cash way
+- updated list of electrum servers
+- updated icons and branding
+- remove RBF (unsupported by Bitcoin Cash network nodes)
+- use different directory for wallets and configuration
+
+The Electron Cash software is NOT affiliated, associated, or endorsed by Electrum, electrum.org or the Electrum
+developers.
+
+If you are concerned about running Electron Cash binaries we recommend installing and/or running it from the github
+source directly.
+
+
+Usage
+-----
+
+When you first run Electron Cash it will use a different configuration directory to Electrum.  On Unix it is
+".electron-cash", and on Windows/MacOS it is "ElectronCash".  Your wallet files will be copied from the Electrum
+cofiguration directory (".electrum" on unix, "Electrum" on Windows/MacOS), if found.  Initially transactions will show
+up as unverified because Electron Cash is downloading the blockchain headers to verify the transactions.  This can take
+up to 10 minutes, but is only done once.
+
+Ensure you are running Electron Cash and not Electrum by checking for "Electron Cash" in the title bar wording.  Some
+users installing from setup.py have reported conflicts if both Electrum and Electron Cash are installed in parallel
+that way.
+
+We STRONGLY recommend you get comfortable and only send a small amount of Bitcoin Cash coins at first, to yourself,
+to confirm the network is processing your transactions as expected.
+
+Bitcoin Cash hard forks after the 6th block with timestamp greater than 1 August 2017, 12:20 UTC has been mined.  The
+seventh block must be greater than one million bytes in size.
+
+The Bitcoin Cash fork enforces a new signing scheme which is incompatible with the legacy chain.  Electron Cash only
+signs transactions using this scheme, so its transactions are only valid on the Bitcoin Cash hard fork after the fork
+has occurred.
+
+If you want to send Bitcoin before the fork, or Segwitcoins after the fork, you should continue to use the standard
+Electrum client, Electron Cash will not work.
+
+Once the network forks, it will take time for the Electrum server network to split into servers of the Segwit fork, and
+servers of the Bitcoin Cash fork.  You should ensure you are connected to a Bitcoin Cash Electrum server in order to
+send transactions successfully.  Some servers that will be serving the Bitcoin Cash fork are:
+
+    electrum-abc.cascharia.com via SSL port 50002
+    electrum-abc.criptolayer.net via SSL port 50012
+    180.235.49.196, 35.185.209.69 and 35.197.25.235  TCP port 50001 and SSL port 50002
+
+There will likely be other servers available; please check their banners in the Console tab (View|Show Console).
+
+
+Hardware Wallets
+----------------
+
+Since Bitcoin Cash enforces a new signing scheme, hardware wallet vendors need to supply new firmware and/or libraries
+for the hardware to be able to sign transactions correctly.  Currently such libraries and firmware do not exist, so you
+cannot use your hardware wallets with Electron Cash.
+
+To use Electron Cash with your hardware-wallet coins you will need to restore your wallet as a software Electron Cash
+BIP44 wallet from its seed so that Electron Cash can sign the transactions itself.  Since this exposes your coins to
+risk you may want to wait for the 3rd party software to be developed and integrated instead.
+
+
+Two-factor Authentication (2FA) Wallets
+---------------------------------------
+
+For the same reason as Hardware Wallets above, 2FA wallets need Trustedcoin to perform new Bitcoin Cash-style
+signatures for their transactions to be valid on the Bitcoin Cash fork.  If third party support appears we will attempt
+to integrate it.
+
+
+Multisig
+--------
+
+For a multisig transaction to be valid on the Bitcoin Cash fork, each signature must be done thew new Bitcoin Cash way,
+so each signature must be performed with Electron Cash or other Bitcoin Cash-compatible software.
+
+Unfortunately Electron Cash does not currently work with multisig wallets as Electrum's serialization format for
+transferring transactions between cosigners is incomplete.  We intend to fix this.
+
+
+Miscellaneous
+-------------
+
+Electrum 2.9 has new code to deal with chain forks which may have outstanding (pre-existing in Electrum)
+bugs and problems.  Since this package forks that code it will contain those issues.
+
+If you have problems syncing to the correct chain fork (take a look at the Overview Tab in the "Network" window (in
+Menu "Tools") to see information about chain forks your client knows about), you can try to remove everything except
+"wallets" directory and "config" file from your Electron Cash directory.
+
+Electron Cash 3.0 -- This is now on Python 3.  Make sure all python commands are on python 3 and any needed
+modules/libraries are imported into pyhon 3.  The build is deterministic for windows (everyone should get
+the same binary because of customization to Pyinstaller that was done by Electrum team, as well as separate
+repos for locales and icons).  The fee upgrades may not be visible for existing wallet owners
+unless you reset the max fee in preferences or remove the config file.  There is no minimum fee on the client
+side.  Be careful sending too low of a fee (lower than 1 satoshi/byte) or your transaction may get stuck,
+and there is no warning message.
+
+
+# Release 2.9.2
+  * force headers download if headers file is corrupted
+  * add websocket to windows builds
+  * fix initial headers download
+  * validate contacts on import
+  * command-line option for locktime
+
+# Release 2.9.3
+  * Improved code to force wallet to stay on Bitcoin Cash chain
+  * Removed dynamic fees.  Fees are now simple Sat/Byte model
+  * Add Coin_Type 145 for Bitcoin Cash for bip39 seed imports
+  * Use bitcoincash URI prefix for receiving and QR codes
+
+# Release 2.9.4
+  * Implement new Difficulty Adjustment Algorithm for Nov 13, 2017 Hard Fork
+  * Change ticker symobl from BCC to BCH
+  * Implement changes to allow simultaneous installation with Electrum
+  * Upgrade to PyQt5
+  * Various fixes for hardware wallets
+  * Remove 2FA for new wallet creation
+  * Remove feature to copy electrum wallet files
+
+# Release 3.0
+  * upgrade to Python3 and PyQt5
+  * Build is done deterministically for windows
+  * improve fee policy
+
+# Release 3.1
+
+  * Multiple address format support.  Electron Cash supports input of cashaddr
+    addresses, legacy bitcoin addresses, and BitPay addresses anywhere
+    where a legacy address used to be accepted.
+  * Only display of cashaddr and legacy addresses is supported.  You can
+    toggle the display format in the Appearance tab of the Preferences
+    dialog window; alternatively you can press the converter icon
+    button in the toolbar at the bottom of the main window.  Hardware
+    wallets will probably show the legacy format until their firmware is
+    updated.
+  * An address converter tab can convert between all 3 address formats.
+    To see it, choose to show it from the View menu.
+  * At some stage support for BitPay address format will be removed, and
+    at some later stage support for display of legacy addresses will also
+    be removed.
+  * The fee slider has been adjusted to range from 1 to 10 sats/byte.
+  * Many bug fixes and improvements
+
+
+# Release 3.1.1
+  * Requires Python 3.5 or greater
+  * Fixes JSONPRC security threat
+  * Fixes included for ledger for windows
+
+
+# Release 3.1.2
+  * Additional security improvements related to JSONRPC
+
+# Release 3.1.3
+  * Android only release for security fixes
+
+# Release 3.1.5
+  * Various bug fixes
+
+# Release 3.1.6
+
+  * Enable Bip70 payment requests for merchants like BitPay.
+  * Prohibit unconfirmed inputs on payment request (invoice) payments
+    because Bitpay will reject them anyway.
+  * Remove Bitpay address format from address converter as Bitpay is
+    now fully on CashAddr.
+  * Introduce 'cash' moniker for micro bitcoin
+
+# Release 3.2
+
+* restore disabled script opcodes (May 2018 HF)
+* network protocol version bump to 1.2
+* ledger: cashaddr support and various fixes
+* more block explorers
+* other bugfixes and improvements
+
+# Release 3.3
+
+* Add external plugins feature.  Please see https://github.com/Electron-Cash/Electron-Cash/blob/master/plugins/README.rst  and pay special attention to the risks involved with running external plugins.
+* Various bugfixes and improvements
+
+# Release 3.3.1
+
+* Add OP_RETURN feature.
+* Upgraded fee interface allowing lower fees with a custom fee rate.
+
+# Release 3.3.2
+
+* UTXO (coin) level freezing (accessible from Coins tab)
+* Bugfix to network code reared its head when user switches forks in unlikely circumstances
+* Checkpoint code (ElectrumX 1.4) protocol upgrade for faster blockchain header downloads
+* Updated servers list
+* BitPay support now works flawlessly
+* Fork icon indicates chain splits to allow user to select an alternate chain
+* UI glitches fixed
+* Various bug fixes (address exceptions)
+* Translations on Windows working again
+* More Spanish language translations!
+* Mac: bitcoincash: URLs working
+* Mac: Bitpay URLs working
+
+# Release 3.3.3
+
+* Added native elliptic curve cryptography using libsecp256k1 (1000x speedup on tx signing in some cases)
+* MacOS QR Reader now works.
+* Windows QR Reader now works.
+* Various performance fixes -- app should be able to handle much larger wallets now with many UTXOs
+* Nework layer fixups
+* Updated Checkpoint to the BCH chain.
+* Various minor UI gltiches fixed
+* MacOS binary size significantly reduced
+* Support for OP_RETURN parameters to bitcoincash: URL
+* Allow 1-of-1 multisig wallets
+* Server list update
+
+# Release 3.3.4
+
+* Anti-Phishing protection for all platforms. Server-provided text will not
+  appear in user-facing GUI windows anymore. Server error messages are instead
+  parsed and mapped to predefined strings.
+* "Import Labels" now works.
+* Memory usage of the app has been reduced -- especially with multiple wallets.
+* Upgrade prebuilt Windows and MacOS binary to use newer PyQt5 5.11.3.
+
+# Release 3.3.5
+
+* Added ability to specify raw hex op_return data in Send tab
+* Added server options for: "Preferred" and "Banned" in Network Dialog, and an
+  option to connect to only preferred servers.
+* LabelSync plugin now works properly
+* Cosigner pool plugin fixups -- it should work much better now!
+* Cashaddr is now default on new installs
+* OSX packaging fixes (code signature should stay dynamically valid now)
+* Updated Trezor plugin to trezorlib-0.11.x (#1089)
+* Many bugs and quirks fixed from issue tracker
+* Performance improvements
+* Memory leaks fixed
+
+# Release 3.3.6
+
+* Support for op_return_raw= URI parameter to 'bitcoincash:' URIs. This
+  paremeter is for raw hex to be used as the OP_RETURN payload (0x6a will
+  always be prefixed to this raw hex.) (markblundeberg)
+* Testnet wallets were using the wrong bip32 key headers. They SHOULD
+  accept & generate tpub/tprv on testnet but instead the keys generated were
+  xpub/xprv. This was not to spec and has been fixed but, it may mean you will
+  need to regenerate your testnet wallets form mnemonic seed. :/ (cculianu)
+* Added "Check for updates..." mechanism which is enabled by default
+  (check is done once per hour). See Preferences -> General to disable auto
+  check. Or Help -> "Check for updates..." for manual checking. (cculianu)
+* Added "Dark" theme to UI. See Preferences -> General (cculianu)
+* Fixed incompatibility bug where generated QR images were uppercase-only
+  BITCOINCASH: which caused problems with some buggy wallet implementations. We
+  switched back to generating 'bitcoincash:' (mixed-case) URIs, which is more
+  compatible. (cculianu)
+* Added "Export contacts" facility to UI so you can export all your contacts to
+  a file. (Strangely, we had "Import contacts", but no export!) (cculianu)
+* Added "Wallet -> Rebuild history" to Qt GUI. Allows users to re-synch entire
+  wallet from server, on demand. (commit: a72b2a72, cculianu)
+* Request fee estimate from ElectrumX/ElectronX server every 20 minutes
+  (cculianu)
+* Performance improvements for wallets with huge numbers of tx's (cculianu)
+* Trezor bugfix (SomberNight)
+* Append HMAC to Bitbox messages (TheCharlatan)
+* Android fixes (mhsmith)
+* Various internal bugfixes and code refactoring (cculianu, ecdsa, SomberNight)
+* servers.json updated (torusJKL)
+* Fixed a compatibility issue with Qt 5.12 (SomberNight, cculianu)
+
+# Release 4.0.0
+
+* Privacy features have been added, most notably CashShuffle has been integrated
+  strongly into the wallet. It is an optional plugin for shuffling coins
+  securely with other users. Coin control and other logic has been added as
+  well. The bulk of the work for this release has been this feature.
+  (Clifford, cculianu, Josh Ellithorpe, Mark Lundeberg, Jonald Fyookball,
+  imaginaryusername, emergent_reasons, acidsploit, and others).
+* Fix #1174, #1178 - Resurrection of .onion support (requires enabling of
+  non-SSL).
+* Fixups for qr code image saving (cculianu), #1175
+* Closing a wallet now actually closes its daemon threads. Closing a wallet
+  window now also implicitly closes any tx dialog child windows it created.
+  Closing the last wallet window in the app will quit the app, even if other
+  child windows are still alive. (cculianu)
+* Coins tab layout fixups #1180, including right click -> Copy X (cculianu,
+  Mark Lundeberg, SomberNight)
+* Addition of Wallet -> Scan beyon gap... tool #1194 (cculianu)
+* Fixed #968 for the Receive tab -- when the form is unsaved it now always is
+  *guaranteed* to refresh itself with a new unused address in real time.
+  (cculianu)
+* Tx notification systray popup was too intermittent.  It now pops up more
+  frequently when reeiving or synching a new wallet. The wording used has also
+  been simplified. (cculianu)
+* Fix #1182 - Bad proxy can end up in config file (cculianu)
+* Fix #1215 - Tabs that are not being shown are no longer refreshed in the GUI.
+  They refresh themselves when you switch to them, however, if they need to.
+  This should improve perception of UI responsiveness for large wallets
+  especially. (cculianu)
+* Fixed some bugs related to switching chains (forks) #1185 (cculianu)
+* Fixed a bug where importing a private key didn't update the history until
+  app restart. (cculianu)
+* Fix Network Dialog layout (SomberNight)
+* Fix sign message not accept rich text spesmilo#5210 (SomberNight)
+* Fix #1189 - Cope better with unknown wallet formats or corrupt wallets on
+  startup.  This should improve the experience for SLP users that also use
+  regular Electron Cash (cculianu)
+* Switch over to bitcoin-abc libsecp in preparation for Schnorr signatures.
+  Libsecp is now actually bundled with the Linux "source" tarball. (cculianu)
+* Fix to exchange rate prefs screen UI and deletion of BitcoinAverage as a
+  historical rate provider (cculianu)
+* If running from source, app now has an icon on all platforms (cculianu)
+* Fix ubuntu installation for virtual-env (acidsploit)
+* Due to phishing being a recurrent annoyance, "Preferred servers only" now
+  defaults to "CHECKED" for new installs. (cculianu)
+* Many performance improvements, especially for large wallets (cculianu)
+* Cache address balance in memory rather than recompute each call (SomberNight)
+* Various internal bugfixes (cculianu, SomberNight, ecdsa)
+
+# Release 4.0.1
+
+* Lowest base unit in GUI has been renamed from 'cash' to 'bits' by popular
+  demand.  It turns out the 'cash' unit never was popular. (cculianu)
+* CashShuffle & Keepkey: Fixed a bug in google protobuf that prevented both
+  plugins from being loaded simultaneously. #1227 (cculianu)
+* Trezor support has been improved with many bugs fixed. It should be less
+  crashy overall when restoring seeds or when cancelling dialogs. (cculianu)
+  Special thanks to Technologov for providing feedback and for donating Trezor
+  wallets to test & dev on.
+* Added ability to load any image to Trezor One or Model T's home screen. The
+  image will be scaled and dithered correctly.  You can load PNG, JPG, GIF,
+  SVG or whatever other image formats Qt supports. (cculianu)
+* CashShuffle: Implemented Coins Tab (right click) -> Reshuffle Coin. Use this
+  feature if want to shuffle already-shuffled coins again to keep liquidity up
+  or for even more privacy. (cculianu)
+* Fix #1235 - Email plugin was broken and crashy. It works now. (cculianu)
+* Virtual keyboard plugin looked terrible on some platforms, particularly macOS.
+  Its layout has been improved to look good on all plafrotms. (cculianu)
+* Windows build is now on Python 3.6.8
+* Fix #1238 & #1239 - Dark Mode had some hard to read GUI elements due to poorly
+  chosen colors in the Transaction Dialog. Fixed. (cculianu)
+* Fix #1231 - Request list esoteric crash when rebuilding history. (cculianu)
+* Merge PR #959 - Fix the support for Ledger HW1/Nano legacy hardware w/o
+  touching Nano S/Blue (Thomas Preindl, Axel Gembe)
+* Ledger: Improved handling of locked Ledger devices (#1245) (Axel Gembe)
+* HW Wallets: Fixed devices not being closed properly in some cases (#1246)
+  (Axel Gembe)
+* HW Wallets: Improved messaging for user when trying to detect a HW device
+  and dependent libraries are missing. This affects the install wizard and it
+  is hoped it will assist users in troubleshooting. (#1244, #1251) (Axel Gembe)
+* HW Wallets: Show proper error message when trying to sign a tx with OP_RETURN
+  (#1254) (Axel Gembe)
+
+# Release 4.0.2
+
+* Set the gap limit for change from 6 to 20. This is because we realized
+  CashShuffle wallets already behave as if the gap limit were 12 (reserving
+  addresses as they shuffle). We just made it official. (Mark Lundeberg)
+* Added BIP38 private key support. You can create an import wallet, import
+  private keys, or sweep private keys using BIP38.  In either of those 3,
+  specify a mix of WIF and/or BIP38 keys and you will be prompted to enter the
+  password to decrypt the BIP38 keys in question, 1 at a time. (#1289)
+  (cculianu)
+* Added Windows CLI support if running from cmd.exe or WindowsPowerShell
+  (previously the console output was always mute even if running with -v --
+  it only worked for msys, mingw, cygiwn, etc, but not normal Windows console).
+  (#1295) (Axel Gembe)
+* Windows: Make console no longer flash on startup (#1294) (Axel Gembe)
+* Fix to minor esoteric/rare bug in CashShuffle where it may be overzealously
+  freezing receiving addresses with non-shuffle outputs on them. (#1291)
+  (cculianu)
+* Ledger HW Wallet: Remove non-working websocket 2FA for legacy ledger devices
+  (#1298) (Axel Gembe)
+* Ledger HW Wallet: Added support for OP_RETURN and also multiple transaction
+  outputs (on devices that support it). Code mainly taken from Electrum but
+  adapted and modified by us. (Axel Gembe)
+* Added Linux AppImage builds -- these builds are self-contained binaries with
+  everything rolled into a single file.  It should make it much easier for
+  Linux users not wishing to install dependencies to simply run Electron Cash.
+  Based off Electrum's implementation, with our own customizations. (cculianu)
+* OSX: Made the DMG release use a "fancy" dmg with graphics and a symlink to
+  /Applications as is customary on macOS. (cculianu)
+* Lib: Fixed a potential crash bug if the server sends bad data to the client.
+  (cculianu)
+* Deprecated support for Python 3.5.  Electron Cash now requires Python 3.6+.
+* CLI: Added -x/--disable_preferred_servers command-line option (#1222)
+  (cculianu)
+* CLI: encrypt/decrypt commands were broken. They are now working. (#1270)
+  (cculianu)
+* Disabled all fee estimates in the codebase.  They are useless on BCH anyway
+  and were a holdover from our BTC roots.  BCH tx's always confirm next block
+  if they pay the minimum 1.0 sats/B fee anyway.  Fee estimates are not needed.
+  Also disabled the "Estimated confirmation time:" label from the Transaction
+  Dialog winow.  This is not informative either for similar reasons. (cculianu)
+* Hardened build system against dependency vulnerabilities (cculianu)
+* Fixed bug when Coins -> "Spend" and you right-click in the Send tab's
+  coins area. (#1269) (Mark Lundeberg)
+* Winows: Added some missing OpenGL libs to the built package.  Qt will now
+  use OpenGL or fall back to ANGLE (GL -> D3D translation layer) or software
+  rendering. The fallbacks help with buggy drivers. (cculianu, Axel Gembe)
+* Fixed Tx Dialog breaking on esoteric scriptsigs (#1263) (Mark Lundeberg)
+* Strip whitespace when copying various right-click -> "Copy Amount" to the
+  clipboard. (cculianu)
+
+# Release 4.0.3
+
+* Added Schnorr signatures to UI and backend (fyookball, cculianu,
+  Mark Lundeberg)
+* After much trial and tribulation: fixed broken KeepKey support: KeepKey
+  webusb now works, too. Latest devices should work again. Thanks Axel!
+  (Axel Gembe)
+* Fixed multisig not working on Trezor (& KeepKey) (cculianu, Axel Gembe)
+* Updated QR reading accuracy and detection for Linux AppImage & Windows by
+  updating the version of ZBar we ship; it's custom-compiled by us from
+  official repo to include only what's needed. (Axel Gembe)
+* Fix #1349 -- Assertion Error on daemon stop (cculianu)
+* Added "Hardware Wallet Support..." tool in menu and in Install Wizard for
+  Linux only to install udev rules for HW wallets. (Axel Gembe, cculianu)
+* OP_RETURN-too-large message in UI was wrong, off by 1 (Axel Gembe)
+* Fix #1338 - Crash on BIP38 private key sweep (cculianu, im_uname)
+* AppImage build fixups (Axel Gembe)
+* Added/removed some servers from servers.json (cculianu, dagurval, im_uname)
+* Address list: remove double space in balance column (Axel Gembe)
+* Console: Make insert key toggle overwrite mode (Axel Gembe)
+* x509 certs: Print better error messages when certs are expired; affects
+  bitpay BIP70 (cculianu, SomberNight)
+* Layout and Qt effects fixups for various (Axel Gembe)
+* Fix #1306 - Dark theme glitches (Axel Gembe)
+* Fixups to keyboard navigation for console tab (Axel Gembe)
+* Fix console font being reset when moving between monitors on Windows
+  (Axel Gembe)
+* Qt accelerator key fixups (Axel Gembe)
+* Fix #1261 - Mojave Dark mode looked bad (cculianu)
+* Added fancy warning box on top of Console tab to prevent social engineering
+  attacks (Axel Gembe)
+* Added -R/--relax-warnings CLI option to disable Secp & other warnings
+  (Axel Gembe)
+* Better Qt error messages when importing bad WIF p2sh 'private keys' (cculianu)
+* Ledger Nano-X USB device support (Axel Gembe)
+* Various small other nits & bugfixes [see commit log] (cculianu, Axel Gembe)
+
+# Release 4.0.4
+
+* Added a brand new, cross platform and awesome QR Code scanner #1376
+  (Axel Gembe, cculianu)
+* Fixed QR icon appearing black/invisible on some Linux systems
+  (Axel Gembe, cculianu)
+* Allow user to load any image containing a QR code in the various QR-scan
+  style dialogs: Pay-to in Send tab, Private Key Sweep, etc. (Axel Gembe)
+* Fix #1375 - Ensure 'Receive' tab does not ever give you a frozen address.
+  (cculianu)
+* Schnorr signing has been enabled by default if previously unspecified if the
+  libsecp256k1[ABC] is present (non-HW, non-multisig wallets only) (cculianu)
+* Fix #1385 - Auto-switch send tab mode Shuffled/Unshuffled depending on the
+  selected coins when doing Coins -> right click -> Spend. (cculianu)
+* Various bugfixes (Axel Gembe, cculianu)
+
+# Release 4.0.5
+
+* Bugfix -- Imported Private Key wallets as well as some HW wallets (keepkey)
+  could not sign or save a tx in 4.0.4 due to a subtle bug introduced as part
+  of a refactor. Fixed. (cculianu)
+* Fixed QR scanner looking off-center on some platforms. (Axel Gembe)
+* Fixed QR scanner quirks on some platforms when failure to configure camera
+  resolution confused the QR scanner a little bit. (Axel Gembe)
+
+# Release 4.0.6
+
+* Added CoinText support. Just enter 'cointext:ANY_PHONE_NUMBER' in the send tab
+  to use it! (cculianu, Jonald Fyookball)
+* Added a brand-new Transaction Dialog feature "Download input data" which
+  allows you to get 100% accurate fees, input addresses, and input amounts for
+  ANY tx in your wallet or even NOT in your wallet. (cculianu)
+* Various fixups to script parser code and misc. transaction refactorings
+  (Mark Lundeberg)
+* Qt: Enable automatic high DPI scaling on Windows and Linux (Axel Gembe)
+* Redid some of the icons and graphics to support high DPI (Axel Gembe,
+  cculianu)
+* Added command-line option `--qt_disable_highdpi` to force-disable high DPI
+  mode (Axel Gembe)
+* Bugfixes to Ledger support + allow up to 187 byte OP_RETURN (Axel Gembe)
+* Misc tiny UI nits and other fixups (cculianu, Axel Gembe)
+* Updated libsecp256k1 to latest from Bitcoin-ABC (cculianu)
+* Reduced .dmg, .exe, & .AppImage binary sizes by optimizing images (Axel Gembe)
+* Updated servers.json (imaginaryusername)
+* CashShuffle: Raised default shuffle limit to 99.9999 BCH (cculianu)
+* Replaced the 'clock' icons with new hi-res versions. Please direct all
+  hatemail to Calin Culianu for he volunteers to take full responsibility.
+  (Jason Pribble, cculianu, James Cramer, Axel Gembe)
+* Minor fix: Clicking a link in browser to open a URL in Electron Cash no longer
+  resurrects a closed wallet and instead opens the link in whatever active
+  wallet windows exist. (cculianu)
+
+# Release 4.0.7
+
+* CoinText: Show a popup label after CoinText is initiated to remind user
+  they need to hit "Send" or "Preview" to proceed (cculianu, imaginary_username)
+* Tx Dialog: Fixups and functionality expanded. All wallet addresses are now
+  links which are clickable (leading to the address's history view). All input
+  prevouts are now clickable links as well; they lead to a tx dialog screen for
+  the prevout tx. Additionally, we added a right-click context menu for the
+  input/output panes of the tx dialog window. This brings EC's functionality
+  closer to that of a mini block explorer. (cculianu)
+* KeepKey: Fixed a packaging issue where loading BIP39 onto an uninitialized
+  KeepKey would fail with a Python exception on Windows & Mac #1434 (cculianu)
+* Python 3.6 is officially the minimum Python version for Electron Cash now.
+  In the last version, you could still run on Python 3.5 (poorly), we just
+  made it official. (Axel Gembe, cculianu)
+* Added OP_RETURN capability to the 'Receive' tab. You can now generate receive
+  request URIs and QR codes containing 'op_return' and/or 'op_return_raw'. Not
+  all wallets can read this query string argument, but Electron Cash can.
+  (cculianu)
+* Linux run-from-source: Warn/Abort with helpful messages if user is missing
+  required PyQt libs such as QtSvg. (cculianu)
+* QR Scanner: Added informative message for Linux run-from-source users who
+  happen to have a broken PyQt5 lacking a required lib for accessing the
+  camera. (cculianu)
+* Schnorr: Defaults to off for watching-only wallets. This is to prevent
+  air-gapped setups from underestimating fee between generating and signing EC.
+  (cculianu)
+* Tx Dialog: Warn if user is attempting to broadcat a low fee tx of <1 sats/B.
+  (cculianu)
+* Address tab: Allow CTRL+F of addresses prefixed with bitcoincash: to do the
+  expected thing. (cculianu)
+* Various bugfixes (cculianu)
+* OpenAlias: Fix #1441 - Resurrected it form the dead. It wasn't working before.
+  You can now send payments to people via their openalias eg user@domain.net
+  (requires they set up a DNS TXT record).  See https://openalias.org/#implement
+  (Axel Gembe)
+* AppImage: 100% deterministic builds now. (Axel Gembe)
+* AppImage: "Open in block explorer" now works (Axel Gembe)
+* Windows: We figured out what was causing the anti-virus false positives on
+  our recent releases and took steps to reduce the possibility of AV false
+  positives going forward. (cculianu, Axel Gembe)
+* CashShuffle: Fix #1223 - Finally resolved the "dead menu actions" bug where
+  sometimes after bringing up the CashShuffle settings, hotkeys and File->menu
+  actions would no longer respond. (cculianu, Axel Gembe)
+* Quotes/Fiat Exchange Rate: The "historical rates" code was buggy and prone
+  to "no data" being shown even when the server we get the quotes from has
+  data. Bug #1448. This has now been fully fixed and made unbuggy. (cculianu)
+* Export Wallet History: Fix #1459 - The Wallet -> Export History facility now
+  always exports fiat history data if "Fiat History" is enabled in preferences.
+  Note also that the history export is now sorted in descending order by date,
+  like the history tab default sort order.  (cculianu)
+* Update checker: Made the "new version available!" notification less obtrusive:
+  it now posts a message to the system tray popup as well as just creating a
+  new status bar icon you can click on to respond to the notification at your
+  leisure.  Hopefully this will tempt fewer people to turn off the notifications
+  (cculianu)
+* Preferences pane: Split up the "Transactions" tab in the preferences to
+  "per-wallet" and "app-global" sections to more clearly communicate in the UI
+  which of the options are global and which are per-wallet. Closes issue #1427
+  (cculianu)
+* Preferences pane: Added a new option "notify when receiving funds" which
+  is on by default and if unchecked, allows you to no longer receive system
+  tray notifications on tx's. This is a per-wallet setting. Closes issue #1451
+  (cculianu)
+* Tx Send Confirmation: Added a new button to the tx send confirmation dialog
+  "Copy link" which copies the link to the tx on the configured block explorer.
+  Issue #1464 (cculianu)
+* AppImage builds have been made SIGNIFICANTLY smaller. Here's to faster
+  downloads and peppier startup times, hooray! In addition, the macOS .dmg build
+  and the Windows .exe builds have been made slightly smaller. (Axel Gembe)
+* Cash Address Toggle: Replaced icon with a much nicer one. (Leandro Di Marco)
+* Cash Address Toggle: After a reddit poll was conducted, we decided to make it
+  possible to disable the cash address status bar button in the GUI. It's on
+  by default, but can be disabled in Preferences -> General. In addition, the
+  Preferences -> General tab has been laid out slightly differently. (cculianu)
+* Improved system tray icon and other assorted icons for high DPI. (Axel Gembe)
+* Various build system fixes and bugs fixed. (Axel Gembe)
+
+# Release 4.0.8
+
+* Cash Accounts support has been added to Electron Cash!  Most of the UI for it
+  is in the "Contacts" tab (View -> Show Contacts), there are also UI bits to it
+  in the Addresses tab, in the Tools menu, and of course, the Send tab (where
+  you can enter any Cash Account and it will get auto-resolved for you!)
+  #1505 (cculianu with massive platform work from Axel Gembe)
+* Fixups to allow Digital Bitbox and Ledger to sign more types of OP_RETURN
+  outputs. (imaginaryusername, Axel Gembe, cculianu)
+* "Button" Editor: Fix keypress events going to the editor when the buttons are
+  focused and other nits. #1518 (Axel Gembe)
+* More help for "QtSvg Missing" error; #1516 (Mark Lundeberg)
+* Qt: Performance fix to History tab for wallets with many txs when verifying.
+  The performance when verifying for wallets with a huge history was not optimal
+  and the UI would periodically hang. This has been fixed. (cculianu)
+* SPV: Make the merkle node checker no longer care whether "inner node looks
+  like a tx" because this check is no longer need after the Nov. 2018 hard-fork.
+  (cculianu, Mark Lundeberg)
+* Fix #1502 - Intermittent iOS Crash Reporter on bad/expired BIP70 Payment
+  (cculianu)
+* Translations: Add support for plural forms #1500 (Axel Gembe)
+* Coins Tab: Added default sort order of Amount, Descending. The Coins tab now
+  also remebers whatever sort order you gave it. This should be good for
+  CashShuffle users with many coins in their coins tab. (cculianu)
+* Wallet: Improve performance of is_mine() check from O(N) to O(logN) (cculianu)
+* Qt Network Dialog: Let the user edit the host/port in peace (SomberNight,
+  cculianu)
+* Fonts: Improve color emoji support on Windows and Linux #1498 (Axel Gembe)
+* Fonts: Add Google Noto Color Emoji font subset #1496, #1523 - This is bundled
+  in Windows and AppImage and loaded at runtime if the user lacks a suitable
+  color emoji font (Axel Gembe).
+* AppImage: Bundle more binaries to increase compatibility & other fixes #1492
+  (Axel Gembe)
+* Updated "Error, Could not import PyQt5" message to be more helpful (cculianu)
+* Qt: Update to 5.12.3 for Windows and AppImage builds #1490 (Axel Gembe)
+* Linux Qt: Warn user if running Qt < 5.12 (this has terrible font support
+  which causes EC to render fonts badly if using emojis or unicode) (cculianu)
+* AppImage: Upgrade to Ubuntu 16.04 as base #1489 (Axel Gembe)
+* Build: Protect against PGP keyserver poisoning attack #1487 (Axel Gembe)
+* Added electroncash.se server to servers.json (Georg Engelman)
+* TxDialog: Allow various fields to be selected by mouse. (cculianu)
+* TxDialog: Added the "Mined in block" field to the dialog. (cculianu)
+* Localization: The app now defaults to the system language on Windows, Mac and
+  generic Unix for new installs.  The preferences dialog has also been improved
+  to bring the General tab to the front and make the language picker contain
+  translated language names. #1477 (Axel Gembe, cculianu, Alexander Schlarb)
+* Fix #1473: Omit bitcoincash: prefix from legacy address in receive tab QR
+  image if no parameters are filled-in other than 'address'. This allows users
+  to quickly use the receive tab to scan a QR image from a mobile wallet that
+  doesn't know about bitcoincash:. Note that if the receive tab has parameters
+  filled in eg: description, amount, etc, then the receive request becomes a
+  URI and it will have the bitcoincash: prefix prepended, even if using legacy
+  address mode. (cculianu)
+* Ledger: Fix #1479: 2FA Dialog with Legacy devices and multiple outputs was
+  crashy due to a small programming error. Fixed. (Axel Gembe)
+* Added various hotkeys to the GUI Ctrl+K, Ctrl+M, etc. You will see them in
+  the various in-app menus (such as Tools, Wallet, etc). (cculianu)
+* Made the network layer more resilient to malformed server responses.
+  (cculianu)
+* Search box has been fixed to not get crushed by the balance label and to also
+  work better and have placeholder text. Closes #1493 (cculianu)
+* Coins tab: Offer alternate address format copy (eg "Copy Legacy Address" if
+  in CashAddr mode, and vice versa). This was already available in the Addresses
+  tab but wasn't in the Coins tab. Closes #1476 (cculianu)
+* Address tab: Allow multi-select and copy of data items such as Addresses,
+  Address & Balance, etc. Closes #1475 (cculianu)
+* Contacts tab: All contacts can now also get an optional label. The label is
+  keyed off the address and is saved in wallet.labels. Closes #1508 (cculianu)
+* Added better help for the Pay to edit in the send tab. The help text has been
+  improved to clarify this advanced widget's capabilities, and a '?' help button
+  has been added in the tool buttons for the line edit. (cculianu)
+* App icon has been updated to be a little more rectangular and render better
+  across resolutions and platforms. #1526 (cculianu, Axel Gembe, fyoookball,
+  BeltranLeo)
+* Update checker: Use a longer timeout to not time out when using a proxy
+  server. #1509 (cculianu)
+* External Plugins: Be more resilient to a bad plugin file. #1533 (cculianu)
+* Updated translations (Axel Gembe)
+* Email plugin crash fix #1534 (cculianu)
+* Minor UI bugfixes. (Axel Gembe, cculianu)
+
+# Release 4.0.9
+
+* Fixed remaining (rare, hopefully) font & emoji rendering issues on some Linux
+  distributions. (Axel Gembe)
+* Added preferences options for "Use FreeType" (Windows) and "fontconfig
+  overrides" (Linux).  (cculianu)
+* Updated blockchain checkpoint to block 592911. (Malcolm Smith)
+* Added support for "cashacct:" URIs #1547. You can paste these in the Pay-to
+  edit in the Send tab or, if on Linux, Mac & Windows, click on a cashacct:
+  link in your browser as well. (cculianu)
+* Fixed esoteric crash bug which would occur sometimes when opening the
+  preferences dialog. This bug was due to bugs in PyQt5 when using QtMultimedia
+  and the fix involved loading QtMultimedia at app start, rather than on-demand.
+  #1545 (cculianu)
+* Fix #1552: Disallow "Request payment" in addresses tab when address is used.
+  This would lead to an inconsistent UI; the receive tab would always enforce a
+  new address anyway, so the option in the right-click menu was misleading at
+  best in that situation.  "Request payment" works as normal if the address is
+  unused, however. (cculianu)
+* Fixed Windows setup.exe to be more reproducible and other misc build fixes.
+  (Axel Gembe, cculianu)
+* Fixed very rare uncaught exception due to misbehaving plugin #1554. (cculianu)
+* KeepKey & Trezor: Fix WebUSB on Windows 10 1903 by patching libusb, #1556.
+  (Axel Gembe)
+* Cash Accounts: Lookup/Search results offer a "Details..." link now instead
+  of the "View tx..." link. You can view tx on the details page. (cculianu)
+* Qt: Added proper keyboard navigation to the Transaction Dialog window, and
+  various other places. #1557 (Axel Gembe)
+* Android: Added native libsecp256k1 support (Malcolm Smith)
+* Bugfix #1240, #892, #1484: Prevent infinite startup hangs due to lockfile
+  timestamp in the future. (cculianu)
+* Email Plugin: Minor fixups and fixed bug #924. (cculianu)
+* iOS: Fix #1273 -- Crash due to trying to pass a Python Exception to obj-c as
+  string. (cculianu)
+* Various build and packaging fixes for Windows. (Axel Gembe)
+* Added BitPay 2.0 JSON API support. (cculianu)
+* Fixup to some plugins such as Scheduled Payments and Inter-Wallet-Transfer
+  raising uncaught exceptions if they are loaded and enabled and user hits
+  Ctrl+F (cculianu).
+* LabelSync: Prevent error dialog spam when labels plugin fails to update
+  labels on the server. (cculianu)
+
+# Release 4.0.10
+
+* Lib & Qt: Added Bip38Key encryption support to both the library for plugins
+  to use as well as to the Qt UI for users to be able to export or encrypt WIF
+  keys as BIP38 encrypted keys; #1593, #1594. (cculianu)
+* Minor internal i18n nits, #1571. (Mark Lundeberg)
+* Windows: Switch LibUSB to version 1.0.23-rc2, #1572. (Axel Gembe)
+* iOS: Added native secp256k1 to iOS build, drastically improving signing speed.
+  (cculianu)
+* iOS: Added Schnorr signatures. (cculianu)
+* Fixed output script classifaction code to be more correct. (Mark Lundeberg)
+* Qt: Made generated QR codes look better on HighDPI displays. (cculianu,
+  zebra-lucky)
+* Misc. localization and internationalization fixups. (Axel Gembe)
+* OSX: Minor fixup for Mojave font weights being rendered too thick. (cculianu)
+* Minor bugfix: Guard against "all zero" transactions coming from malicious
+  servers, #987. (cculianu)
+* Qt Console: Fixed the warning box layout to fit on-screen in all setups,
+  #1584. (Axel Gembe)
+* Qt: Fixed minor warning about alpha value, #1585. (proteanx)
+* OSX & Linux AppImage: Bumped bundled Python version to 3.6.9. (cculianu)
+* iOS: Added a ruby helper script which, if running Brew, will auto-set-up
+  more of the Xcode project for the user after creating it with
+  `make_ios_project.sh`. (jonspock)
+* Added SLP awareness to all wallets. Even though one can't easily get an SLP
+  token into a non-SLP wallet, it is still possible. The EC internals now
+  track transactions containing SLP tokens and guard against spending such
+  coins. Coins that have SLP tokens on them are highlighted in green in the
+  "Coins" tab and cannot be spent from the UI.  This is to prevent token
+  burn, #1602 (cculianu)
+* Android build fixes, #1599. (mhsmith)
+* More Android fixes: Added stability improvements and various corner
+  case bugfixes (see github PR #1605 for details). (mhsmith)
+* Fiat FX Rate: Bitpay.com URL / API endpoint has changed, thus breaking fiat
+  exchange rate sources if "Bitpay" was selected. Fixed. (cculianu)
+* Updated websockets (electrum-merchant): fixed stale/old code which no longer
+  ran, added '--payment_url' option, and other miscellany. (cculianu)
+* Implemented BIP70 properly on Qt and iOS; #1612. (cculianu)
+* MacOS HW Wallets: Fixed SIGSEGV crash due to talking to the device from
+  multiple threads which is not supported on Darwin. (cculianu)
+* Ledger Nano HW support has been vastly improved: It should be less crashy
+  and provide the user with much more meaningful messages for getting the device
+  into the proper state to talk to Electron Cash. (cculianu)
+* Wallet: Fixed erroneous coinbase maturity logic. Immature mined coins were
+  erroneously being withheld from spending for an extra confirmation. (cculianu)
+* Coins tab: Coinbase coins that are not mature are now highlighted in blue
+  text and are not allowed to be selected for individual coin spending
+  (previously you could select them for spending with no way to actually spend
+  them which was bad UX). (cculianu)
+* TxDialog: coinbase tx's now show 0 fee, rather than 'unknown' (cculianu)
+
+# Release 4.0.11
+
+* Added SatoChip hardware wallet support: https://satochip.io/.
+  #1668 (Baudoin Collard, cculianu)
+* Added API support for plugins to register themselves with the command-line
+  in order to offer RPC service commands. #1670 (Mark Lundeberg)
+* Added "Show crash reporter" to preferences, and re-laid-out the preferences
+  pane. #1673 (cculianu)
+* Fix #1671 -- "No data" for fiat when using the 'history' RPC command has been
+  now fixed. (cculianu)
+* Fix #1679 -- Exporting history now shows fees (if known), as well as input
+  and output addresses involved in a tx. (cculianu)
+* Plugin API fix for @hook. #1669 (cculianu, Mark Lundeberg)
+* Internal API optimization for transaction signing #1666 (Mark Lundeberg)
+* Added BlockExplorer.one for both testnet and mainnet as a block explorer
+  configurable in preferences. #1664 (Axel Gembe)
+* CLI: Added --op_return and --op_return_raw options for the 'payto' command.
+  (cculianu)
+* AppImage: Improved binary stripping for more reproducible builds. #1662
+  (Axel Gembe)
+* Updated SSL certificates to Sept. 2019. This should hopefully fix some of the
+  "Unable to verify SSL" errors some users have seen when using CashShuffle.
+  (cculianu)
+* Fixed a long-standing bug where sometimes Electron Cash would hang forever on
+  startup due to a stale/old daemon 'lockfile'. (cculianu)
+* Qt history tab: Added workaround for persitent 'Unknown' balances when using
+  advanced scripts to spend funds. (cculianu)
+* Qt UI: Add mechanism to prohibit '3..' p2sh by default, which should protect
+  users from accidentally sending BCH to BTC segwit addresses. This protection
+  can be disabled in preferences. Issues #1658 and #1225. (cculianu)
+* Updated README for better instructions on how to run the development/git
+  version. (Mark Lundeberg)
+* Added servers to servers.json: tbch.loping.net, greedyhog.ddns.net. Removed
+  server theblains.org. (Axel Gembe, greedyhog)
+* iOS: Fixes for iOS 13.0+ and other miscellany (cculianu)
+* iOS fix: "Downloading headers xx%..." is now more accurate (cculianu)
+* iOS fix for bug #1651, crash if prefs screen up when wallet closed. (cculianu)
+* transaction.py: don't append value when serializing inputs with scriptSig.
+  #1648, #1628, #1637 (Mark Lundeberg)
+* Addresses tab: hide all empty change addresses, not just used ones &
+  pop open change list by default. #1646 (Mark Lundeberg)
+* Android: allow specifying a server which isn't in servers.json. #1644 #1636
+  (Malcolm Smith)
+* Add Swahili to the language list. (Patrick Kariuki)
+* Bumped Qt version to 5.13.2 on most platforms. (cculianu)
+* Qt prefs: Renamed the default "light" UI style to "Default". On some systems
+  this style is actually dark in appearance. (cculianu)
+* cashaccts: Fixed parse bug in parsing eg 'cashacctname#123,1.23'. (cculianu)
+* Misc. menu and dialog nits, polish, cleanups, more consistent Capitalization,
+  & More. (Tom Zander, cculianu)
+* Qt: main window, make sure Ctrl+Q is shown in File->Quit. (cculianu)
+* Transations: prefer verbatim scriptSig for (re)serializing complete
+  transaction inputs. #1637 (Mark Lundeberg)
+* Added index_url override to addrequest command. #1636 (Yuki Matsumoto)
+* i18n: Use pgettext in a few places, and various fixups. #1624 (Axel Gembe)
+* Very many Android fixes. #1614 (Malcolm Smith)
+* p2sh: Fix coin tracking / balance, etc for esoteric scriptSigs/redeemScripts
+  in inputs. This should make it easier to have a wallet that tracks smart
+  contract addresses and other advanced usages of Bitcoin. #1620 (cculianu)
+* synchronizer: Check txid from server against response content. This is a
+  paranoia check to make sure the server isn't being malicious. (cculianu)
+* i18n nit: Translate 'Unknown' string in format_satoshis. (cculianu)
+* Removed cashshuffle.net #1619 (Georg Engelmann)
+* Configure payment_url to include payment request ID. #1617 (Mark Meson)
+* Command-line: added `addressconvert` command. (cculianu)
+* BIP70 Payment Request Fix. There were potentially subtle bugs in how we
+  handled BIP70. Nothing major. They have been fixed. #1615 (cculianu & Mark
+  Meson)
+* iOS: Add SLP-awareness & protection to the UI. (cculianu)
+* Misc. refactoring, nits, and bugfixes (cculianu, Mark Lundeberg)
+
+# Release 4.0.12
+
+* **TRANSLATIONS!** This release includes a complete coverage of the Spanish
+  language as well as many other language strings added for German, Portuguese,
+  and other languages. (various contributors, w/ Jonald Fyookball as organizer)
+* Made export history way better (#1682) -- Exporting history from the GUI or
+  the CLI can now optionally include accurate fee data as well as accurate fiat
+  amounts (if fiat history is enabled in the GUI). (cculianu)
+* Fix #1681 - Gave cashshuffle message.proto file a package name. This caused
+  issues for some source users whereby the lack of a package name may clash with
+  modules installed on the user's system. (cculianu)
+* Android (phase 4): Add ability to delete closed wallets (#1690) (Andrew#128)
+* More graceful and softer shutdown on Ctrl-C / SIGINT (#1695) (Mark Lundeberg)
+* Various backend preparations for CashFusion (#1693) (Mark Lundeberg)
+* Remove unused SIP dependency for Python 3.8 compatibility (Axel Gemebe)
+* SatoChip HW Wallet: Fix crash when cancelling PIN change or seed reset
+  (Baudoin Collard)
+* SatoChip HW Wallet: Fix recovered authentikey does not correspond to
+  registered authentikey error (#1717) (Baudoin Collard)
+* Fix #1718: We had a string format error in Export Private Keys dialog, which
+  would cause uses that were using a password with '{' in it to experience
+  crashes. (cculianu)
+
+# Release 4.0.13
+
+- **BIP 39 Seed format** is now the ***native seed format*** for Electron Cash!
+  (Calin Culianu)
+    - New wallets will always generate seeds in this format. When restoring from
+      seed, format auto-detection is implemented (so that old 'Electrum' style
+      seeds continue to work).
+    - Additionally, wallets created/restored from BIP39 will no longer have no
+      "Seed" icon in the GUI (and you can always view their seed; it is never
+      "forgotten").
+  - The seed dialog now always shows derivation paths for BIP39 seeds.
+- **New integrated Tor capability**. (Axel Gembe, Calin Culianu)
+    - This capability will be bundled with Electron Cash for the upcoming
+      ***CashFusion*** feature.
+    - For now, though -- you can use it to start/stop Tor right from inside
+      Electron Cash -- **no additional Tor browser install needed**!
+- Faster Network, #1819: Improved network code for faster wallet startup times.
+  (Mark B Lundeberg)
+- Added "Sign/Verify message" to the 'Contacts' tab right-click menu.
+  (Calin Culianu)
+- Fix #1727 - Don't close Qt app if user hides windows using the system tray
+  icon Show/Hide feature. (Calin Culianu)
+- Wallet rename function added for Android version, plus other fixes.
+  (Andrew#128, Malcolm Smith)
+- Wallet export function added for Android version. (Andrew#128, Malcolm Smith)
+- Internal fix-ups to possible error message dialogs when broadcasting a
+  transaction #1730 (Mark B. Lundeberg)
+- Performance boost to base_encode/base_decode for legacy addresses.
+  (SomberNight/ghost43)
+- Updated translations. (Axel Gembe, Georg Engelmann, various other volunteers)
+- Updated embedded libsecp256k1 to ABC version 0.20.9.
+  (Calin Culianu, ABC Authors)
+- Server list: Add 'display' key to give Tor servers a short name. (Axel Gembe)
+- Network dialog: Various fixups to proxy detection and usage of Tor servers &
+  onion icon on .onion servers (Axel Gembe, Calin Culianu)
+- Various much-needed build system refinements and fixes. (Axel Gembe)
+- Qr code reader: Fix to make it more reliable on all setups. (Axel Gembe)
+- Updated pre-packages server list, aka `servers.json`.
+  (Calin Culianu, Andrea Suisani)
+- Fixed the long-standing "tx's lose their txid" bug resulting in erroneous
+  error dialogs popping up on broadcast sometimes. (Calin Culianu)
+- Fix #1785 - Allow searching (Ctrl+F) by tx_hash in history tab.
+  (Calin Culianu)
+- About dialog: Update copyright year to 2020 and make localizable. (Axel Gembe)
+- Fix #1789: Disallow user delete last address in Imported wallet. You could
+  then end up with an empty, 0-address wallet, which the rest of the internal
+  codebase did not like. (Calin Culianu)
+- Fix #1774: Tolerate spurious 'error' messages from server. (Calin Culianu)
+- Fix #1738 - Handle `protobuf` serialization errors for payment requests.
+  (Calin Culianu)
+- CashFusion back-port #1647:  Add change-address reservation subsystem.
+  (Mark B Lundeberg)
+- Add create/restore commands in to daemon mode RPC server #1746.
+  (MrNaif2018)
+- UTXOList (Coins tab): Show number of coins in output_point column.
+  (Calin Culianu)
+- Update ViaBTC explorer address. (Imaginary Username)
+- #1802 - Added "payment_received" event which can be used by plugin authors
+  wishing to author BIP70 payment integraton plugins. (MrNaif2018)
+- Fix: Signing payment requests with OpenAlias should now work. (Calin Culianu)
+- #1811: `servers.json`, updated greedyhog's server. (greedyhog)
+- Max OSX -Binaries are now built with hardened runtime enabled, which is
+  required now on latest Catalina. (Calin Culianu)
+- Fix #1817, Bitcoin Lib: Added tighter validation to bitcoin.deserialize_xkey.
+  (Calin Culianu)
+- Various internal bug-fixes and improvements.
+  (Calin Culianu, Axel Gembe, Mark B Lundeberg, Andrew#128, Malcolm Smith).
+
+# Release 4.0.14
+
+- Fixed a bug in CashShuffle which would sometimes cause some shuffle tx's
+  to use the same address twice in the outputs. (cculianu)
+  See reddit thread:
+      https://old.reddit.com/r/btc/comments/fmcf0x/cash_shuffle_privacy_bug/
+
+# Release 4.0.15
+
+- Fixed USB HID support for hardware wallets on macOS. (cculianu)
+- Documentation: Updated instructions for running from source on macOS #1848.
+  (Ty Everett)
+- Fix #1806 - Fixed crash when no outputs in tx dialog. (cculianu)
+- Requirements: Remove protobuf <3.9 constraint #1864. (Axel Gembe)
+- Server list updated. (imaginaryusername, Axel Gembe, cculianu)
+- Android fixups and improvements:
+    - Handle base units being renamed or removed (Malcolm Smith)
+    - Switch to Requests screen when a request is saved (Malcolm Smith)
+    - Fix crash when opening payment protocol URL from browser (Malcolm Smith)
+    - Various internal improvements and fixes (Malcolm Smith)
+- Bugfix: BIP39 passphrases were being handled incorrectly for upper or mixed
+  case #1878. (Jochen Hoenicke)
+- Added OP_REVERSEBYTES to the list of known script ops for display. (cculianu)
+- Made "Connect only to Preferred Servers" False by default. (cculianu)
+- Varous macOS Fixups and improvements:
+    - Mojave+ dark mode now works (cculianu)
+    - On macOS we now disabled the "dark" theme in favor of the system dark
+      theme (cculianu)
+    - Catalina startup times drastically improved (cculianu)
+
+# Release 4.1.0
+
+- ***CashFusion*** is here! To access it, simply right-click on the CashFusion
+  icon in the bottom-right of the status bar. Thanks to everybody that worked on
+  it, in particular: Mark Lundeberg, Jonald Fyookball, Axel Gembe, Calin Culianu
+  and many more that don't fit here.
+- Tx Signing has been significantly sped up for transactions with many inputs.
+  (Mark Lundeberg, cculianu)
+- Tezor HW Wallet: Updated to support latest firmware. #1900, #1902 (Axel Gembe)
+- Fixes for bugs introduced by newer ecdsa libraries that use gmpy2. In
+  particular on Fedora 32 things would sometimes explode when signing a tx or
+  using CashFusion, due to ecdsa API quirks. (cculianu)
+- Fixed ZBar (QR camera) issues on Windows. #1916 (Axel Gembe)
+- SSL Certs: Accept wildcard certs, accept CA-signed replacing pinned
+  self-signed. Servers can now use wildcard certs or switch from self-signed to
+  CA-signed without losing users! (cculianu)
+- Update criptolayer server. #1874 (imaginaryusername)
+- Add electroncash.de block explorer. #1920 (Axel Gembe)
+- Network: Show problematic pinned certificates and allow unpinning. #1919 (Axel
+  Gembe)
+- Update plugin for Satochip hardware wallet to support latest firmware v0.11.
+  #1915. (Toporin)
+- Tor: Make process shutdown more robust. #1893 (Axel Gembe)
+- AudioModem: Fixed to not crash on unsupported platforms. (cculianu)
+- Various internal refactorings, fixups, and internal API improvements.
+  (cculianu, Axel Gembe, Mark Lundeberg)
+
+# Release 4.1.1
+
+- Added support for the ASERTi3-2d DAA for the Nov. 15th, 2020 upgrade #1954
+  (Calin Culianu)
+- Added testnet4 support, accessible with the --testnet4 CLI option (#1974)
+- Internal build fixes for OSX (Calin Culianu)
+- Internal fix for unit tests #1929 (Axel Gembe)
+- CashFusion: Show icon and add message even on non-fusable wallets #1927 (Axel
+  Gembe)
+- dnssec: fix compat with dnspython 1.16 and 2.0.0 #1934 (Axel Gembe)
+- tests: fix cashaddr checksum test unreliability #1938 (Axel Gembe)
+- CashShuffle: Remove unmaintained tests #1940 (Axel Gembe)
+- Tor: Make the messages refer to a specific Tor binary #1941 (Axel Gembe)
+- git sanity: enforce "git checkout commithash" actually pulls commit #1949
+  (SomberNight, Axel Gembe)
+- CashFusion: Add more tiers for fusion server #1951 (Jonald Fyookball)
+- trezor: bump lib version, implement new passphrase-on-device UI #1947 (Axel
+  Gembe, matejcik)
+- Add Blockchain.com mainnet and testnet explorers #1952 (Axel Gembe)
+- Fusion: Remove example server #1953 (Axel Gembe)
+- CashFusion: Ensure tor_port_good is defined in plugin (Calin Culianu)
+- Build: Fix wine build failing, typo in the git checkout work #1956 (Axel
+  Gembe)
+- CashFusion: Better consolidation logic (Mark Lundeberg)
+- CashFusion: Update default server to use SSL #1959 (Mark Lundeberg)
+- CashFusion: Enhance fuzzing logic; more funds safety checks (Mark Lundeberg)
+- CashFusion: Miscellaneous cleanup (Mark Lundeberg)
+- Made PyQt5 optional by default and installable by [full] or [gui] extra
+  requires (MrNaif2018)
+- Android: add plural formulae for Arabic and Polish (Malcolm Smith)
+- Android: use Babel so we don't need to handle every plural formula separately
+  (Malcolm Smith)
+- Prompt to start Tor only if user has enabled autofuse for wallet (Calin
+  Culianu)
+- Fix make_locale to be more pythonic (agilewalker)
+- Exchange rates: Remove dead exchanges #1982 (Axel Gembe)
+- Android: Sign transaction with schnorr #1988 (Jonas Lundqvist)
+- CashFusion: Include 'distinct coins' concept when enforcing privacy threshold
+  (Mark Lundeberg)
+- Qt: Set the layout direction based on user-configured language, for
+  right-to-left languages (Calin Culianu)
+- Network dialog: Add capitalized Tor binary name #1989 (Axel Gembe)
+- Run history_list_filter hook on updated labels #1990 (Jonas Lundqvist)
+
+# Release 4.2.0
+
+- Added support for scalnet test network, accessed with CLI arg --scalenet.
+  (Calin Culianu)
+- CLI/Server: Added addtransaction arg to payto/paytomany (#1997) (MrNaif2018)
+- Ledger: Fix warning about unverified inputs (#2003) (Axel Gembe)
+- Ledger: Test firmware version for trusted input requirement, fixes failure
+  on older firmware < 1.4.0. (#2008) (Axel Gembe)
+- Ledger: Update python dependencies (#2009) (Axel Gembe)
+- Android: add Load & Sign unbroadcasted tx (#1986) (Matthew Clancy,
+  Malcolm Smith)
+- Added ASERT tests (#2007) (Jonas Lundqvist)
+- Added paymentrequest tests (#2011) (Jonas Lundqvist)
+- Enable coverage HTML report (#2012) (Jonas Lundqvist)
+- Use locale atof when sorting columns (#2015) (Jonas Lundqvist)
+- Add Bitcoin Unlimited block explorer (#2016) (Jonas Lundqvist)
+- CLI: Added RPA paycode support (#2006) (Jonald Fyookball & Calin Culianu)
+- Dockerfile fixes for WINE and Linux AppImage (Calin Culianu)
+- Got rid of `imp` rewriting of lib, plugins, and gui dirs in source tree.
+  (Calin Culianu, Axel Gembe, Malcolm Smith)
+- Disable cointext: support from send tab & remove cointext code (#2022)
+  (Calin Culianu)
+- Qt UI: Made all tabs except for "Console" ON by default (Calin Culianu)
+- TxDialog: Add "Freeze Coins" button to freeze inputs before broadcast
+  (Calin Culianu)
+
+# RELEASE NOTES 4.2.1
+
+- CashFusion: Server-side checks to ensure "fast schnorr" is available on the
+  server. (Mark Lundeberg)
+- Fixed a typo in the transaction dialog ("Unfeeze" -> "Unfreeze") #2027
+  (Axel Gembe)
+- CashFusion: Various tweaks to starting logic, stopping behavior, bugfixes,
+  better handling for confirmed-only case, better handling when network down,
+  improved logic for wallet waiting to receive fusions. #2028, #2030
+  (Mark Lundeberg)
+- Tor subprocess: Ensure daemonized (Mark Lundeberg)
+- Android: Added fiat send, plus various fixes (Malcolm Smith)
+- Added Loping.net block explorers; added TestNet4 / ScaleNet explorer list
+  #2036 (Axel Gembe)
+- Added a "View on block explorer" option for addresses in the TX dialog #2049
+  (Axel Gembe)
+- Added shortcuts to Windows build for TestNet4 and ScaleNet #2050 (Axel Gembe)
+- Fix for ScaleNet: Turns out it has a 2d half-life, not one hour. Bug caused
+  ScaleNet to stop working post-Nov 15th. Now it should work. (Calin Culianu)
+- Various updates to server list. (Axel Gembe)
+- Added checkpoint after HF block, also added CLI arg --taxcoin for ABC's coin.
+  (Calin Culianu)
+- Network Dialog: Added advanced request throttling params (Calin Culianu)
+
+# RELEASE NOTES 4.2.2
+
+- Fixed a regression introduced in 4.2.1 where the checkpoint block being after
+  the asert anchor caused the code in blockchain.py to have a bad time.
+  (Calin Culianu)
+
+# RELEASE NOTES 4.2.3
+
+- Fixed rare None dereference. (Calin Culianu)
+- Android: fix remaining issues with RTL languages such as Arabic
+  (Malcolm Smith)
+- Ledger: Update USB ids for app-bitcoin version >= 1.5.1 (#2061) (Axel Gembe)
+- Taxcoin: Add taxplorer.loping.net block explorer #2067 (Axel Gembe)
+- Taxcoin: Add taxplorer.loping.net server #2066 (Axel Gembe)
+- NetworkDialog: Fix glitches when restoring selection on update()
+  (Calin Culianu)
+- Removed defunct CashShuffle servers (Calin Culianu)
+- Android: move transactions screen from export_history to faster get_history
+  (#2063) (Malcolm Smith)
+- Update macOS build notes (#2073) (Corentin Mercier)
+- Android: refactor common list behavior into a base class (Malcolm Smith)
+- CashFusion: fix minor race leading to exception #2077 (Mark Lundeberg)
+- Android: note that this Chaquopy version is for Electron Cash only
+  (Malcolm Smith)
+- Android: cache config in Python dict for performance (Malcolm Smith)
+- Android: catch "not connected" exception in "Load transaction" (Malcolm Smith)
+- Android: fix deprecated theme attribute in layout (Malcolm Smith)
+- Android: make Send address box automatically parse request URLs
+  (Malcolm Smith)
+
+# RELEASE NOTES 4.2.4
+
+- Trezor: Fixed connecting autolocked device #2085 (Daniel Gonzalez Gasull)
+- Fixed icon directory and added scalable icon #2089 (Emily Roberts)
+- Added option to scan current screen for QR code #2091 #2093 (Jonas Lundqvist)
+- Android: updated to Chaquopy 9.1.1 (Malcolm Smith)
+- Android: improved performance and UI responsiveness (Malcolm Smith)
+- Enabled fiat by default #2099 (Malcolm Smith)
+- Improved performance of (un)freezing coins (Calin Culianu)
+- Disabled Fiat display for testnets (Calin Culianu)
+- Reduced time spent saving wallets #2106 #2110 (Malcolm Smith)
+- Android: added more details when synchronizing (Malcolm Smith)
+- Reduced synchronization time by reducing address saves #2113 (Malcolm Smith)
+- Tor: Fixed proxy bypass for stem version >= 1.8.0 (Axel Gembe)
+- Android: save wallets periodically during synchronization (Malcolm Smith)
+- Android: when a wallet is loded, run a foreground service to prevent the
+  process from being killed (Malcolm Smith)
+- macOS: Workaround for Qt UI not working on Big Sur (Calin Culianu)
+- Satochip: use BIP39 by default & improve user interface #2127 (Toporin)
+- Android: added adaptive icon (Malcolm Smith)
+- Updated copyright year to 2021 #2126 (Marius Kjærstad)
+- iOS: Fixed inability to restore Electrum seed wallet (Calin Culianu)
+- Warn if a legacy addres is used #2129 (Daniel Gonzalez Gasull)
+- AppImage: Build using Ubuntu 18.04 (Bionic) #2144 (Axel Gembe)
+- Tor: Updated message parser to support version 0.4.5.x #2145 (Axel Gembe)
+- Tor: Updated to version 0.4.5.5-rc with some patches #2145 #2147 (Axel Gembe)
+- OpenSSL: Updated to version 1.1.1i #2148 (Axel Gembe)
+- NSIS: Updated to version 3.06.1 #2150 (Axel Gembe)
+- NSIS: Added an installer log. This fixes silent installation and accidental
+  file deletion #2153 (Axel Gembe)
+- macOS: Updated PyQt5 to version 5.15.2 to fix Big Sur (Calin Culianu)
+- AppImage: Build all binaries except PyQt5 from source #2159 (Axel Gembe)
+- Windows: Updated PyInstaller to version 4.2 #2161 (Axel Gembe)
+- Build: Updated Python to version 3.8.7 #2162 (Axel Gembe, Calin Culianu)
+- Android: reduced network timeouts #971 (Malcolm Smith)
+- Android: changed "sign transaction" to "save transaction" #2032 (Malcolm Smith)
+- Reverted RPA paycode support #2170 (Mark B Lundeberg)
+- Zbar: Updated to version 0.23.91 #2171 (Axel Gembe)
+- Added Vietnamese Dong to CoinGecko exchange pairs #2178 (Hieu Van)
+- macOS: Fix to mysterious and intermittent Segfault-on-exit (Calin Culianu)
+- Various internal bugfixes and code refactoring #2087 #2095 #2097 #2117 #2140
+  #2143 #2151 #2155 #2156 #2158 #2160 #2154 #2176 (Daniel Gonzalez Gasull,
+  Calin Culianu, Axel Gembe, Mark B Lundeberg, Malcolm Smith, Pierre K, Toporin)
+
+# RELEASE NOTES 4.2.5
+
+- appimage build: build was failing on some host systems #2181 (SomberNight)
+- Requirements: Restring PyQt5 version to >=5.12.3 and < 5.15.3 (Calin Culianu)
+- Re-enabled PyQt 5.15.3 (Calin Culianu)
+- OSX Fix: Allow for Mojave+ dark mode to work (requires Qt 5.15.2) (Calin Culianu)
+- NSIS: Wait for the uninstaller to finish #2184 (Axel Gembe)
+- NSIS: Ensure the process is not running when (un)installing #2184 (Axel Gembe)
+- Servers: Add electroncash.de scalenet server #2186 (Axel Gembe)
+- Servers: Fix indentation #2187 (Axel Gembe)
+- Build: Use git version with patch for CVE-2021-21300 #2191 (Axel Gembe)
+- setup.py: Fix typo #2192 (Axel Gembe)
+- AppImage: Include libxcb into the image #2197 (Axel Gembe)
+- Add requirements-binaries.txt to manifest #2200 (Jonas Lundqvist)
+- Install Wizard: Add derivation path scanner #2199 (Jonas Lundqvist)
+- Tweaks and fixups to the DerivationPathScanner (Calin Culianu)
+- Build: Add cffi to the requirements #2203 (Axel Gembe)
+- Android: add new layout screens for the choice between standard and multi-sig
+  wallet. (Aldin Kovačević)
+- Android: reorganize code for creating a standard wallet.(Aldin Kovačević)
+- Tor: Update to version 0.4.5.7 with some patches #2205 (Axel Gembe)
+- OpenSSL: Update to version 1.1.1j #2206 (Axel Gembe)
+- Skip path derivation scan if seed is unavailable #2208 (Jonas Lundqvist)
+- Shorten boolean expression, use double quotes #2209 (Daniel Gonzalez Gasull)
+- Style changes (from backport), small refactorings #2211 (Daniel Gonzalez Gasull)
+- Fix PR 2211 #2218 (agilewalker)
+- Add electrs.electroncash.de #2222 (Georg Engelmann)
+- Removed unreachable line of code #2224 #2234 (Daniel Gonzalez Gasull)
+- OpenSSL: Update to version 1.1.1k #2225 (Axel Gembe)
+- Python: Update to version 3.8.9 #2226 (Axel Gembe)
+- Fixed typo #2227 (Kevin Nowaczyk)
+- AppImage: Update OpenSSL to version 1.1.1-1ubuntu2.1~18.04.9
+  #2231 (Axel Gembe)
+- Android: Added initial UI for multisg wallet creation. (Aldin Kovačević)
+- Build: Verify the Python checksums #2239 (Axel Gembe)
+- Android: Various commits to support multi-sig wallets (Aldin Kovačević)
+- Remove CPFP (child pays for parent) (Calin Culianu)
+- Update servers.json (Calin Culianu)
+- Android: Using 'get_tx_info' to get the status of the transaction.
+  (Aldin Kovačević)
+- Make make_locale check exit status of gettext commands #2259 (Malcolm Smith)
+- Android: fix duplicate requirement, add missing string (Malcolm Smith)
+- Android: update to Gradle 6.5 and Android Gradle plugin 4.1.2 (Malcolm Smith)
+- Android: Added multisig wallets to the Android application #2279
+  (Aldin Kovačević)
+- Look for external plugins in ELECTRON_CASH_PATH #2301 (Jonas Lundqvist)
+- Support disabling JSON-RPC server in Daemon #2305 (MrNaif2018)
+- [fusion] Increase 'fuzz fee' to be tier/10^6 #1984 (Mark B. Lundeberg)
+- Add feerate argument to payto/paytomany #2306 (MrNaif2018)
+- Android: catch overflow errors in AmountBox; closes #2288 (Malcolm Smith)
+- Android: restore thousands commas in read-only fiat amounts; closes #2246
+  (Malcolm Smith)
+- Android: Make PaymentRequest.has_expired always return a boolean; closes #2298
+  (Malcolm Smith)
+- Android: Add missing interface_lock in Network.get_server_height; closes #2173
+  (Malcolm Smith)
+- iOS: Support OP_RETURN transaction outputs #2307 (JOE LOYA ⚡️)
+- Android: many, many, many commits fixing many things related to v4.2.4-4
+  (Malcolm Smith)
+- CashFusion: Add "spend only fused coins" to Send tab #2316 (Calin Culianu)
+- Android: add sweep private keys command (Malcolm Smith)
+- Fix daemon running in non-jsonrpc mode (MrNaif2018)
+- Various Linux and Windows build fixups (Calin Culianu)
+- Fixed build for OSX Mojave (Calin Culianu)
+- Make OpenAlias accept 'bitcoincash:' prefix #2321 (Karol Trzeszczkowski)
+- Updated checkpoints for mainnet, testnet3, and testnet4 (Calin Culianu)
+- Removed support for ABC's "TaxCoin" (Calin Culianu)
+- CashFusion Server: Allow testnets to have unlimited connections per IP
+  (Calin Culianu)
+- CashFusion: Add depth checks #2325 (Jonas Lundqvist, Calin Culianu)
+- CashFusion: Added a "Fusion Status" column to coins tab (Calin Culianu)
+- macOS: Fix popup_widget display if running in dark mode (Calin Culianu)
+- Remove bitcoin.com block explorer #2328 (Jonas Lundqvist)
+- CashFusion: Clarify status of coins on fused address #2329 (Jonas Lundqvist)
+- Add more accurate exchange rate for ARS #2326 (Santiago Chiabotto)

@@ -1,0 +1,17 @@
+Metadata-Version: 2.1
+Name: Electron-Cash
+Version: 4.2.5
+Summary: Lightweight Bitcoin Cash Wallet
+Home-page: http://electroncash.org
+Author: The Electron Cash Developers
+Author-email: jonf@electroncash.org
+License: MIT Licence
+Platform: UNKNOWN
+Provides-Extra: hardware
+Provides-Extra: gui
+Provides-Extra: all
+License-File: LICENCE
+License-File: AUTHORS
+
+Lightweight Bitcoin Cash Wallet
+

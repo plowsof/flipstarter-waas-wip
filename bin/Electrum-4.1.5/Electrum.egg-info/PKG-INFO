@@ -1,0 +1,17 @@
+Metadata-Version: 2.1
+Name: Electrum
+Version: 4.1.5
+Summary: Lightweight Bitcoin Wallet
+Home-page: https://electrum.org
+Author: Thomas Voegtlin
+Author-email: thomasv@electrum.org
+License: MIT Licence
+Description: Lightweight Bitcoin Wallet
+Platform: UNKNOWN
+Requires-Python: >=3.6.1
+Provides-Extra: hardware
+Provides-Extra: gui
+Provides-Extra: crypto
+Provides-Extra: tests
+Provides-Extra: full
+Provides-Extra: fast
