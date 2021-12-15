@@ -9,12 +9,17 @@ from monerorpc.authproxy import AuthServiceProxy, JSONRPCException
 from filelock import FileLock
 import cryptocompare
 import sqlite3
+import configparser
 
 cryptocompare.cryptocompare._set_api_key_parameter("-")
 
 wishlist = []
-node_url = 'http://eeebox:18084/json_rpc'
-json_fname = "wishlist-data.json"
+#node_url = 'http://eeebox:18084/json_rpc'
+config = configparser.ConfigParser()
+config.read('wishlist.ini')
+node_url = "http://localhost:" + config["monero"]["daemon_port"] + "/json_rpc"
+
+json_fname = os.path.join(config["wishlist"]['www_root'],"data","wishlist-data.json")
 
 
 def getPrice(crypto,offset):
@@ -77,9 +82,11 @@ def main(tx_id,multi=0):
         dump_json(saved_wishlist)
 
 def dump_json(wishlist):
-    with FileLock("wishlist-data.json.lock"):
+    global json_fname
+    lock = json_fname + ".lock"
+    with FileLock(lock):
         #print("Lock acquired.")
-        with open('wishlist-data.json', 'w') as f:
+        with open(json_fname, 'w+') as f:
             json.dump(wishlist, f, indent=6)  
 
 # should be check - exists in database
@@ -93,6 +100,12 @@ def checkHeight(tx_id):
             rpc_connection = AuthServiceProxy(service_url=node_url)
             print("after rpc con")
             print(tx_id)
+            params = {
+                      "account_index":0,
+                      "in":True
+                     }
+            info = rpc_connection.get_transfers(params)
+            pprint.pprint(info)
             params = {
                       "account_index":0,
                       "txid":tx_id

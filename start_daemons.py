@@ -8,7 +8,7 @@ import sys
 from monerorpc.authproxy import AuthServiceProxy, JSONRPCException
 
 wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
-
+www_root = ""
 def monero_rpc_online(rpc_url):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
     try:
@@ -47,7 +47,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
         "--wallet-dir", wallet_dir,
         "--rpc-bind-port", rpc_port,
         "--disable-rpc-login",
-        "--tx-notify", f"python3 {os.path.join(os.path.abspath(os.path.join(os.getcwd(),'xmr_in_vps_pi.py')))} %s",
+        "--tx-notify", f"/usr/bin/python3 {os.path.join(os.path.abspath(os.path.join(os.getcwd(),'notify_xmr_vps_pi.py')))} %s",
         "--daemon-address", remote_node,
         "--stagenet"
     ]
@@ -106,7 +106,9 @@ def set_up_notify(bin_path,wallet_path,address,http_server,symbol):
     return(address)
 
 def getJson():
-    with open("wishlist-data.json", "r") as f:
+    global www_root
+    wishlist_file  = os.path.join(www_root,"data","wishlist-data.json")
+    with open(wishlist_file, "r") as f:
         return json.load(f)
 
 def start_bch_daemon(electron_bin,wallet_file):
@@ -139,11 +141,14 @@ def start_btc_daemon(electrum_bin,wallet_file):
 
 
 def main(config):
+    global www_root
     rpc_bin_file = os.path.join(".", "bin", "monero-wallet-rpc")
     rpc_port = config["monero"]["daemon_port"]
     rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
     wallet_file = config["monero"]["wallet_file"]
     remote_node = config["monero"]["remote_node"]
+    www_root = config["wishlist"]["www_root"]
+
     if monero_rpc_online(rpc_url) == True:
         monero_rpc_close_wallet(rpc_url)
         moenro_rpc_open_wallet(rpc_url,wallet_file)
@@ -176,7 +181,7 @@ def main(config):
 
 
     #start the bitcoin listener
-    os.system(f'python3 listen.py {http_port}')
+    os.system(f'/usr/bin/python3 notify_bch_btc.py {http_port}')
 
 
 if __name__ == '__main__':

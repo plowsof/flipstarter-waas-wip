@@ -7,7 +7,6 @@ import pickle
 from filelock import FileLock
 from datetime import datetime
 import requests
-from github import Github
 
 import random
 import string
@@ -33,6 +32,8 @@ unconfirmed_balance = 0
 
 btc_wishlist = {}
 
+www_root = ""
+
 def getJson(config,fname):
     with open(fname,"r") as f:
         return json.load(f)
@@ -53,6 +54,7 @@ class S(BaseHTTPRequestHandler):
         global status
         global confirmed, unconfirmed_balance, btc_wishlist
         global bch_path, btc_path
+        global www_root
         content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
         post_data = self.rfile.read(content_length).decode('utf-8') # <--- Gets the data itself
         thejson = json.loads(post_data)
@@ -63,12 +65,12 @@ class S(BaseHTTPRequestHandler):
                 print(f"daemon_path= {bch_path}")
                 daemon_path = bch_path
                 print("BCH address status change")
-                json_fname = "wishlist-data-bch.json"
+                json_fname = os.path.join(www_root,"data","wishlist-data-bch.json")
                 btc_wishlist = getJson(config,json_fname)
             else:
                 daemon_path = btc_path
                 print("BTC address status change")
-                json_fname = "wishlist-data-btc.json"
+                json_fname = os.path.join(www_root,"data","wishlist-data-btc.json")
                 btc_wishlist = getJson(config,json_fname)
 
             status = thejson["status"]
@@ -118,8 +120,10 @@ def run(server_class=HTTPServer, handler_class=S, port=8080, config=[]):
     #load some json stuff
     global btc_totals, confirmed, btc_wishlist
     global bch_path, btc_path
+    global www_root
     bch_path = config["bch"]["bin"]
     btc_path = config["btc"]["bin"]
+    www_root = config["wishlist"]["www_root"]
     '''
     with open('wishlist-data-btc.json',"r") as f:
         btc_wishlist = json.load(f)
