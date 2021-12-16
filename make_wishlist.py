@@ -16,6 +16,8 @@ import string
 import _thread as thread
 import psutil
 
+#bitcoin - have to ./make_libsecp256k1.sh 
+
 #Api key of "-" appears to work currently, this may change,
 cryptocompare.cryptocompare._set_api_key_parameter("-")
 
@@ -215,7 +217,7 @@ def create_new_wishlist(config):
         w_type = wish["type"]
         title = wish["title"]
 
-        usd_hour_goal = goal
+        usd_hour_goal = wish["hours"]
         if hours:
             goal += (float(usd_hour_goal) * float(percent_buffer)) 
             goal *= hours
@@ -244,8 +246,15 @@ def create_new_wishlist(config):
                     "xmr_address": address,
                     "btc_total": 0,
                     "xmr_total": 0,
+                    "bch_total": 0,
                     "hour_goal": usd_hour_goal,
-                    "history": []
+                    "xmr_history": [],
+                    "bch_history": [],
+                    "btc_history": [],
+                    "btc_confirmed": 0,
+                    "btc_unconfirmed": 0,
+                    "bch_confirmed": 0,
+                    "bch_unconfirmed": 0
         } 
         wishes.append(app_this)
         put_qr_code(address,"xmr")
@@ -295,27 +304,6 @@ def create_new_wishlist(config):
 
     with open(os.path.join(www_root,"data","wishlist-data.json"), "w+") as f:
         json.dump(the_wishlist,f, indent=4)
-
-    #create the addresses/metadata list
-    btc_json = {}
-    btc_metadata = {
-    "date_modified": str(datetime.now())
-    }
-    btc_json["addresses"] = btc_info
-    btc_json["metadata"] = btc_metadata
-
-    with open(os.path.join(www_root,'data','wishlist-data-btc.json'), 'w+') as f:
-        json.dump(btc_json, f, indent=6)  
-
-    bch_json = {}
-    bch_metadata = {
-    "date_modified": str(datetime.now())
-    }
-    bch_json["addresses"] = bch_info
-    bch_json["metadata"] = bch_metadata
-
-    with open(os.path.join(www_root,'data','wishlist-data-bch.json'), 'w+') as f:
-        json.dump(bch_json, f, indent=6)  
 
     '''
     btc_history = []
@@ -543,10 +531,13 @@ def main(config):
         www_root = input('Where is your root website folder (e.g. /var/www/html):')
     www_data_dir = os.path.join(www_root,"data")
     www_qr_dir = os.path.join(www_root,"qrs")
+    www_js_dir = os.path.join(www_root,"js")
     if not os.path.isdir(os.path.join(www_data_dir)):
         os.mkdir(www_data_dir)
-    if not os.path.isdir(os.path.join(www_qr_dir)):
+    if not os.path.isdir(www_qr_dir):
         os.mkdir(www_qr_dir)
+    if not os.path.isdir(www_js_dir):
+        os.mkdir(www_js_dir)
     #Monero setup
     wallet_file = config["monero"]["wallet_file"]
     if not wallet_file:

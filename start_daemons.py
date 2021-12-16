@@ -108,6 +108,7 @@ def set_up_notify(bin_path,wallet_path,address,http_server,symbol):
 def getJson():
     global www_root
     wishlist_file  = os.path.join(www_root,"data","wishlist-data.json")
+    print(f"{wishlist_file}")
     with open(wishlist_file, "r") as f:
         return json.load(f)
 

@@ -13,12 +13,6 @@ import string
 
 import configparser
 
-#Node will be taken from config file, hardcoded here for testing
-node_url =  'http://eeebox:18085/json_rpc'
-
-letters = string.ascii_lowercase
-uid = ''.join(random.choice(letters) for i in range(10)) 
-
 #This file is run once to host the http server
 #values taken from a config file once
 
@@ -34,13 +28,12 @@ btc_wishlist = {}
 
 www_root = ""
 
-def getJson(config,fname):
+def getJson(fname):
     with open(fname,"r") as f:
         return json.load(f)
 
-
 class S(BaseHTTPRequestHandler):
-    global bch_path, btc_path
+    global bch_path, btc_path, www_root
     def _set_response(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
@@ -65,56 +58,66 @@ class S(BaseHTTPRequestHandler):
                 print(f"daemon_path= {bch_path}")
                 daemon_path = bch_path
                 print("BCH address status change")
-                json_fname = os.path.join(www_root,"data","wishlist-data-bch.json")
-                btc_wishlist = getJson(config,json_fname)
             else:
                 daemon_path = btc_path
                 print("BTC address status change")
-                json_fname = os.path.join(www_root,"data","wishlist-data-btc.json")
-                btc_wishlist = getJson(config,json_fname)
-
+            ticker = thejson["symbol"]
+            ticker_address = f"{ticker}_address"
+            ticker_total = f"{ticker}_total"
+            ticker_history = f"{ticker}_history"
+            ticker_con = f"{ticker}_confirmed"
+            ticker_unc = f"{ticker}_unconfirmed"
             status = thejson["status"]
             print(f"daemon_path: {daemon_path}")
             stream = os.popen(f"{daemon_path} getaddressbalance {address} --testnet")
             json_output = stream.read().replace("\n","")
             print(repr(json_output))
             output = json.loads(json_output)
-            print(btc_wishlist)
             address_con = output["confirmed"]
             address_unc = output["unconfirmed"]
             print(f"conf {address_con}, unc {address_unc}")
 
             now_balance = float(address_unc) + float(address_con)
-            for i in range(len(btc_wishlist["addresses"])):
-                print(f"is {btc_wishlist['addresses'][i]['address']} == {address}:")
-                if btc_wishlist["addresses"][i]["address"] == address:
 
-                    old_balance = float(btc_wishlist["addresses"][i]["unconfirmed"]) + float(btc_wishlist["addresses"][i]["confirmed"])
+            data_fname = os.path.join(www_root,"data","wishlist-data.json")
+            with open(data_fname, "r") as f:
+                data_wishlist = json.load(f)
+            for i in range(len(data_wishlist["wishlist"])):
+                print(f"is {data_wishlist['wishlist'][i][ticker_address]} == {address}:")
+                if data_wishlist["wishlist"][i][ticker_address] == address:
+
+                    old_balance = float(data_wishlist["wishlist"][i][ticker_unc]) + float(data_wishlist["wishlist"][i][ticker_con])
                     if old_balance < now_balance:
                         #print(f"old balance: {old_balance} new balance : {now_balance}")
                         amount = float(now_balance) - float(old_balance)
-                        btc_wishlist["addresses"][i]["unconfirmed"] = address_unc
-                        btc_wishlist["addresses"][i]["confirmed"] = address_con
-                        #print(f"This address: {address} received this many sats:{amount}")
-                        btc_wishlist["metadata"]["date_modified"] = str(datetime.now())
-                        #add to address history
-                        tx_info = {
-                        "amount":amount, 
-                        "date_time":str(datetime.now())
-                        }
-                        btc_wishlist["addresses"][i]["history"].append(tx_info)
-                        btc_wishlist["addresses"][i]["contributors"] += 1
-                        pprint.pprint(btc_wishlist)
-                        lock = FileLock(f"{json_fname}.lock")
+                        data_wishlist["wishlist"][i][ticker_unc] = address_unc
+                        data_wishlist["wishlist"][i][ticker_con] = address_con
+                        print("should be ok here?")
+                        pprint.pprint(data_wishlist)
+                        for i in range(len(data_wishlist["wishlist"])):
+                            wish = data_wishlist["wishlist"][i]
+                            print(f'is {address} == {wish[ticker_address]}')
+                            if address == wish[ticker_address]:
+                                print("yes")
+                                data_wishlist["wishlist"][i][ticker_con] = float(address_con)
+                                data_wishlist["wishlist"][i][ticker_unc] = float(address_unc)
+                                data_wishlist["wishlist"][i][ticker_total] = float(address_unc) + float(address_con)
+                                tx_info = {
+                                            "amount":amount, 
+                                            "date_time":str(datetime.now())
+                                          }
+                                data_wishlist["wishlist"][i][ticker_history].append(tx_info)
+                                data_wishlist["wishlist"][i]["contributors"] += 1
+                                modified = str(datetime.now())
+                                data_wishlist["metadata"]["modified"] = modified
+                        lock = FileLock(f"{data_fname}.lock")
                         with lock:
-                            with open(json_fname, "w+") as f:
-                                    json.dump(btc_wishlist, f, indent = 2)
-                        
-                        #end the loop early
-                        num = i
-                        i = len(btc_wishlist["addresses"]) + 1
-            #JS will add these 2 for the total. we only cared about the amount for the history.
-            #btc_wishlist["addresses"][i]["confirmed"] = address_con
+                            with open(data_fname, "w+") as f:
+                                json.dump(data_wishlist, f, indent=2) 
+                    
+                #end the loop early
+                num = i
+                i = len(data_wishlist["wishlist"]) + 1
 
 def run(server_class=HTTPServer, handler_class=S, port=8080, config=[]):
     #load some json stuff

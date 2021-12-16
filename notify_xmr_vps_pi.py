@@ -65,7 +65,7 @@ def main(tx_id,multi=0):
                     "amount":float(tx_data["amount"]),
                     "date_time": str(datetime.now())
                     }
-                    saved_wishlist["wishlist"][i]["history"].append(history_tx)
+                    saved_wishlist["wishlist"][i]["xmr_history"].append(history_tx)
                     #Percent calculated by JS - or some timed script to periodically check         
                     break
             except Exception as e:
