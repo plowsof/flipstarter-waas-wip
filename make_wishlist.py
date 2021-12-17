@@ -18,12 +18,13 @@ import psutil
 
 #bitcoin - have to ./make_libsecp256k1.sh 
 
+view_key = ""
+main_address = ""
+
 #Api key of "-" appears to work currently, this may change,
 cryptocompare.cryptocompare._set_api_key_parameter("-")
 
 #need to get these from the monero wallet - these are just placeholders for now
-viewkey = "716f1c5f49d46262095b8e52203e28148b0e36f9ca4571f6150db35d72752008"
-main_address = "45BJBhJDxHZ25ubmcCNg1UYaZ8DpoeqXLRYaaZKuAVbAB6Nt63zNs6cGwkeBgRR1x5jHj9xaKvbzxVwwEeZqRoPuTxYGNNH"
 percent_buffer = 0.05
 
 
@@ -242,7 +243,7 @@ def create_new_wishlist(config):
                     "qr_img_url_bch": f"qrs/{bch_address[0:12]}.png",
                     "title": title,
                     "btc_address": btc_address,
-                    "bch_address": bch_address,
+                    "bch_address": ("bitcoincash:" + bch_address),
                     "xmr_address": address,
                     "btc_total": 0,
                     "xmr_total": 0,
@@ -446,7 +447,7 @@ def create_monero_wallet(config):
         rpc_connection.close_wallet()
         wallet_path = os.path.join(wallet_dir,wallet_fname)
         config["monero"]["wallet_file"] = wallet_path
-
+        #TODO viewkey main_address in config file
         with open('wishlist.ini', 'w') as configfile:
             config.write(configfile)
     except Exception as e:
@@ -523,6 +524,7 @@ def create_btc_wallet(config):
         config.write(configfile)
     return config
 
+#set viewkeys for wallets here
 def main(config):
     global www_root
     www_root = config["wishlist"]["www_root"]
