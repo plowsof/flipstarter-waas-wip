@@ -84,8 +84,10 @@ class S(BaseHTTPRequestHandler):
                 data_wishlist = json.load(f)
             for i in range(len(data_wishlist["wishlist"])):
                 print(f"is {data_wishlist['wishlist'][i][ticker_address]} == {address}:")
-                if data_wishlist["wishlist"][i][ticker_address] == address:
-
+                wishlist_address = data_wishlist["wishlist"][i][ticker_address]
+                if ":" in wishlist_address:
+                    wishlist_address = wishlist_address.split(":")[1]
+                if  wishlist_address == address:
                     old_balance = float(data_wishlist["wishlist"][i][ticker_unc]) + float(data_wishlist["wishlist"][i][ticker_con])
                     if old_balance < now_balance:
                         #print(f"old balance: {old_balance} new balance : {now_balance}")
