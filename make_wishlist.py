@@ -18,7 +18,7 @@ import psutil
 
 #bitcoin - have to ./make_libsecp256k1.sh 
 
-view_key = ""
+viewkey = ""
 main_address = ""
 
 #Api key of "-" appears to work currently, this may change,
@@ -47,24 +47,33 @@ wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
 
 www_root = ""
 
-def address_create_notify(create=1,notify=1,addr=""):
-    global http_server
-    global electrum_path
+def address_create_notify(bin_dir,port,addr="",create=1,notify=1):
     if create == 1:
-        stream = os.popen(f".{electrum_path} createnewaddress -w {wallet_path} --testnet")
+        stream = os.popen(f".{bin_dir} createnewaddress -w {wallet_path} --testnet")
         output = stream.read()
         #that was fun. address had a newline on it.
         address = output.replace("\n","")
-        print(address)
     if notify == 1:
         if addr != "":
             address = addr
-        thestring = f".{electrum_path} notify {address} {http_server} --testnet"
+        thestring = f".{bin_dir} notify {address} {port} --testnet"
         print(thestring)
         stream = os.popen(thestring)
         output = stream.read()
         print(output)
     return(address)
+
+def get_xmr_subaddress(rpc_url,wallet_file,title):
+    rpc_connection = AuthServiceProxy(service_url=rpc_url)
+    xmr_wallet = os.path.basename(wallet_file)
+    rpc_connection.open_wallet({"filename": wallet_file })
+    #label could be added
+    params={
+            "account_index":0,
+            "label": title
+            }
+    info = rpc_connection.create_address(params)
+    return info["address"]
 
 
 def getPrice(crypto,offset):
@@ -119,7 +128,7 @@ def put_qr_code(address, xmr_btc):
         border=4,
     )
     else:
-        uri = "bitcoincash"
+        uri = "bchtest"
         
         logo = "bitcoin-cash-bch-logo.png"
         thumnail = (60, 60)
@@ -137,7 +146,10 @@ def put_qr_code(address, xmr_btc):
         raise e
 
     title = address[0:12]
-
+    if os.path.isfile(os.path.join(www_root,"qrs",f"{title}.png")):
+        #dont bother recreating the qr image
+        #could cause issues if you want to do that though
+        return
 
 
     data = f"{uri}:{address}"
@@ -196,14 +208,16 @@ def load_old_txs():
                    continue
                 
 
-def create_new_wishlist(config):
-    global wishes, btc_info
-    global viewkey, main_address
-    global wallet_path, electrum_path
-    global wishes
-    global percent_buffer
-    global btc_info
+def create_new_wishlist():
+    print("we're at create_new_wishli")
     #load wishlist from json file
+    config = configparser.ConfigParser()
+    config.read('wishlist.ini')
+
+    viewkey = config["monero"]["viewkey"]
+    main_address = config["monero"]["mainaddress"]
+    percent_buffer = config["wishlist"]["percent_buffer"]
+
     with open("your_wishlist.json", "r") as f:
         wishlist = json.load(f)
 
@@ -223,7 +237,9 @@ def create_new_wishlist(config):
             goal += (float(usd_hour_goal) * float(percent_buffer)) 
             goal *= hours
         else:
+            orig_goal = goal
             goal *= float(percent_buffer)
+            goal += orig_goal
 
         app_this = { 
                     "goal_usd":goal, #these will be in usd
@@ -243,7 +259,7 @@ def create_new_wishlist(config):
                     "qr_img_url_bch": f"qrs/{bch_address[0:12]}.png",
                     "title": title,
                     "btc_address": btc_address,
-                    "bch_address": ("bitcoincash:" + bch_address),
+                    "bch_address": ("bchtest:" + bch_address),
                     "xmr_address": address,
                     "btc_total": 0,
                     "xmr_total": 0,
@@ -302,20 +318,10 @@ def create_new_wishlist(config):
     the_wishlist["wishlist"] = wishes
     the_wishlist["metadata"] = total
 
+    #need a file lock on this
 
     with open(os.path.join(www_root,"data","wishlist-data.json"), "w+") as f:
-        json.dump(the_wishlist,f, indent=4)
-
-    '''
-    btc_history = []
-    with open('btc-history.json', 'w+') as f:
-        json.dump(btc_history, f, indent=2)
-    
-    btc_conf_balance = {"balance":0}
-    with open("btc-confirmed-balance.json", "w+") as f:
-        json.dump(btc_conf_balance, f, indent=2)
-    '''
-    return 
+        json.dump(the_wishlist,f, indent=4) 
 
 
 def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file=None,remote_node=None):
@@ -426,6 +432,9 @@ def create_monero_wallet(config):
         mnemonic = rpc_connection.query_key({"key_type": "mnemonic"})["key"]
         spend_key = rpc_connection.query_key({"key_type": "spend_key"})["key"]
         main_address = rpc_connection.get_address()["address"]
+        config["monero"]["viewkey"] = view_key
+        config["monero"]["mainaddress"] = main_address
+
         print("*************[Monero Wallet]*************")
         print(f"Your Monero wallet seed is:") 
         print(mnemonic)
@@ -620,33 +629,17 @@ def main(config):
     #get new saved variables
     config = configparser.ConfigParser()
     config.read('wishlist.ini')
-
+    port = ""
     for wish in wishlist["wishlist"]:
         if not wish["xmr_address"]:
-            rpc_connection = AuthServiceProxy(service_url=rpc_url)
             xmr_wallet = os.path.basename(config['monero']['wallet_file'])
-            rpc_connection.open_wallet({"filename": xmr_wallet })
-            #label could be added
-            params={
-                    "account_index":0,
-                    "label": wish["title"]
-                    }
-            info = rpc_connection.create_address(params)
-            wish["xmr_address"] = info["address"]
-    
+            wish["xmr_address"] = get_xmr_subaddress(rpc_url,xmr_wallet,wish["title"]):
         if not wish["btc_address"]:
-            btc_wallet_path = config['btc']['wallet_file']
-            stream = os.popen(f"{electrum_bin} createnewaddress -w {btc_wallet_path} --testnet")
-            output = stream.read()
-            btc_address = output.replace("\n","")
-            wish["btc_address"] = btc_address
-
+            bin_dir = config['btc']['wallet_file']
+            wish["btc_address"] = address_create_notify(bin_dir,port,addr="",create=1,notify=0)
         if not wish["bch_address"]:
-            bch_wallet_path = config["bch"]["wallet_file"]
-            stream = os.popen(f"{electron_bin} createnewaddress -w {bch_wallet_path} --testnet")
-            output = stream.read()
-            btc_address = output.replace("\n","")
-            wish["bch_address"] = btc_address
+            bin_dir = config["bch"]["wallet_file"]
+            wish["bch_address"] = address_create_notify(bin_dir,port,addr="",create=1,notify=0)
     pprint.pprint(wishlist)
 
     #terminate all daemons
@@ -672,7 +665,7 @@ def main(config):
         monero_daemon.communicate()
     with open('your_wishlist.json', 'w') as f:
         json.dump(wishlist, f, indent=6) 
-    create_new_wishlist(config)
+    create_new_wishlist()
     config["bch"]["bin"] = electron_bin
     config["btc"]["bin"] = electrum_bin
     config["wishlist"]["www_root"] == www_root

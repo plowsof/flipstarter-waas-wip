@@ -28,7 +28,7 @@ def main(config):
                     <li>
                         <span class="wish_title">{wish["title"]}</span></br>
                         <p class="description">{wish["description"]}</p>
-                        <i class="fundgoal">Raised {total} of {wish["goal_usd"]} <progress id="file" max="100" value="{wish["percent"]}">{wish["percent"]}%</progress> Contributors: {wish["contributors"]}</i>
+                        <i class="fundgoal">Raised ${total} of ${wish["goal_usd"]} <progress id="file" max="100" value="{wish["percent"]}">{wish["percent"]}%</progress> Contributors: {wish["contributors"]}</i>
                         <label for="file"></label><br/>
                         <img class="ticker" src="../logos/monero-xmr-logo.png" alt="XMR">
                         <p class="xmr_address" id="{wish["id"]}">{wish["xmr_address"]}</br></p>

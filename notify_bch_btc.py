@@ -52,6 +52,8 @@ class S(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length).decode('utf-8') # <--- Gets the data itself
         thejson = json.loads(post_data)
         address = thejson["address"].replace("\n","")
+        if ":" in address:
+            address = address.split(":")[1]
         if thejson["status"]: #!= status:
             #is it a btc or bch address?
             if thejson["symbol"] == "bch":
@@ -83,43 +85,36 @@ class S(BaseHTTPRequestHandler):
             with open(data_fname, "r") as f:
                 data_wishlist = json.load(f)
             for i in range(len(data_wishlist["wishlist"])):
-                print(f"is {data_wishlist['wishlist'][i][ticker_address]} == {address}:")
                 wishlist_address = data_wishlist["wishlist"][i][ticker_address]
                 if ":" in wishlist_address:
                     wishlist_address = wishlist_address.split(":")[1]
+                print(f"is {wishlist_address} == {address}:")
                 if  wishlist_address == address:
+                    print("yes")
                     old_balance = float(data_wishlist["wishlist"][i][ticker_unc]) + float(data_wishlist["wishlist"][i][ticker_con])
                     if old_balance < now_balance:
                         #print(f"old balance: {old_balance} new balance : {now_balance}")
                         amount = float(now_balance) - float(old_balance)
-                        data_wishlist["wishlist"][i][ticker_unc] = address_unc
-                        data_wishlist["wishlist"][i][ticker_con] = address_con
-                        print("should be ok here?")
-                        pprint.pprint(data_wishlist)
-                        for i in range(len(data_wishlist["wishlist"])):
-                            wish = data_wishlist["wishlist"][i]
-                            print(f'is {address} == {wish[ticker_address]}')
-                            if address == wish[ticker_address]:
-                                print("yes")
-                                data_wishlist["wishlist"][i][ticker_con] = float(address_con)
-                                data_wishlist["wishlist"][i][ticker_unc] = float(address_unc)
-                                data_wishlist["wishlist"][i][ticker_total] = float(address_unc) + float(address_con)
-                                tx_info = {
-                                            "amount":amount, 
-                                            "date_time":str(datetime.now())
-                                          }
-                                data_wishlist["wishlist"][i][ticker_history].append(tx_info)
-                                data_wishlist["wishlist"][i]["contributors"] += 1
-                                modified = str(datetime.now())
-                                data_wishlist["metadata"]["modified"] = modified
+                        data_wishlist["wishlist"][i][ticker_con] = float(address_con)
+                        data_wishlist["wishlist"][i][ticker_unc] = float(address_unc)
+                        data_wishlist["wishlist"][i][ticker_total] = float(now_balance)
+                        tx_info = {
+                                    "amount":amount, 
+                                    "date_time":str(datetime.now())
+                                  }
+                        data_wishlist["wishlist"][i][ticker_history].append(tx_info)
+                        data_wishlist["wishlist"][i]["contributors"] += 1
+                        modified = str(datetime.now())
+                        data_wishlist["metadata"]["modified"] = modified
                         lock = FileLock(f"{data_fname}.lock")
                         with lock:
                             with open(data_fname, "w+") as f:
                                 json.dump(data_wishlist, f, indent=2) 
                     
-                #end the loop early
-                num = i
-                i = len(data_wishlist["wishlist"]) + 1
+                    #end the loop early
+                    break
+                else:
+                    print("not equal")
 
 def run(server_class=HTTPServer, handler_class=S, port=8080, config=[]):
     #load some json stuff
