@@ -47,16 +47,22 @@ wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
 
 www_root = ""
 
-def address_create_notify(bin_dir,port,addr="",create=1,notify=1):
+def address_create_notify(bin_dir,wallet_path,port,addr="",create=1,notify=1):
+    print("address_create_notify")
+    print(f'bin dir = {bin_dir}')
+    print(f'walletpath = {wallet_path}')
+    print(f'port:{port}')
     if create == 1:
-        stream = os.popen(f".{bin_dir} createnewaddress -w {wallet_path} --testnet")
+        thestring = f"./{bin_dir} createnewaddress -w {wallet_path} --testnet"
+        print(f'cmd : {thestring}')
+        stream = os.popen(thestring)
         output = stream.read()
         #that was fun. address had a newline on it.
         address = output.replace("\n","")
     if notify == 1:
         if addr != "":
             address = addr
-        thestring = f".{bin_dir} notify {address} {port} --testnet"
+        thestring = f"./{bin_dir} notify {address} {port} --testnet"
         print(thestring)
         stream = os.popen(thestring)
         output = stream.read()
@@ -238,7 +244,7 @@ def create_new_wishlist():
             goal *= hours
         else:
             orig_goal = goal
-            goal *= float(percent_buffer)
+            goal = (int(goal) * float(percent_buffer))
             goal += orig_goal
 
         app_this = { 
@@ -317,6 +323,7 @@ def create_new_wishlist():
     the_wishlist = {}
     the_wishlist["wishlist"] = wishes
     the_wishlist["metadata"] = total
+    the_wishlist["archive"] = []
 
     #need a file lock on this
 
@@ -629,18 +636,16 @@ def main(config):
     #get new saved variables
     config = configparser.ConfigParser()
     config.read('wishlist.ini')
-    port = ""
+    port = config["callback"]["port"]
     for wish in wishlist["wishlist"]:
         if not wish["xmr_address"]:
             xmr_wallet = os.path.basename(config['monero']['wallet_file'])
-            wish["xmr_address"] = get_xmr_subaddress(rpc_url,xmr_wallet,wish["title"]):
+            wish["xmr_address"] = get_xmr_subaddress(rpc_url,xmr_wallet,wish["title"])
         if not wish["btc_address"]:
-            bin_dir = config['btc']['wallet_file']
-            wish["btc_address"] = address_create_notify(bin_dir,port,addr="",create=1,notify=0)
+            wish["btc_address"] = address_create_notify(electrum_bin,btc_wallet_path,port,addr="",create=1,notify=0)
         if not wish["bch_address"]:
-            bin_dir = config["bch"]["wallet_file"]
-            wish["bch_address"] = address_create_notify(bin_dir,port,addr="",create=1,notify=0)
-    pprint.pprint(wishlist)
+            wish["bch_address"] = address_create_notify(electron_bin,bch_wallet_path,port,addr="",create=1,notify=0)
+
 
     #terminate all daemons
 
@@ -712,14 +717,16 @@ def wish_add(wish):
         json.dump(wishlist, f,indent=6)
 
 if __name__ == "__main__":
+    #os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    print(f"cwd: {os.getcwd()}")
     for proc in psutil.process_iter():
         # check whether the process name matches
         if "monero-wallet-" in proc.name():
             print(proc.name())
             proc.kill()
-        if 'electrum' in proc.name():
+        if 'electrum' in proc.name().lower():
             proc.kill()
-        if 'electron' in proc.name():
+        if 'electron' in proc.name().lower():
             proc.kill()
     config = configparser.ConfigParser()
     config.read('wishlist.ini')

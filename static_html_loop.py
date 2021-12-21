@@ -9,7 +9,8 @@ import json
 def main(config):
     www_root = config["wishlist"]["www_root"]
     funding_page = config["wishlist"]["page_name"]
-    funding_template = f'template_{funding_page}'
+    #funding_template = f'template_{funding_page}'
+    funding_template = "index.html"
     funding_file = os.path.join(www_root,funding_page)
     json_file = os.path.join(www_root,"data","wishlist-data.json")
     if not os.path.isfile(funding_template):
@@ -30,13 +31,13 @@ def main(config):
                         <p class="description">{wish["description"]}</p>
                         <i class="fundgoal">Raised ${total} of ${wish["goal_usd"]} <progress id="file" max="100" value="{wish["percent"]}">{wish["percent"]}%</progress> Contributors: {wish["contributors"]}</i>
                         <label for="file"></label><br/>
-                        <img class="ticker" src="../logos/monero-xmr-logo.png" alt="XMR">
+                        <img class="ticker" src="./logos/monero-xmr-logo.png" alt="XMR">
                         <p class="xmr_address" id="{wish["id"]}">{wish["xmr_address"]}</br></p>
                         <p>[<a href="{wish["qr_img_url_xmr"]}" data-lightbox="{wish["id"]}" data-title="Thank you 😘">QR</a>] <span class="tooltip">[History]<span class="tooltiptext">{xmr_history}</span></span></p>
-                        <img class="ticker" src="../logos/bitcoin-cash-bch-logo.png" alt="BCH">
+                        <img class="ticker" src="./logos/bitcoin-cash-bch-logo.png" alt="BCH">
                         <p class="bch_address" id="{wish["id"]}">{wish["bch_address"]}</br></p>
                         <p>[<a href="{wish["qr_img_url_bch"]}" data-lightbox="{wish["id"]}" data-title="Thank you 😘">QR</a>] <span class="tooltip">[History]<span class="tooltiptext">{bch_history}</span></span></p>
-                        <img class="ticker" src="../logos/BTC_Logo.png" alt="BTC">
+                        <img class="ticker" src="./logos/BTC_Logo.png" alt="BTC">
                         <p class="btc_address" id="{wish["id"]}">{wish["btc_address"]}</br></p> 
                         <p>[<a href="{wish["qr_img_url_btc"]}" data-lightbox="{wish["id"]}" data-title="Thank you 😘">QR</a>] <span class="tooltip">[History]<span class="tooltiptext">{btc_history}</span></span>
                     </li>

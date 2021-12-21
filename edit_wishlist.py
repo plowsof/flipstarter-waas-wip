@@ -3,7 +3,10 @@ import json
 from make_wishlist import create_new_wishlist, address_create_notify, get_xmr_subaddress
 import pprint
 import os 
+config = ""
+
 def main():
+    global config
     print('''Wishlist editor.
         this script assumes that your wishlist is running already.
         Lets begin!''')
@@ -14,22 +17,89 @@ def main():
     #for i in range(len(wishlist["wishlist"])):
     #    print(f"{i}) {wishlist['wishlist'][i]['title']}")
     print("1) Add a wish")
-    print("2) Remove/edit a wish")
-    while True:
-        try:
-            answer = input("[Enter 1 or 2] >> ")
-            print(answer)
-            if answer == "1":
-                #add
-                wish_prompt(config)
-                print("prompt")
+    print("2) Remove")
+    print("3) Edit")
+    answer = ""
+    while answer not in [1,2,3]:
+        answer = int(input("[Enter 1 or 2] >> "))
+    if answer == 1:
+        wish_prompt(config)
+    if answer == 2:
+        wish_edit(wishlist,"Delete")
+    if answer == 3:
+        wish_edit(wishlist,"Edit")
+
+def wish_edit(wishlist,edit_delete):
+    returned_list = {"hello":"world"}
+    print(f"Which wish would you like to {edit_delete}")
+    for i in range(len(wishlist["wishlist"])):
+        offset = i 
+        offset += 1
+        print(f"{offset}) {wishlist['wishlist'][i]['title']}")
+    index = ""
+    end = len(wishlist["wishlist"])
+    while index not in range(1,end):
+        index = int(input(f"Pick a wish to Edit / Remove (1-{offset}) >> "))
+
+    index -= 1
+    if edit_delete == "Edit":
+        while True:
+            print("EDIT")
+            #title
+            print(f"Edit Wish: {wishlist['wishlist'][index]['title']}")
+            print("1) Title")
+            print("2) Goal")
+            print("3) Description")
+            answer = ""
+            goal = ""
+            description = ""
+            title = ""
+            while answer not in [1,2,3]:
+                answer = int(input(">> "))
+            if answer == 1:
+                wishlist["wishlist"][index]["title"] = input("New title >> ")
+            if answer == 2:
+                while not goal.isnumeric():
+                    goal = input("New $Goal >> ")
+                wishlist["wishlist"][index]["usd_goal"] = goal
+            if answer == 3:
+                wishlist["wishlist"][index]["description"] = input("New Description >> ")
+            again = 0
+            finish = ""
+            while finish.lower() not in ["y","yes","no","n"]:
+                finish = input("Edit this wish again? y/n >> ")
+            if "n" in finish.lower():
+                print("saving edits")
+                pprint.pprint(wishlist)
                 break
-            else:
-                print("Not == 1")
-                if answer == "2":
-                    break
-        except Exception as e:
-            pass
+    if edit_delete == "Delete":
+        while True:
+            answer = input(f"Delete: {wishlist['wishlist'][i]['title']} \n Are you sure?")
+            if "y" in answer.lower():
+                wishlist = delete_wish(wishlist,index)
+                break
+    pprint.pprint(wishlist)
+    with open("your_wishlist.json","w") as f:
+        json.dump(wishlist,f, indent=6)
+
+def delete_wish(wishlist,index):
+    global config
+    deleted = wishlist["wishlist"][index]
+    wishlist["wishlist"].pop(index)
+    with open('your_wishlist.json','w+') as f:
+        json.dump(wishlist, f, indent=6)
+    www_root = config["wishlist"]["www_root"]
+    data_json = os.path.join(www_root,"data","wishlist-data.json")
+    with open(data_json,"r") as f:
+        now_wishlist = json.load(f)
+    for i in range(len(now_wishlist["wishlist"])):
+        if now_wishlist["wishlist"][i]["xmr_address"] == wishlist["wishlist"][index]["xmr_address"]:
+            archive = now_wishlist["wishlist"][i]
+            now_wishlist["wishlist"].pop(i)
+            i = len(data_json["wishlist"])
+    now_wishlist["archive"].append(archive)
+    return now_wishlist
+    #lets find the wish in our data.json file in www_root 
 
 def wish_add(wish,config):
     try:
@@ -41,7 +111,7 @@ def wish_add(wish,config):
             wishlist = {}
             wishlist["wishlist"] = []
         wish = {
-        "usd_goal":wish["goal"],
+        "usd_goal":wish["usd_goal"],
         "hours": "",
         "title": wish["title"],
         "description":wish["desc"],
@@ -51,15 +121,15 @@ def wish_add(wish,config):
         "type": "gift"
         }
         bin_dir = config["bch"]["bin"]
-        port = config["callback"]
+        port = config["callback"]["port"]
         wish["bch_address"] = address_create_notify(bin_dir,port,addr="",create=1,notify=1)
         bin_dir = config["btc"]["bin"]
-        wish["btc_address"] = address_create_notify(bin_dir,port,="",create=1,notify=1)
+        wish["btc_address"] = address_create_notify(bin_dir,port,addr="",create=1,notify=1)
         rpc_port = config["monero"]["daemon_port"]
         if rpc_port == "":
             rpc_port = 18082
         rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
-        wish["xmr_address"] = get_xmr_subaddress(rpc_url,config["monero"]["wallet_path"],wish["title"]):
+        wish["xmr_address"] = get_xmr_subaddress(rpc_url,config["monero"]["wallet_path"],wish["title"])
         wish = wish.copy()
         wishlist["wishlist"].append(wish)
         with open('your_wishlist.json','w+') as f:
@@ -102,8 +172,6 @@ def wish_prompt(config):
     if 'y' in add.lower():
         wish={}
         wish_prompt()
-    else:
-        print("Wishlist created, lets add donation addresses to them..")
     
 
 
