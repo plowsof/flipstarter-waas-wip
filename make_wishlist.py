@@ -72,6 +72,7 @@ def address_create_notify(bin_dir,wallet_path,port,addr="",create=1,notify=1):
 def get_xmr_subaddress(rpc_url,wallet_file,title):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
     xmr_wallet = os.path.basename(wallet_file)
+    print(f"xmr wallet file: {xmr_wallet}")
     rpc_connection.open_wallet({"filename": wallet_file })
     #label could be added
     params={
@@ -223,13 +224,15 @@ def create_new_wishlist():
     viewkey = config["monero"]["viewkey"]
     main_address = config["monero"]["mainaddress"]
     percent_buffer = config["wishlist"]["percent_buffer"]
+    www_root = config["wishlist"]["www_root"]
 
     with open("your_wishlist.json", "r") as f:
         wishlist = json.load(f)
 
     for wish in wishlist["wishlist"]:
         pprint.pprint(wish)
-        goal = wish["usd_goal"]
+        goal = wish["goal_usd"]
+
         desc = wish["description"]
         address = wish["xmr_address"]
         btc_address = wish["btc_address"]
@@ -244,8 +247,9 @@ def create_new_wishlist():
             goal *= hours
         else:
             orig_goal = goal
-            goal = (int(goal) * float(percent_buffer))
-            goal += orig_goal
+            percent = int(percent_buffer) / 100
+            percent = float(percent) * int(orig_goal)
+            goal = int(goal) + int(percent)
 
         app_this = { 
                     "goal_usd":goal, #these will be in usd
@@ -702,7 +706,7 @@ def wish_add(wish):
         wishlist["wishlist"] = []
 
     wish = {
-    "usd_goal":wish["goal"],
+    "goal_usd":wish["goal"],
     "hours": "",
     "title": wish["title"],
     "description":wish["desc"],

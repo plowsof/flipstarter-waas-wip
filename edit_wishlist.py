@@ -21,7 +21,7 @@ def main():
     print("3) Edit")
     answer = ""
     while answer not in [1,2,3]:
-        answer = int(input("[Enter 1 or 2] >> "))
+        answer = int(input("Enter 1 2 or 3 >> "))
     if answer == 1:
         wish_prompt(config)
     if answer == 2:
@@ -38,6 +38,7 @@ def wish_edit(wishlist,edit_delete):
         print(f"{offset}) {wishlist['wishlist'][i]['title']}")
     index = ""
     end = len(wishlist["wishlist"])
+    print(f"end: {end}")
     while index not in range(1,end):
         index = int(input(f"Pick a wish to Edit / Remove (1-{offset}) >> "))
 
@@ -61,7 +62,7 @@ def wish_edit(wishlist,edit_delete):
             if answer == 2:
                 while not goal.isnumeric():
                     goal = input("New $Goal >> ")
-                wishlist["wishlist"][index]["usd_goal"] = goal
+                wishlist["wishlist"][index]["goal_usd"] = goal
             if answer == 3:
                 wishlist["wishlist"][index]["description"] = input("New Description >> ")
             again = 0
@@ -96,7 +97,7 @@ def delete_wish(wishlist,index):
         if now_wishlist["wishlist"][i]["xmr_address"] == wishlist["wishlist"][index]["xmr_address"]:
             archive = now_wishlist["wishlist"][i]
             now_wishlist["wishlist"].pop(i)
-            i = len(data_json["wishlist"])
+            break
     now_wishlist["archive"].append(archive)
     return now_wishlist
     #lets find the wish in our data.json file in www_root 
@@ -110,8 +111,8 @@ def wish_add(wish,config):
         else:
             wishlist = {}
             wishlist["wishlist"] = []
-        wish = {
-        "usd_goal":wish["usd_goal"],
+        new_wish = {
+        "goal_usd": wish["goal"],
         "hours": "",
         "title": wish["title"],
         "description":wish["desc"],
@@ -122,16 +123,20 @@ def wish_add(wish,config):
         }
         bin_dir = config["bch"]["bin"]
         port = config["callback"]["port"]
-        wish["bch_address"] = address_create_notify(bin_dir,port,addr="",create=1,notify=1)
+        wallet_path = config["bch"]["wallet_file"]
+        print(f'the port is {port}')
+        new_wish["bch_address"] = address_create_notify(bin_dir,wallet_path,port,addr="",create=1,notify=1)
         bin_dir = config["btc"]["bin"]
-        wish["btc_address"] = address_create_notify(bin_dir,port,addr="",create=1,notify=1)
+        wallet_path = config["btc"]["wallet_file"]
+        new_wish["btc_address"] = address_create_notify(bin_dir,wallet_path,port,addr="",create=1,notify=1)
         rpc_port = config["monero"]["daemon_port"]
         if rpc_port == "":
             rpc_port = 18082
         rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
-        wish["xmr_address"] = get_xmr_subaddress(rpc_url,config["monero"]["wallet_path"],wish["title"])
-        wish = wish.copy()
-        wishlist["wishlist"].append(wish)
+        wallet_path = os.path.basename(config['monero']['wallet_file'])
+        new_wish["xmr_address"] = get_xmr_subaddress(rpc_url,wallet_path,wish["title"])
+        new_wish = new_wish.copy()
+        wishlist["wishlist"].append(new_wish)
         with open('your_wishlist.json','w+') as f:
             json.dump(wishlist, f,indent=6)
         print("CREATE WISHLIST")
