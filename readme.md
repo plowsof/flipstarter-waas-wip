@@ -1,6 +1,6 @@
 Work in progress. 
 
-Currently have a VPS up and running @ http://109.228.52.142/simple.html 
+Currently have a VPS up and running @ http://109.228.52.142/funding
 
 I have been focusing on making it load quicker / supporting NonJS users.
 
