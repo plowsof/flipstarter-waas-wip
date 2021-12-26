@@ -15,6 +15,7 @@ import random
 import string
 import _thread as thread
 import psutil
+from start_daemons import start_btc_daemon
 
 #bitcoin - have to ./make_libsecp256k1.sh 
 
@@ -46,6 +47,16 @@ wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
 
 
 www_root = ""
+
+#https://stackoverflow.com/questions/17455300/python-securely-remove-file
+def secure_delete(path, passes=1):
+    length = os.path.getsize(path)
+    with open(path, "br+", buffering=-1) as f:
+        for i in range(passes):
+            f.seek(0)
+            f.write(os.urandom(length))
+        f.close()
+    os.remove(path)
 
 def address_create_notify(bin_dir,wallet_path,port,addr="",create=1,notify=1):
     print("address_create_notify")
@@ -424,6 +435,7 @@ def monero_rpc_close_wallet(rpc_url):
 def create_monero_wallet(config):
     global wallet_dir, monero_wallet_rpc, rpc_bin_file
     rpc_port = config["monero"]["daemon_port"]
+    dummy_wallet = os.path.join(wallet_dir,"dummy_wallet")
     if rpc_port == "":
         rpc_port = 18082
     rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
@@ -485,9 +497,12 @@ def create_monero_wallet(config):
         rpc_connection.close_wallet()
         print("deleting hot wallet...")
         wallet_path = os.path.join(wallet_dir,wallet_fname)
-        os.remove(wallet_path)
-        os.remove(wallet_path + ".keys")
-        os.remove(wallet_path + ".address.txt")
+        
+        keys = wallet_path + ".keys"
+        address_file = wallet_path + ".address.txt"
+        secure_delete(keys, passes=3)
+        secure_delete(wallet_path, passes=3)
+        os.remove(address_file)
 
         print("quiting original  rpc process")
         monero_daemon.terminate()
@@ -530,10 +545,9 @@ def create_monero_wallet(config):
         while not os.path.isfile(wallet_path):
             print(f"Waitinf for wallet to be created...{wallet_path}")
             time.sleep(1)
-
         #remove the broken wallet file(??)
         print(f"deleting {wallet_path}")
-        
+        #rpc_connection.close_wallet()
         monero_daemon.terminate()
         monero_daemon.communicate()
         os.remove(wallet_path)
@@ -590,9 +604,18 @@ def create_bch_wallet(config):
         print(f"format:{bch_data['keystore']['seed_type']} derivation: {bch_data['keystore']['derivation']}")
         print("Please keep your seed information in a safe place; if you lose it, you will not be able to restore your wallet")
         print("*************[Bitcoin-Cash wallet]*************")
+        input("Write it down or you can never spend money you receive _warning_ >>")
         config["bch"]["wallet_file"] = wallet_path
         with open('wishlist.ini', 'w') as configfile:
             config.write(configfile)
+        #stop bch daemon
+        stop_bit_daemon(electron_bin)
+        secure_delete(wallet_path,passes=3)
+        run_args = [
+        electron_bin, "restore", "-w", wallet_path, "--testnet", bch_data['keystore']['xpub']
+        ]
+        bch_bin = subprocess.Popen(run_args,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        bch_bin.communicate()
         return config
         pass
     except Exception as e:
@@ -612,7 +635,7 @@ def create_btc_wallet(config):
     wallet_path = os.path.join(wallet_dir,wallet_fname)
     #print(wallet_path)
     run_args = [
-        electrum_bin, "create", "-w", wallet_path, "--offline", "--testnet"
+        electron_bin, "create", "-w", wallet_path, "--offline", "--testnet"
         ]
     bch_bin = subprocess.Popen(run_args,stdout=subprocess.PIPE)
     #wait until finished
@@ -629,7 +652,17 @@ def create_btc_wallet(config):
     config["btc"]["wallet_file"] = wallet_path
     with open('wishlist.ini', 'w') as configfile:
         config.write(configfile)
+    #stop_bit_daemon(electrum_bin)
+
+    secure_delete(wallet_path,passes=3)
+    run_args = [
+    electron_bin, "restore", "-w", wallet_path, "--offline", "--testnet", bch_data['keystore']['xpub']
+    ]
+    pprint.pprint(run_args)
+    bch_bin = subprocess.Popen(run_args,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    bch_bin.communicate()
     return config
+
 
 #set viewkeys for wallets here
 def main(config):
@@ -706,14 +739,8 @@ def main(config):
     electrum_bin = config["btc"]["bin"]
 
     btc_wallet_path = config["btc"]["wallet_file"]
-    run_args = [
-    electrum_bin, "daemon", "-d", "--testnet"
-    ]
-    btc_daemon = subprocess.Popen(run_args, stdout=subprocess.PIPE)
-    btc_daemon.communicate()
-    stream = os.popen(f"{electrum_bin} load_wallet -w {btc_wallet_path} --testnet")
-    stream.read()
-
+    print(f"time to break: {btc_wallet_path} {electrum_bin}")
+    start_btc_daemon(electrum_bin,btc_wallet_path)
     rpc_port = config["monero"]["daemon_port"]
     rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
 
@@ -743,18 +770,9 @@ def main(config):
     #if they where launched stop them
     #"blindly try to stop any running bch/btc daemon"
 
-    print(f"electron:{electron_bin}")
-    print(f"electrum:{electrum_bin}")
-    run_args = [
-    electron_bin, "daemon", "stop", "--testnet"
-    ]
-    bch_daemon = subprocess.Popen(run_args)
-    bch_daemon.communicate()
-    run_args = [
-    electrum_bin, "stop", "--testnet"
-    ]
-    btc_daemon = subprocess.Popen(run_args)
-    btc_daemon.communicate()
+    stop_bit_daemon(electrum_bin)
+    stop_bit_daemon(electron_bin)
+
 
     monero_rpc_close_wallet(rpc_url)
     monero_daemon.terminate()
@@ -767,7 +785,18 @@ def main(config):
     config["wishlist"]["www_root"] == www_root
     with open('wishlist.ini', 'w') as configfile:
         config.write(configfile)
-    #bch daemon 
+
+    #clear memory cache (linux)
+    os.system('sync')
+    open('/proc/sys/vm/drop_caches','w').write("1\n")
+
+def stop_bit_daemon(daemon_dir):
+    if "electron" in daemon_dir:
+        run_args = [daemon_dir, "daemon", "stop", "--testnet"]
+    else:
+        run_args = [daemon_dir, "stop", "--testnet"]
+    stop_daemon = subprocess.Popen(run_args)
+    stop_daemon.communicate()
 
 def wish_prompt():
     wish={}
@@ -823,3 +852,9 @@ if __name__ == "__main__":
     config.read('wishlist.ini')
     main(config)
 
+'''
+
+n('The addresses in this wallet are not bitcoin addresses.
+e.g. tb1qn..q6 (length: 42)')
+
+'''
