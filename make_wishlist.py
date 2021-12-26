@@ -73,7 +73,8 @@ def get_xmr_subaddress(rpc_url,wallet_file,title):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
     xmr_wallet = os.path.basename(wallet_file)
     print(f"xmr wallet file: {xmr_wallet}")
-    rpc_connection.open_wallet({"filename": wallet_file })
+    #i dont think we need to open one
+    #rpc_connection.open_wallet({"filename": wallet_file, "password": "" })
     #label could be added
     params={
             "account_index":0,
@@ -335,15 +336,32 @@ def create_new_wishlist():
         json.dump(the_wishlist,f, indent=4) 
 
 
-def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file=None,remote_node=None):
+def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None):
     global wallet_dir
-    rpc_args = [ 
-        f".{rpc_bin_file}", 
-        "--wallet-dir", wallet_dir,
-        "--rpc-bind-port", rpc_port,
-        "--disable-rpc-login", "--stagenet"
-    ]
+    if wallet_file == None:
+        rpc_args = [ 
+            f".{rpc_bin_file}", 
+            "--wallet-dir", wallet_dir,
+            "--rpc-bind-port", rpc_port,
+            "--disable-rpc-login", "--stagenet",
+            "--daemon-address", remote_node
+        ]
+    else:
+        print("wallet file was none!")
+        rpc_args = [ 
+            f".{rpc_bin_file}", 
+            "--wallet-file", wallet_file,
+            "--rpc-bind-port", rpc_port,
+            "--disable-rpc-login", "--stagenet",
+            "--daemon-address", remote_node,
+            "--password", ""
+        ]
+
+    print("at monero_daemona")
+    pprint.pprint(rpc_args)
     monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
+
+    print("problem")
     kill_daemon = 0
     print("Starting Monero rpc...")
     for line in iter(monero_daemon.stdout.readline,''):
@@ -353,14 +371,19 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file=None,remote_node=
             break
         if b"Starting wallet RPC server" in line.rstrip():
             print("Success!")
+            rpc_connection = AuthServiceProxy(service_url=rpc_url)
+            if wallet_file != None:
+                rpc_remote = remote_node + "/json_rpc"
+                remote_rpc_connection = AuthServiceProxy(service_url=rpc_remote)
+                data = remote_rpc_connection.get_info()
+                info = rpc_connection.refresh({"start_height": (data['height'] - 1)})
+                rpc_connection.store()
             break
         time.sleep(1)
     if kill_daemon == 1:
         monero_daemon.terminate()
         sys.exit(1)
 
-    #Starting rpc server successful. lets wait until its fully online
-    rpc_connection = AuthServiceProxy(service_url=rpc_url)
     num_retries = 0
     while True:
         try:
@@ -377,8 +400,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file=None,remote_node=
             num_retries += 1
     if wallet_file:
         #open this wallet
-        info = rpc_connection.open_wallet({"filename": wallet_fname})
-        info = rpc_connection.set_daemon({"address": remote_node})
+        info = rpc_connection.open_wallet({"filename": wallet_file, "password" :""})
 
 def monero_rpc_online(rpc_url):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
@@ -386,20 +408,21 @@ def monero_rpc_online(rpc_url):
         info = rpc_connection.get_version()
         return True
     except Exception as e:
-        print(e)
+        print("Offline as an error")
         return False
 
 def monero_rpc_close_wallet(rpc_url):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
     try:
         info = rpc_connection.close_wallet()
+        pprint.pprint(info)
         pass
     except Exception as e:
         print(e)
         sys.exit(1)
 
 def create_monero_wallet(config):
-    global wallet_dir
+    global wallet_dir, monero_wallet_rpc, rpc_bin_file
     rpc_port = config["monero"]["daemon_port"]
     if rpc_port == "":
         rpc_port = 18082
@@ -417,8 +440,7 @@ def create_monero_wallet(config):
                 proc.kill()
     #start the monero-rpc-wallet daemon
     print("start it up")
-    #monero_wallet_rpc is set by a global,
-    monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url)
+    monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,None,remote_node)
         
 
     print("Creating a Monero wallet..")
@@ -433,7 +455,7 @@ def create_monero_wallet(config):
                 "language": "English"
                 }
         info = rpc_connection.create_wallet(params)
-        info = rpc_connection.open_wallet({"filename": wallet_fname})
+        info = rpc_connection.open_wallet({"filename": wallet_fname,"password": ""})
         info = rpc_connection.get_height()
         #to get block height data we need to use /json_rpc
         rpc_remote = remote_node + "/json_rpc"
@@ -454,18 +476,83 @@ def create_monero_wallet(config):
         print("*************[Monero Wallet]*************")
         print(f"setting block height from remote node to: {data['height']}")
 
-        info = rpc_connection.set_daemon({"address": remote_node})
+        input("Write your seed then press Enter. A view-only wallet will now be created without the spend key.")
 
-        #time.sleep(10)
-        info = rpc_connection.get_height()
-        print(info)
-        info = rpc_connection.refresh({"start_height": (data['height'] - 1)})
-        print("Saving monero wallet")
-        rpc_connection.store() 
+        #closing hot wallet...
 
-        #Close in a thread as this blocks for a few seconds TODO
+        #delete
+        print("closing hot wallet...")
         rpc_connection.close_wallet()
+        print("deleting hot wallet...")
         wallet_path = os.path.join(wallet_dir,wallet_fname)
+        os.remove(wallet_path)
+        os.remove(wallet_path + ".keys")
+        os.remove(wallet_path + ".address.txt")
+
+        print("quiting original  rpc process")
+        monero_daemon.terminate()
+        monero_daemon.communicate()
+        for proc in psutil.process_iter():
+            # check whether the process name matches
+            if "monero-wallet-" in proc.name():
+                print(proc.name())
+                proc.kill()
+
+        #restore from viewkey
+        wallet_json_data = {
+            "version":1,
+            "filename":wallet_path,
+            "scan_from_height":data['height'],
+            "password":"",
+            "viewkey":view_key,
+            "address":main_address
+            }
+        json_path = wallet_path + ".json"
+        with open(json_path, "w+") as f:
+            json.dump(wallet_json_data,f)
+        #./monero-wallet-rpc --stagenet --generate-from-json monero_vythwejctc.json --rpc-bind-port 1879 --daemon-address xmr-lux.boldsuck.org:38081 --disable-rpc-login
+        #json_path = wallet_fname + ".json"
+        
+        #dummy wallet would be here TODO
+        rpc_args = [ 
+        f".{monero_wallet_rpc}",
+        "--rpc-bind-port", rpc_port,
+        "--disable-rpc-login", "--stagenet",
+        "--daemon-address", remote_node,
+        "--generate-from-json", json_path
+        ]
+        pprint.pprint(rpc_args)
+        test_string = ""
+        for x in rpc_args:
+            test_string += x + " "
+        print(test_string)
+        monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
+        while not os.path.isfile(wallet_path):
+            print(f"Waitinf for wallet to be created...{wallet_path}")
+            time.sleep(1)
+
+        #remove the broken wallet file(??)
+        print(f"deleting {wallet_path}")
+        
+        monero_daemon.terminate()
+        monero_daemon.communicate()
+        os.remove(wallet_path)
+        #close it so we can set wallet dir(??)
+        
+        #start with the keys file only
+        #special
+        monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_path,remote_node)
+
+
+        #assuming we can still use the same port..
+        print("Hello world")
+        view_key = rpc_connection.query_key({"key_type": "view_key"})["key"]
+        print(f"viewkey: {view_key}")
+
+        #omiting the wallet-dir makes generate-from-json work (?)
+        #but we need wallet-dir to use it
+        #monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_fname,remote_node)
+        print("Should be online now?")
         config["monero"]["wallet_file"] = wallet_path
         #TODO viewkey main_address in config file
         with open('wishlist.ini', 'w') as configfile:
@@ -529,7 +616,7 @@ def create_btc_wallet(config):
         ]
     bch_bin = subprocess.Popen(run_args,stdout=subprocess.PIPE)
     #wait until finished
-    bch_bin.communicate()
+    bch_bin.communicate()   
 
     with open(wallet_path, "r") as f:
         bch_data = json.load(f)
@@ -548,6 +635,10 @@ def create_btc_wallet(config):
 def main(config):
     global www_root
     www_root = config["wishlist"]["www_root"]
+    rpc_port = config["monero"]["daemon_port"]
+    if rpc_port == "":
+        rpc_port = 18082
+    rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
     #Error checks needed here on user inputs
     if not www_root:
         www_root = input('Where is your root website folder (e.g. /var/www/html):')
@@ -576,10 +667,6 @@ def main(config):
         else:
             #a wallet file was supplied
             #we still need to start the rpc up
-            rpc_port = config["monero"]["daemon_port"]
-            if rpc_port == "":
-                rpc_port = 18082
-            rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
             remote_node = "http://" + config["monero"]["remote_node"]
 
             monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_file,remote_node)
@@ -669,9 +756,9 @@ def main(config):
     btc_daemon = subprocess.Popen(run_args)
     btc_daemon.communicate()
 
-    if monero_online == 1:
-        monero_daemon.terminate()
-        monero_daemon.communicate()
+    monero_rpc_close_wallet(rpc_url)
+    monero_daemon.terminate()
+    monero_daemon.communicate()
     with open('your_wishlist.json', 'w') as f:
         json.dump(wishlist, f, indent=6) 
     create_new_wishlist()

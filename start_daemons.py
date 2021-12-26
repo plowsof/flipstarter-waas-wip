@@ -44,12 +44,12 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
     print(f"{os.path.join(os.path.abspath(os.path.join(os.getcwd(),'xmr-btc-wishlist.py')))}")
     rpc_args = [ 
         f"{rpc_bin_file}", 
-        "--wallet-dir", wallet_dir,
+        "--wallet-file", wallet_file,
         "--rpc-bind-port", rpc_port,
         "--disable-rpc-login",
         "--tx-notify", f"/usr/bin/python3 {os.path.join(os.path.abspath(os.path.join(os.getcwd(),'notify_xmr_vps_pi.py')))} %s",
         "--daemon-address", remote_node,
-        "--stagenet"
+        "--stagenet", "--password", ""
     ]
     for x in rpc_args:
         print(x)
@@ -80,8 +80,6 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
             print("Hello world")
             info = rpc_connection.get_version()
             print("Monero RPC server online.")
-            wallet_fname = os.path.basename(wallet_file)
-            info = rpc_connection.open_wallet({"filename": wallet_fname})
             print(info)
             return monero_daemon
         except Exception as e:
@@ -95,6 +93,8 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
             num_retries += 1
 
 def set_up_notify(bin_path,wallet_path,address,http_server,symbol):
+    if ":" in address:
+        address = address.split(':')[1]
     if symbol == "btc":
         thestring = f"{bin_path} notify {address} {http_server} --testnet"
     else:
@@ -120,7 +120,7 @@ def start_bch_daemon(electron_bin,wallet_file):
     bch_daemon = subprocess.Popen(run_args)
     bch_daemon.communicate()
     run_args = [
-    electron_bin, "daemon", "start", "load_wallet", "-w", wallet_file, "--testnet"
+    electron_bin, "daemon", "load_wallet", "-w", wallet_file, "--testnet"
     ]
     print(run_args)
     bch_daemon = subprocess.Popen(run_args)
