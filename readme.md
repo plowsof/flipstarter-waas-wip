@@ -7,7 +7,7 @@ I have been focusing on making it load quicker / supporting NonJS users.
 Tutorials will come after:    
 - the list can be edited while running
 - view only wallets can be created automatically @ setup 
-- [ ] secure deletion of hot wallet files
+- [x] secure deletion of hot wallet files
 - [ ] wipe memory caches
 - [x] monero view only wallet
 - [ ] bch view only wallet
