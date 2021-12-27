@@ -51,11 +51,14 @@ www_root = ""
 #https://stackoverflow.com/questions/17455300/python-securely-remove-file
 def secure_delete(path, passes=1):
     length = os.path.getsize(path)
+    print("Wiping {path} with random data.")
     with open(path, "br+", buffering=-1) as f:
         for i in range(passes):
             f.seek(0)
             f.write(os.urandom(length))
+            print(f"Pass {i}")
         f.close()
+    print("Removing the file")
     os.remove(path)
 
 def address_create_notify(bin_dir,wallet_path,port,addr="",create=1,notify=1):
@@ -377,7 +380,8 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
     kill_daemon = 0
     print("Starting Monero rpc...")
     for line in iter(monero_daemon.stdout.readline,''):
-        print(str(line.rstrip()))
+        #debug output
+        #print(str(line.rstrip()))
         if b"Error" in line.rstrip() or b"Failed" in line.rstrip():
             kill_daemon = 1
             break
@@ -620,7 +624,7 @@ def create_bch_wallet(config):
         print(f"format:{bch_data['keystore']['seed_type']} derivation: {bch_data['keystore']['derivation']}")
         print("Please keep your seed information in a safe place; if you lose it, you will not be able to restore your wallet")
         print("*************[Bitcoin-Cash wallet]*************")
-        input("Write it down or you can never spend money you receive _warning_ >>")
+        input("Write your seed down on paper or you can never spend money you receive \n Press enter to continue >>")
         config["bch"]["wallet_file"] = wallet_path
         with open('wishlist.ini', 'w') as configfile:
             config.write(configfile)
@@ -632,6 +636,23 @@ def create_bch_wallet(config):
         ]
         bch_bin = subprocess.Popen(run_args,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         bch_bin.communicate()
+        #
+        print("Verifying new view-key matches.")
+        with open(wallet_path, "r") as f:
+            json_data = json.load(f)
+        orig_view_key = bch_data['keystore']['xpub']
+        new_view_key = json_data['keystore']['xpub']
+        if orig_view_key == new_view_key:
+            print("New view-key is a match.")
+        else:
+            print("Fatal error: new wallet does not match the original")
+            sys.exit(1)
+
+        #del bch variables
+        del bch_data
+        del orig_view_key
+        del new_view_key
+        del json_data
         return config
         pass
     except Exception as e:
