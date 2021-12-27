@@ -16,7 +16,7 @@ import string
 import _thread as thread
 import psutil
 from start_daemons import start_btc_daemon
-
+import textwrap
 #bitcoin - have to ./make_libsecp256k1.sh 
 
 viewkey = ""
@@ -195,6 +195,7 @@ def dump_json(wishlist):
 
 #get input from a used wallet
 def load_old_txs():
+    #todo - update so this adds tx ids to the database
     global wishes
     rpc_connection = AuthServiceProxy(service_url=node_url)
     #label could be added
@@ -479,32 +480,37 @@ def create_monero_wallet(config):
         main_address = rpc_connection.get_address()["address"]
         config["monero"]["viewkey"] = view_key
         config["monero"]["mainaddress"] = main_address
-
+        wrapper = textwrap.TextWrapper(width=100)
+        
+        wrapped_seed = wrapper.wrap(text=mnemonic)
         print("*************[Monero Wallet]*************")
+        print("*")
         print(f"Your Monero wallet seed is:") 
-        print(mnemonic)
+        for line in wrapped_seed:
+            print(line)
+        print("*")
         print(f"restore height: {data['height']}")
+        print(f"main address: {main_address}")
+        print(f"view key: {view_key}")
         print("Please keep your seed information in a safe place; if you lose it, you will not be able to restore your wallet")
         print("*************[Monero Wallet]*************")
-        print(f"setting block height from remote node to: {data['height']}")
+        #print(f"setting block height from remote node to: {data['height']}")
 
-        input("Write your seed then press Enter. A view-only wallet will now be created without the spend key.")
+        input("Write your seed down on paper\n If you do not do this you will not be able to spend any money you get as this tool uses view-only wallets.\n Press Enter to continue >>")
 
-        #closing hot wallet...
-
-        #delete
-        print("closing hot wallet...")
+        #print("closing hot wallet...")
         rpc_connection.close_wallet()
-        print("deleting hot wallet...")
+        #print("deleting hot wallet...")
         wallet_path = os.path.join(wallet_dir,wallet_fname)
-        
+        print("Secure deletion of wallet / keys file (3 passes of random data)...")
         keys = wallet_path + ".keys"
         address_file = wallet_path + ".address.txt"
         secure_delete(keys, passes=3)
         secure_delete(wallet_path, passes=3)
         os.remove(address_file)
+        print("Monero hot wallet files deleted.")
 
-        print("quiting original  rpc process")
+        #print("quiting original  rpc process")
         monero_daemon.terminate()
         monero_daemon.communicate()
         for proc in psutil.process_iter():
@@ -514,6 +520,7 @@ def create_monero_wallet(config):
                 proc.kill()
 
         #restore from viewkey
+        
         wallet_json_data = {
             "version":1,
             "filename":wallet_path,
@@ -525,9 +532,7 @@ def create_monero_wallet(config):
         json_path = wallet_path + ".json"
         with open(json_path, "w+") as f:
             json.dump(wallet_json_data,f)
-        #./monero-wallet-rpc --stagenet --generate-from-json monero_vythwejctc.json --rpc-bind-port 1879 --daemon-address xmr-lux.boldsuck.org:38081 --disable-rpc-login
-        #json_path = wallet_fname + ".json"
-        
+    
         #dummy wallet would be here TODO
         rpc_args = [ 
         f".{monero_wallet_rpc}",
@@ -536,18 +541,17 @@ def create_monero_wallet(config):
         "--daemon-address", remote_node,
         "--generate-from-json", json_path
         ]
-        pprint.pprint(rpc_args)
+        #pprint.pprint(rpc_args)
         test_string = ""
         for x in rpc_args:
             test_string += x + " "
         print(test_string)
         monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
+        print("Busy creating a view-only Monero wallet...")
         while not os.path.isfile(wallet_path):
-            print(f"Waitinf for wallet to be created...{wallet_path}")
             time.sleep(1)
-        #remove the broken wallet file(??)
-        print(f"deleting {wallet_path}")
-        #rpc_connection.close_wallet()
+        print("View-only wallet created.")
+        #remove the broken wallet file(??) (in testing i had to remove the wallet file for some reason)
         monero_daemon.terminate()
         monero_daemon.communicate()
         os.remove(wallet_path)
@@ -555,14 +559,18 @@ def create_monero_wallet(config):
         
         #start with the keys file only
         #special
+        print("Loading view-only wallet...")
         monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_path,remote_node)
-
+        print("Loaded")
 
         #assuming we can still use the same port..
-        print("Hello world")
-        view_key = rpc_connection.query_key({"key_type": "view_key"})["key"]
-        print(f"viewkey: {view_key}")
-
+        print("Confirming view-only wallet is an exact copy of the hot-wallet")
+        new_view_key = rpc_connection.query_key({"key_type": "view_key"})["key"]
+        if new_view_key != view_key:
+            print("Fatal error: new wallet does not match")
+            sys.exit(1)
+        else:
+            print("View-only wallet is an exact copy of the (deleted) hot-wallet")
         #omiting the wallet-dir makes generate-from-json work (?)
         #but we need wallet-dir to use it
         #monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_fname,remote_node)
@@ -571,6 +579,14 @@ def create_monero_wallet(config):
         #TODO viewkey main_address in config file
         with open('wishlist.ini', 'w') as configfile:
             config.write(configfile)
+
+        #delete variables from memory
+        del data 
+        del view_key 
+        del mnemonic 
+        del spend_key 
+        del main_address 
+
     except Exception as e:
         print(e)
         time.sleep(3)
@@ -701,11 +717,7 @@ def main(config):
             #a wallet file was supplied
             #we still need to start the rpc up
             remote_node = "http://" + config["monero"]["remote_node"]
-
             monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_file,remote_node)
-            if monero_rpc_online(rpc_url) == False:
-                print("Error: monero rpc not online")
-                sys.exit(1)
 
     if not config["bch"]["wallet_file"]:
         config = create_bch_wallet(config)
