@@ -120,6 +120,11 @@ def start_bch_daemon(electron_bin,wallet_file):
     bch_daemon = subprocess.Popen(run_args)
     bch_daemon.communicate()
     run_args = [
+    electron_bin, "daemon", "start", "--testnet"
+    ]
+    bch_daemon = subprocess.Popen(run_args)
+    bch_daemon.communicate()
+    run_args = [
     electron_bin, "daemon", "load_wallet", "-w", wallet_file, "--testnet"
     ]
     print(run_args)

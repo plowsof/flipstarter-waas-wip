@@ -52,18 +52,18 @@ class S(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length).decode('utf-8') # <--- Gets the data itself
         thejson = json.loads(post_data)
         address = thejson["address"].replace("\n","")
+
         if ":" in address:
             address = address.split(":")[1]
-        if thejson["status"]: #!= status:
-            #is it a btc or bch address?
-            if thejson["symbol"] == "bch":
-                print(f"daemon_path= {bch_path}")
-                daemon_path = bch_path
-                print("BCH address status change")
-            else:
-                daemon_path = btc_path
-                print("BTC address status change")
-            ticker = thejson["symbol"]
+        if address[0:1] == "q":
+            print("This is a bchtest address")
+            daemon_path = bch_path
+            ticker = "bch"
+        else:
+            print("This is a bitcoin testnet address")
+            daemon_path = btc_path
+            ticker = "btc"
+
             ticker_address = f"{ticker}_address"
             ticker_total = f"{ticker}_total"
             ticker_history = f"{ticker}_history"
