@@ -686,6 +686,8 @@ def create_btc_wallet(config):
     print(f"format:{bch_data['keystore']['seed_type']} derivation: {bch_data['keystore']['derivation']}")
     print("Please keep your seed information in a safe place; if you lose it, you will not be able to restore your wallet")
     print("*************[Bitcoin wallet]*************")
+    input("Write your seed down on paper or you can never spend money you receive \n Press enter to continue >>")
+
     config["btc"]["wallet_file"] = wallet_path
     with open('wishlist.ini', 'w') as configfile:
         config.write(configfile)
@@ -695,9 +697,26 @@ def create_btc_wallet(config):
     run_args = [
     electron_bin, "restore", "-w", wallet_path, "--offline", "--testnet", bch_data['keystore']['xpub']
     ]
-    pprint.pprint(run_args)
     bch_bin = subprocess.Popen(run_args,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     bch_bin.communicate()
+
+    print("Verifying new view-key matches.")
+    with open(wallet_path, "r") as f:
+        json_data = json.load(f)
+    orig_view_key = bch_data['keystore']['xpub']
+    new_view_key = json_data['keystore']['xpub']
+    if orig_view_key == new_view_key:
+        print("New view-key is a match.")
+    else:
+        print("Fatal error: new wallet does not match the original")
+        sys.exit(1)
+
+    #del bch variables
+    del bch_data
+    del orig_view_key
+    del new_view_key
+    del json_data
+
     return config
 
 
