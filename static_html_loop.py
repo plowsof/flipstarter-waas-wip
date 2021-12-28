@@ -17,7 +17,7 @@ def main(config):
     www_root = config["wishlist"]["www_root"]
     funding_page = config["wishlist"]["page_name"]
     #funding_template = f'template_{funding_page}'
-    funding_template = "index.html"
+    funding_template = os.path.join(".","html","template_page.html")
     funding_file = os.path.join(www_root,funding_page)
     json_file = os.path.join(www_root,"data","wishlist-data.json")
     if not os.path.isfile(funding_template):
@@ -77,8 +77,9 @@ def main(config):
             <div class ="wish">
             <span class="wish_title"><h3>{wish['title']}</h3></span></br>
             <div class="progress_{wish['id']}"></div>
-                <p class="fundgoal">Raised ${total} of ${wish['goal_usd']} Contributors: {wish['contributors']}</p>
                 <p class="description">{wish['description']}</p>
+                <p class="fundgoal">Raised ${total} of ${wish['goal_usd']} Contributors: {wish['contributors']}</p>
+                
                 <br/>
                 <div class="tabs">
                   <input type="checkbox" name="tabs" id="tabone_{wish['id']}">
