@@ -20,7 +20,7 @@ Tutorials will come after:
 I will then begin work on Pi / VPS tutorials to show how easily you can deploy a funding page(and make a real readme! (:)
 
 Then fix this: (can go in the static html refresher loop)
-- [ ] heartbeat to check if the monero remote node is online. If not try a list of nodes from the monero project
+- [x] heartbeat to check if the monero remote node is online. If not try a list of nodes from the monero project (instead of a list of nodes, the "OK" status from the json metadata is removed.
 
 
 ## Electron-Cash-4.2.6
