@@ -15,11 +15,11 @@ Tutorials will come after:
 - [x] detect btc/bch addresses so non-modified wallets can be used
 - [x] update monero / bch / btc wallet files
 - [ ] clean up the prompts / text shown (pretty colours)
-- [ ] static html creation loop
+- [x] static html creation loop
 
 I will then begin work on Pi / VPS tutorials to show how easily you can deploy a funding page(and make a real readme! (:)
 
-Then fix this:
+Then fix this: (can go in the static html refresher loop)
 - [ ] heartbeat to check if the monero remote node is online. If not try a list of nodes from the monero project
 
 
