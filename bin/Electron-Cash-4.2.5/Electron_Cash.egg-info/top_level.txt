@@ -1,3 +1,0 @@
-electroncash
-electroncash_gui
-electroncash_plugins
