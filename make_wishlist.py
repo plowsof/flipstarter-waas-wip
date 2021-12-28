@@ -848,7 +848,7 @@ def main(config):
         #copy the js file
         shutil.copy(os.path.join(".","html","js","app.js"),js_dir)
         shutil.copy(os.path.join(".","html","simple.css"),www_root)
-        shutil.copy(os.path.join(".","html","lightbox.css  "),www_root)
+        shutil.copy(os.path.join(".","html","lightbox.css"),www_root)
         shutil.copy(os.path.join(".","qrs","bitcoin-cash-bch-logo.png"),logos_dir)
         shutil.copy(os.path.join(".","qrs","BTC_Logo.png"),logos_dir)
         shutil.copy(os.path.join(".","qrs","monero-xmr-logo.png"),logos_dir)
