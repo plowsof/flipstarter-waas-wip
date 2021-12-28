@@ -13,7 +13,7 @@ Tutorials will come after:
 - [x] secure deletion of hot wallet files
 - [x] wipe memory caches (must run make_wishlist as root for this)
 - [x] detect btc/bch addresses so non-modified wallets can be used
-- [ ] update monero / bch / btc wallet files
+- [x] update monero / bch / btc wallet files
 - [ ] clean up the prompts / text shown (pretty colours)
 
 I will then begin work on Pi / VPS tutorials to show how easily you can deploy a funding page(and make a real readme! (:)
