@@ -248,7 +248,7 @@ function debugWishlist() {
 function getWishlist() {
     let ran_int = Math.floor(Math.random() * 100000)
     //let url_get = 'http://109.228.52.142/funding/data/wishlist-data.json?uid=' + ran_int;
-    let url_get = '../data/wishlist-data.json'
+    let url_get = './data/wishlist-data.json?uid=' + ran_int;
     let something = {}
     try {
             $.ajax({
