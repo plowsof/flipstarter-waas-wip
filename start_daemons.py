@@ -6,7 +6,9 @@ import subprocess
 import time
 import sys
 from monerorpc.authproxy import AuthServiceProxy, JSONRPCException
-import threading
+import threading 
+from filelock import FileLock
+import pprint
 
 wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
 www_root = ""
@@ -186,15 +188,51 @@ def main(config):
             print(address)
             set_up_notify(electron_path,bch_wallet_path,address,http_server,"bch")
 
-    th = threading.Thread(target=refresh_html_loop)
+    th = threading.Thread(target=refresh_html_loop, args=(remote_node,))
     th.start()
     #start the bitcoin listener
     os.system(f'/usr/bin/python3 notify_bch_btc.py {http_port}')
     
-def refresh_html_loop():
+
+def refresh_html_loop(remote_node):
+    global www_root
     #static html refresh every 5 minutes
     while True: 
         os.system(f'/usr/bin/python3 static_html_loop.py')
+        rpc_url = "http://" + str(remote_node) + "/json_rpc"
+        www_root = config["wishlist"]["www_root"]
+        wishlist = getJson()
+        node_status = wishlist["metadata"]["status"]
+        not_ok = 0
+        list_modified = 0
+        rpc_connection = AuthServiceProxy(service_url=rpc_url)
+        try:
+            info = rpc_connection.get_info()
+            if info["status"] != "OK":
+                not_ok = 1
+            else:
+                not_ok = 0
+        except Exception as e:
+            print("error")
+            not_ok = 1
+       
+
+        if not_ok == 1:
+            if node_status != "":
+               wishlist["metadata"]["status"] = ""
+               list_modified = 1
+        else:
+            if node_status != "OK":
+                wishlist["metadata"]["status"] = "OK"
+                list_modified = 1
+        if list_modified == 1:
+            wishlist_file  = os.path.join(www_root,"data","wishlist-data.json")
+            lock = wishlist_file + ".lock"
+            with FileLock(lock):
+                #print("Lock acquired.")
+                with open(wishlist_file, 'w+') as f:
+                    json.dump(wishlist, f, indent=6) 
+
         time.sleep(60 * 5)
 
 
