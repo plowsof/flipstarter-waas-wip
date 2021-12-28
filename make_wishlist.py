@@ -2,7 +2,6 @@
 import pprint
 import json
 from datetime import datetime
-import cryptocompare
 import qrcode 
 from PIL import Image
 import os
@@ -13,17 +12,18 @@ import configparser
 import sys
 import random
 import string
-import _thread as thread
+#import _thread as thread
 import psutil
 from start_daemons import start_btc_daemon
 import textwrap
+from colorama import Fore, Back, Style
+import shutil
 #bitcoin - have to ./make_libsecp256k1.sh 
 
 viewkey = ""
 main_address = ""
 
 #Api key of "-" appears to work currently, this may change,
-cryptocompare.cryptocompare._set_api_key_parameter("-")
 
 #need to get these from the monero wallet - these are just placeholders for now
 percent_buffer = 0.05
@@ -51,7 +51,7 @@ www_root = ""
 #https://stackoverflow.com/questions/17455300/python-securely-remove-file
 def secure_delete(path, passes=1):
     length = os.path.getsize(path)
-    print("Wiping {path} with random data.")
+    print(f"Wiping {path} with random data.")
     with open(path, "br+", buffering=-1) as f:
         for i in range(passes):
             f.seek(0)
@@ -97,14 +97,6 @@ def get_xmr_subaddress(rpc_url,wallet_file,title):
     info = rpc_connection.create_address(params)
     return info["address"]
 
-
-def getPrice(crypto,offset):
-    data = cryptocompare.get_price(str(crypto), currency='USD', full=0)
-    #print(f"[{crypto}]:{data[str(crypto)]['USD']}")
-    value = float(data[str(crypto)]["USD"])
-    #print(f"value = {value}")
-    return(float(value) - (float(value) * float(offset)))
-
 def formatAmount(amount):
     """decode cryptonote amount format to user friendly format.
     Based on C++ code:
@@ -131,7 +123,7 @@ def put_qr_code(address, xmr_btc):
     global www_root
     if xmr_btc == "xmr":
         uri = "monero"
-        logo = "logo3.png"
+        logo = "monero-xmr-logo.png"
         thumnail = (60, 60)
         qr = qrcode.QRCode(
         version=None,
@@ -487,7 +479,7 @@ def create_monero_wallet(config):
         wrapper = textwrap.TextWrapper(width=100)
         
         wrapped_seed = wrapper.wrap(text=mnemonic)
-        print("*************[Monero Wallet]*************")
+        print(f"*************[{Style.BRIGHT}{Fore.RED}Monero {Style.RESET_ALL}Wallet]*************")
         print("*")
         print(f"Your Monero wallet seed is:") 
         for line in wrapped_seed:
@@ -618,7 +610,7 @@ def create_bch_wallet(config):
         bch_bin.communicate(input=b"\n")
         with open(wallet_path, "r") as f:
             bch_data = json.load(f)
-        print("*************[Bitcoin-Cash wallet]*************")
+        print(f"*************[{Style.BRIGHT}{Fore.GREEN}Bitcoin-Cash {Style.RESET_ALL}wallet]*************")
         print("Your Bitcoin-Cash wallet seed is:")
         print(f"{bch_data['keystore']['seed']}")
         print(f"format:{bch_data['keystore']['seed_type']} derivation: {bch_data['keystore']['derivation']}")
@@ -680,7 +672,7 @@ def create_btc_wallet(config):
 
     with open(wallet_path, "r") as f:
         bch_data = json.load(f)
-    print("*************[Bitcoin wallet]*************")
+    print(f"*************[{Style.BRIGHT}{Fore.RED}Bitcoin {Style.RESET_ALL}wallet]*************")
     print("Your Bitcoin-Cash wallet seed is:")
     print(f"{bch_data['keystore']['seed']}")
     print(f"format:{bch_data['keystore']['seed_type']} derivation: {bch_data['keystore']['derivation']}")
@@ -760,6 +752,7 @@ def main(config):
             monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_file,remote_node)
 
     if not config["bch"]["wallet_file"]:
+        #maybe we dont have to close the daemon in create wallet
         config = create_bch_wallet(config)
     else:
         if not os.path.isfile(config["bch"]["wallet_file"]):
@@ -837,6 +830,36 @@ def main(config):
     config["wishlist"]["www_root"] == www_root
     with open('wishlist.ini', 'w') as configfile:
         config.write(configfile)
+
+
+    #move the html files
+    try:
+        #(qrs dir already made)
+        js_dir = os.path.join(www_root,"js")
+        logos_dir = os.path.join(www_root,"logos")
+        images_dir = os.path.join(www_root,"images")
+        if not os.path.isdir(js_dir):
+            os.mkdir(js_dir)
+        if not os.path.isdir(logos_dir):
+            os.mkdir(logos_dir)
+        if not os.path.isdir(images_dir):
+            os.mkdir(images_dir)
+        #copy the js file
+        shutil.copy(os.path.join(".","html","js","app.js"),js_dir)
+        shutil.copy(os.path.join(".","html","simple.css"),www_root)
+        shutil.copy(os.path.join(".","qrs","bitcoin-cash-bch-logo.png"),logos_dir)
+        shutil.copy(os.path.join(".","qrs","BTC_Logo.png"),logos_dir)
+        shutil.copy(os.path.join(".","qrs","monero-xmr-logo.png"),logos_dir)
+        shutil.copy(os.path.join(".","html","images","close.png"),images_dir)
+        shutil.copy(os.path.join(".","html","images","loading.gif"),images_dir)
+        shutil.copy(os.path.join(".","html","images","next.png"),images_dir)
+        shutil.copy(os.path.join(".","html","images","plowsof.png"),images_dir)
+        shutil.copy(os.path.join(".","html","images","prev.png"),images_dir)
+
+    except Exception as e:
+        raise e
+
+    print("Finished. Run 'start_daemons.py' to complete the install.")
 
     #clear memory cache (linux)
     os.system('sync')
