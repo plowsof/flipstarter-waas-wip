@@ -23,9 +23,9 @@ function debugWishlist() {
             "btc_address": "tb1qn8z6nky4lepc7qssl4mav06gjmxlpflh6tw05n",
             "bch_address": "bchtest:qz8lsyln79nr9f3xk8y4xzwymu3f2f3g4urgadh3gk",
             "xmr_address": "75yaxvaiQMWe8ztnLgABmcVskJ8Ra3awTUfFbi7pEvUu5uGNTRVtTdMBSnxriDLHL7NTQ2JWvHof29NknAKvDCFpV7g55Q8",
-            "btc_total": 2,
+            "btc_total": 0.005,
             "xmr_total": 10,
-            "bch_total": 20,
+            "bch_total": 15,
             "hour_goal": "",
             "xmr_history": [],
             "bch_history": [],
@@ -257,8 +257,8 @@ function getWishlist() {
             url: url_get,
             success: function(data) {
                 //something = data
-                wishlist = debugWishlist()
-                //wishlist = data
+                //wishlist = debugWishlist()
+                wishlist = data
                 modified_live = wishlist["metadata"]["modified"]
                 //alert(modified_live)
                 if (modified != modified_live){
@@ -322,11 +322,10 @@ function getWishlist() {
 
                                             <div class ="wish">
                                             <span class="wish_title"><h3>${wish.title}</h3></span></br>
-                                            <p class="description">${wish.description}</p>
                                             <div class="progress_${wish["id"]}"></div>
                                                 
                                                 <p class="fundgoal">Raised $${total} of $${wish.goal_usd} Contributors: ${wish.contributors}</p>
-                                                
+                                                <p class="description">${wish.description}</p>
 
                                                 
                                                 <br/>
@@ -426,9 +425,11 @@ function getTotal(wish){
      percentages["total_usd"] = total_usd.toFixed(2)
      if (total_percent >= 100){
       //set new values
-      percentages["values"].forEach(x => {
-        percentages["values"][x] = (percentages["values"][x] / total_percent) * 100
-      });
+      Object.keys(percentages["values"]).forEach(function(key) {
+  console.log('Key : ' + key + ', Value : ' + percentages["values"][key])
+  percentages["values"][key] = (percentages["values"][key] / total_percent) * 100
+})
+
 
      }
      return percentages    
