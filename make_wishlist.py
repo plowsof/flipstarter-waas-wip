@@ -512,7 +512,7 @@ def create_monero_wallet(config):
         for proc in psutil.process_iter():
             # check whether the process name matches
             if "monero-wallet-" in proc.name():
-                print(proc.name())
+                #print(proc.name())
                 proc.kill()
 
         #restore from viewkey
@@ -855,6 +855,7 @@ def main(config):
         shutil.copy(os.path.join(".","html","images","next.png"),images_dir)
         shutil.copy(os.path.join(".","html","images","plowsof.png"),images_dir)
         shutil.copy(os.path.join(".","html","images","prev.png"),images_dir)
+        shutil.copy(os.path.join(".","html","js","lightbox-plus-jquery.min.js"),js_dir)
 
     except Exception as e:
         raise e
