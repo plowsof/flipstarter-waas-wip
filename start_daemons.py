@@ -6,6 +6,7 @@ import subprocess
 import time
 import sys
 from monerorpc.authproxy import AuthServiceProxy, JSONRPCException
+import threading
 
 wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
 www_root = ""
@@ -185,11 +186,14 @@ def main(config):
             print(address)
             set_up_notify(electron_path,bch_wallet_path,address,http_server,"bch")
 
-
+    th = threading.Thread(target=refresh_html_loop)
+    th.start()
     #start the bitcoin listener
     os.system(f'/usr/bin/python3 notify_bch_btc.py {http_port}')
+    
+def refresh_html_loop():
     #static html refresh every 5 minutes
-    while True:
+    while True: 
         os.system(f'/usr/bin/python3 static_html_loop.py')
         time.sleep(60 * 5)
 
