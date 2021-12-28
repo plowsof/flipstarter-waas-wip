@@ -324,7 +324,7 @@ def create_new_wishlist():
         "url": "",
         "viewkey": viewkey,
         "main_address": main_address,
-        "status": "OK"
+        "status": "OK",
         "protocol": "v3"
     }
 
