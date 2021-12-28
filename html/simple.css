@@ -1,0 +1,150 @@
+.btc_address{
+  color: #ff4f00 ;
+  font-family: monospace ;
+  cursor: pointer ;
+  word-wrap:break-word;
+}
+
+.xmr_address{
+  color: #ff4f00 ;
+  font-family: monospace ;
+  cursor: pointer ;
+  word-wrap:break-word;
+}
+
+.xmr_address:hover {
+  background-color: gray;
+}
+
+.btc_address:hover {
+  background-color: gray;
+}
+.wishtitle{
+  color: cyan ;
+}
+
+.bch_address:hover {
+  background-color: gray;
+}
+.bch_address{
+  color: #ff4f00 ;
+  font-family: monospace ;
+  cursor: pointer ;
+  word-wrap:break-word;
+}
+
+.ticker{
+    width:50px; /* you can use % */
+    height: auto;  
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+
+
+/**
+ * Tabs
+ */
+
+/*
+.cointab {
+  height: 20px;
+}
+*/
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap; // make sure it wraps
+}
+.tabs label{
+  display: block;
+  padding: 0.5rem 2rem;
+  margin-right: 0.2rem;
+  cursor: pointer;
+  background: #fff;
+  font-weight: bold;
+  transition: background ease 0.2s;
+  border-radius: 10px;
+}
+
+
+.tabs .tab {
+  order: 99; // Put the tabs last
+  flex-grow: 1;
+  width: 100%;
+  display: none;
+  padding: 1rem 3rem;
+  background: #fff;
+}
+
+.tabs input[type="checkbox"]:checked + label {
+  background: red;
+}
+.tabs input[type="checkbox"]:checked + label + .tab {
+  display: block;
+}
+.tabs input[type="checkbox"] {
+  display: none;
+}
+@media (max-width: 45em) {
+  .tabs .tab,
+  .tabs label {
+    order: initial;
+  }
+  .tabs label {
+    width: 100%;
+    margin-right: 0;
+    margin-top: 0.2rem;
+  }
+}
+
+/**
+ * Generic Styling
+*/
+
+body {
+  background: #eee;
+  margin: auto;
+  width: 70%;
+  font-size: 120%;
+}
