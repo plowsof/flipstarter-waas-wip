@@ -188,6 +188,10 @@ def main(config):
 
     #start the bitcoin listener
     os.system(f'/usr/bin/python3 notify_bch_btc.py {http_port}')
+    #static html refresh every 5 minutes
+    while True:
+        os.system(f'/usr/bin/python3 static_html_loop.py')
+        time.sleep(60 * 5)
 
 
 if __name__ == '__main__':
