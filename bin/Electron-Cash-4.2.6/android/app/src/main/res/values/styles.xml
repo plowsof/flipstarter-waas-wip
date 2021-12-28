@@ -1,0 +1,112 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="subtitleTextColor">@android:color/white</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="spinnerStyle">@style/Widget.AppCompat.Spinner.Underlined</item>
+        <item name="android:textDirection" tools:ignore="NewApi">locale</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <!-- See https://plus.google.com/+AndroidDevelopers/posts/Z1Wwainpjhd -->
+    <style name="AppTheme.Splash">
+        <item name="android:windowBackground">@drawable/splash</item>
+    </style>
+
+    <style name="NavigationMenuItem">
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="List">
+        <item name="android:scrollbars">vertical</item>
+    </style>
+
+    <style name="List.WithFAB">
+        <item name="android:paddingBottom">88dp</item>  <!-- 56dp button plus 16dp top and bottom margins -->
+        <item name="android:clipToPadding">false</item>
+        <item name="android:scrollbarStyle">outsideOverlay</item>
+    </style>
+
+    <style name="Clickable">
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <style name="DialogTitle" parent="TextAppearance.AppCompat.Title">
+        <item name="android:layout_marginTop">20dp</item>
+        <item name="android:layout_marginEnd">@dimen/fab_main_margin_inner</item>
+        <item name="android:layout_marginRight">@dimen/fab_main_margin_inner</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <style name="AmountBox">
+        <item name="singleLine">true</item>
+        <item name="android:inputType">numberDecimal</item>
+        <item name="android:textDirection" tools:ignore="NewApi">ltr</item>
+        <item name="android:textAlignment" tools:ignore="NewApi">viewStart</item>
+    </style>
+
+    <!-- FloatingActionButton -->
+    <style name="FAB">
+        <item name="android:tint">#FFFFFF</item>
+    </style>
+    <style name="FAB.Main">
+        <item name="android:layout_marginEnd">@dimen/fab_main_margin_end</item>
+        <item name="android:layout_marginRight">@dimen/fab_main_margin_end</item>
+        <item name="android:layout_marginBottom">@dimen/fab_main_margin_bottom</item>
+        <item name="fabSize">normal</item>
+    </style>
+    <style name="FAB.Main.Inner">
+        <item name="android:layout_marginEnd">@dimen/fab_main_margin_inner</item>
+        <item name="android:layout_marginRight">@dimen/fab_main_margin_inner</item>
+    </style>
+    <style name="FAB.Dialog">
+        <item name="fabSize">mini</item>
+    </style>
+    <style name="FAB.Dialog.Title">
+        <item name="android:layout_marginTop">@dimen/fab_dialog_margin_top</item>
+        <item name="android:layout_marginBottom">@dimen/fab_dialog_margin_bottom</item>
+    </style>
+
+    <style name="FilterButton">
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <!-- Field importances (use with `textAppearance`). -->
+    <style name="Light">
+        <!-- Currently the same as the default appearance. -->
+        <item name="android:textColor">?android:textColorSecondary</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+    <style name="Medium">
+        <item name="android:textColor">?android:textColorPrimary</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+    <style name="Heavy">
+        <item name="android:textColor">?android:textColorPrimary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Field types (use with `style`).-->
+    <style name="Address">
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">middle</item>
+    </style>
+    <style name="Description">
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+    <style name="Value">
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+</resources>

@@ -1,0 +1,15 @@
+<resources>
+
+    <!-- Before API 21, FloatingActionButton draws its own shadow and so takes up much more
+         space. Reduce margins to get as close as possible to the desired layout. -->
+    <dimen name="fab_main_margin_end">4dp</dimen>
+    <dimen name="fab_main_margin_inner">0dp</dimen>
+    <dimen name="fab_main_margin_bottom">0dp</dimen>
+    <dimen name="fab_dialog_margin_inner">0dp</dimen>
+    <dimen name="fab_dialog_margin_top">0dp</dimen>
+    <dimen name="fab_dialog_margin_bottom">0dp</dimen>
+
+    <dimen name="qr_small">150dp</dimen>  <!-- e.g. an address -->
+    <dimen name="qr_large">240dp</dimen>  <!-- e.g. a transaction -->
+
+</resources>

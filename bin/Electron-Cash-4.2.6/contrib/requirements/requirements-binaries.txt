@@ -1,0 +1,6 @@
+PyQt5>=5.12.3
+pycryptodomex
+psutil
+
+# we need at least cryptography>=2.6 for dnspython[DNSSEC]
+cryptography>=2.6

@@ -1,0 +1,24 @@
+{
+    "blackie.c3-soft.com": {
+        "t": "63001",
+        "s": "63002"
+    },
+    "sbch.loping.net": {
+        "t": "63001",
+        "s": "63002"
+    },
+    "5g66mhfnm444pfbbjocrqatv65rrhq7g3hpnvsriu5xjfwcxjqathxid.onion": {
+        "s": "63002",
+        "t": "63001",
+        "display": "sbch.loping.net"
+    },
+	"electroncash.de": {
+        "t": "55003",
+        "s": "55004"
+    },
+    "jktsologn7uprtwn7gsgmwuddj6rxsqmwc2vaug7jwcwzm2bxqnfpwad.onion": {
+        "s": "55003",
+        "t": "55004",
+        "display": "electroncash.de"
+    }
+}
