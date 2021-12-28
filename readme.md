@@ -20,3 +20,7 @@ I will then begin work on Pi / VPS tutorials to show how easily you can deploy a
 
 Then fix this:
 - [ ] heartbeat to check if the monero remote node is online. If not try a list of nodes from the monero project
+
+
+## Electron-Cash-4.2.6
+Comes with CashFusion. Reusable Payment Addresses are planned for a future release too! 
