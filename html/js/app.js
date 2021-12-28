@@ -322,10 +322,11 @@ function getWishlist() {
 
                                             <div class ="wish">
                                             <span class="wish_title"><h3>${wish.title}</h3></span></br>
+                                            <p class="description">${wish.description}</p>
                                             <div class="progress_${wish["id"]}"></div>
                                                 
                                                 <p class="fundgoal">Raised $${total} of $${wish.goal_usd} Contributors: ${wish.contributors}</p>
-                                                <p class="description">${wish.description}</p>
+                                                
 
                                                 
                                                 <br/>
