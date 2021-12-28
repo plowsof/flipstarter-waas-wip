@@ -3,6 +3,7 @@ import json
 from make_wishlist import create_new_wishlist, address_create_notify, get_xmr_subaddress
 import pprint
 import os 
+import sys
 config = ""
 
 def main():
@@ -12,8 +13,17 @@ def main():
         Lets begin!''')
     config = configparser.ConfigParser()
     config.read('wishlist.ini')
+    if not os.path.isfile("your_wishlist.json"):
+        print("Error: please run make_wishlist.py first.")
+        sys.exit(1)
+
     with open("your_wishlist.json", "r") as f:
         wishlist = json.load(f)
+    if not wishlist["wishlist"]:
+        print("Empty wishlist detected. Please add a wish")
+        wish_prompt(config)
+        return
+
     #for i in range(len(wishlist["wishlist"])):
     #    print(f"{i}) {wishlist['wishlist'][i]['title']}")
     print("1) Add a wish")
@@ -38,6 +48,7 @@ def wish_edit(wishlist,edit_delete):
         print(f"{offset}) {wishlist['wishlist'][i]['title']}")
     index = ""
     end = len(wishlist["wishlist"])
+    end += 1
     print(f"end: {end}")
     while index not in range(1,end):
         index = int(input(f"Pick a wish to Edit / Remove (1-{offset}) >> "))
@@ -82,24 +93,24 @@ def wish_edit(wishlist,edit_delete):
     pprint.pprint(wishlist)
     with open("your_wishlist.json","w") as f:
         json.dump(wishlist,f, indent=6)
-
+#tidy this up
 def delete_wish(wishlist,index):
     global config
     deleted = wishlist["wishlist"][index]
-    wishlist["wishlist"].pop(index)
-    with open('your_wishlist.json','w+') as f:
-        json.dump(wishlist, f, indent=6)
     www_root = config["wishlist"]["www_root"]
     data_json = os.path.join(www_root,"data","wishlist-data.json")
     with open(data_json,"r") as f:
         now_wishlist = json.load(f)
     for i in range(len(now_wishlist["wishlist"])):
-        if now_wishlist["wishlist"][i]["xmr_address"] == wishlist["wishlist"][index]["xmr_address"]:
+        if now_wishlist["wishlist"][i]["xmr_address"] == deleted["xmr_address"]:
             archive = now_wishlist["wishlist"][i]
             now_wishlist["wishlist"].pop(i)
             break
+    wishlist["wishlist"].pop(index)
+    with open('your_wishlist.json','w+') as f:
+        json.dump(wishlist, f, indent=6)
     now_wishlist["archive"].append(archive)
-    return now_wishlist
+    return wishlist
     #lets find the wish in our data.json file in www_root 
 
 def wish_add(wish,config):
