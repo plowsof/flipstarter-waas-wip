@@ -93,6 +93,7 @@ def wish_edit(wishlist,edit_delete):
     pprint.pprint(wishlist)
     with open("your_wishlist.json","w") as f:
         json.dump(wishlist,f, indent=6)
+    create_new_wishlist()
 #tidy this up
 def delete_wish(wishlist,index):
     global config
