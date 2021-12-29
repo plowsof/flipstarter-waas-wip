@@ -16,6 +16,7 @@ Tutorials will come after:
 - [x] update monero / bch / btc wallet files
 - [ ] clean up the prompts / text shown (pretty colours)
 - [x] static html creation loop
+- [ ] a prompt if user wants to supply their viewkey (else wallets are made for them)
 
 I will then begin work on Pi / VPS tutorials to show how easily you can deploy a funding page(and make a real readme! (:)
 
