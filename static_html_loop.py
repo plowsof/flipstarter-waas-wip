@@ -37,7 +37,7 @@ def main(config):
         xmr_history = get_history(wish["xmr_history"])
         bch_history = get_history(wish["bch_history"])
         btc_history = get_history(wish["btc_history"])
-        wish["percent"] = (total / wish["goal_usd"]) * 100
+        wish["percent"] = (total / float(wish["goal_usd"])) * 100
         colours = {
           "monero": "#f26822",
           "bitcoin-cash": "#0ac18e",
@@ -78,6 +78,7 @@ def main(config):
             <span class="wish_title"><h3>{wish['title']}</h3></span></br>
             <p class="description">{wish['description']}</p>
             <div class="progress_{wish['id']}"></div>
+                
                 <p class="fundgoal">Raised ${total} of ${wish['goal_usd']} Contributors: {wish['contributors']}</p>
                 
                 <br/>
@@ -159,7 +160,7 @@ def get_total(wish):
         coin = ticker_var[x]
         usd = prices[x]
         this_coin = usd * wish[coin]
-        percent = (this_coin / wish["goal_usd"]) * 100
+        percent = (float(this_coin) / float(wish["goal_usd"])) * 100
         total_percent += percent
         print(f"this_coin = {this_coin} \n wish goal = {wish['goal_usd']}\n percent = {percent}")
         returnme["values"][x] = percent
