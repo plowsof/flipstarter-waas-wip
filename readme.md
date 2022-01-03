@@ -26,3 +26,8 @@ Then fix this: (can go in the static html refresher loop)
 
 ## Electron-Cash-4.2.6
 Comes with CashFusion. Reusable Payment Addresses are planned for a future release too! 
+
+## Receipts (for charities / tax purposes)
+I'm adding "receipts" - for donators who wish to provide KYC details if a charity is using my list. 
+Basically its an unused crypto address to send funds to - an example here  http://109.228.52.142/slider.html 
+This could be repurposed for attatching a message to the donation, or even selling a product
