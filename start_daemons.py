@@ -30,7 +30,7 @@ def monero_rpc_close_wallet(rpc_url):
         print(e)
         sys.exit(1)
 
-def moenro_rpc_open_wallet(rpc_url,wallet_file):
+def monero_rpc_open_wallet(rpc_url,wallet_file):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
     try:
         wallet_fname = os.path.basename(wallet_file)
@@ -160,7 +160,7 @@ def main(config):
 
     if monero_rpc_online(rpc_url) == True:
         monero_rpc_close_wallet(rpc_url)
-        moenro_rpc_open_wallet(rpc_url,wallet_file)
+        monero_rpc_open_wallet(rpc_url,wallet_file)
     else:
         start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file)
 
