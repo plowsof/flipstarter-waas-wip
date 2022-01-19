@@ -1,6 +1,6 @@
 Work in progress. 
 
-Currently have a VPS up and running @ http://109.228.52.142
+Currently have a VPS up and running @ http://getwishlisted.xyz
 
 I have been focusing on making it load quicker / supporting NonJS users.
 
@@ -30,5 +30,5 @@ Comes with CashFusion. Reusable Payment Addresses are planned for a future relea
 ## Receipts (for charities / tax purposes)
 I'm adding "receipts" - for donators who wish to provide KYC details if a charity is using my list. 
 Basically its an unused crypto address to send funds to - an example here showing address retreival but no emails on donation yet.     
-http://getwishlisted.xyz/slider.html     
+http://getwishlisted.xyz/flask  
 This could be repurposed for attatching a message to the donation, or even selling a product
