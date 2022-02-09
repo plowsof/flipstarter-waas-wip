@@ -1,5 +1,6 @@
 import configparser
 import json
+#address_create_notify == get btc or bch address
 from make_wishlist import create_new_wishlist, address_create_notify, get_xmr_subaddress, put_qr_code
 import pprint
 import os 
@@ -65,11 +66,13 @@ def wish_edit(wishlist,edit_delete,www_root):
             print("1) Title")
             print("2) Goal")
             print("3) Description")
+            print("4) Make recurring")
             answer = ""
             goal = ""
             description = ""
+            cost = ""
             title = ""
-            while answer not in [1,2,3]:
+            while answer not in [1,2,3,4]:
                 answer = int(input(">> "))
             if answer == 1:
                 wishlist["wishlist"][index]["title"] = input("New title >> ")
@@ -79,6 +82,14 @@ def wish_edit(wishlist,edit_delete,www_root):
                 wishlist["wishlist"][index]["goal_usd"] = goal
             if answer == 3:
                 wishlist["wishlist"][index]["description"] = input("New Description >> ")
+            if answer == 4:
+                while not cost.isnumeric():
+                    cost = input("Cost of the recurring amount in USD e.g. 100 >> ")
+                wishlist["wishlist"][index]["type"] = "recurring:" + str(cost)
+                pprint.pprint(wishlist["wishlist"][index])
+                wish_id = wishlist["wishlist"][index]["xmr_address"][0:12]
+                w_dir = os.getcwd()
+                print(f"Fee added. Pass wishlist_recurring.py this id: {wish_id} to deduct the amount \n Add this in crontab to deduct the amount monthly: \n0 0 1 * * /usr/bin/python3 {w_dir}/wishlist_recurring.py {wish_id}")
             again = 0
             finish = ""
             while finish.lower() not in ["y","yes","no","n"]:
@@ -93,6 +104,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                         now_wishlist["wishlist"][i]["goal_usd"] = wishlist["wishlist"][index]["goal_usd"]
                         now_wishlist["wishlist"][i]["title"] = wishlist["wishlist"][index]["title"]
                         now_wishlist["wishlist"][i]["description"] = wishlist["wishlist"][index]["description"]
+                        now_wishlist["wishlist"][i]["type"] = wishlist["wishlist"][index]["type"]
                         break
                 lock = FileLock(f"{data_json}.lock")
                 with lock:
@@ -121,6 +133,7 @@ def delete_wish(wishlist,index):
             archive = now_wishlist["wishlist"][i]
             now_wishlist["wishlist"].pop(i)
             break
+    now_wishlist["archive"].append(archive)
     lock = FileLock(f"{data_json}.lock")
     with lock:
         with open(data_json, "w+") as f:
@@ -128,7 +141,6 @@ def delete_wish(wishlist,index):
     wishlist["wishlist"].pop(index)
     with open('your_wishlist.json','w+') as f:
         json.dump(wishlist, f, indent=6)
-    now_wishlist["archive"].append(archive)
     return wishlist
     #lets find the wish in our data.json file in www_root 
 
@@ -256,7 +268,7 @@ def wish_prompt(config):
     add = input('Add another wish y/n:')
     if 'y' in add.lower():
         wish={}
-        wish_prompt()
+        wish_prompt(config)
     
 
 

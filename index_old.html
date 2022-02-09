@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+    <link rel="stylesheet" href="/flask/static/stylesheets/slider.css" type="text/css"/ />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+      <meta http-equiv="Refresh" content="300">
+      <link href="/flask/static/stylesheets/lightbox.css" rel="stylesheet"/>
+      <meta charset="utf-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1"/>
+      <title>Crypto Funding</title>
+      <link rel="shortcut icon" type="image/x-icon" href="/flask/static/images/plowsof.png"/>
+      <link rel="stylesheet" href="/flask/static/stylesheets/simple.css" type="text/css"/>
+      <link rel="prefetch" href="/flask/static/images/btc.png"/>
+      <link rel="prefetch" href="/flask/static/images/xmr.png"/>
+      <link rel="prefetch" href="/flask/static/images/bch.png"/>
+      <link rel="prefetch" href="/flask/static/images/plowsof.png"/>
+      <link rel="prefetch" href="/flask/static/images/prev.png" />
+      <link rel="prefetch" href="/flask/static/images/next.png" />
+      <link rel="prefetch" href="/flask/static/images/loading.gif"/>
+      <link rel="prefetch" href="/flask/static/images/close.png" />
+      <link rel="prefetch" href="/flask/static/images/spinner.gif"/>
+
+   </head>
+   <body>
+         <div>
+<h1> Info </h1>
+<p>Donate testnet/stagenet coins to a wish to see live updates.</p>
+<li>Monero faucet: <a href="https://melo.tools/faucet/stagenet/">here</a></li>
+<li>Bitcoin-cash faucet: <a href="https://tbch.googol.cash/">here</a></li>
+<li>Bitcoin faucet: <a href="https://bitcoinfaucet.uo1.net/">here</a></li>
+<li>Card Payment: 4111111111111111 exp:12/33 ccv:123 postcode:12345</li>
+<li>The {_WISHLIST_} / {_COMMENTS_} are just a placeholders for now. (for none-js users)</li>
+
+<h1> Buy a ticket </h1>
+<div class="buy_ticket">
+  <form name="buy_ticket" action="/flask/crypto_donate" method="POST" > 
+  <label for="coins_select">Purchase with:</label>
+  <select class="coins_ticket" name="coins" id="coin_select">
+    <option value="xmr" rfund="Monero">Monero</option>
+    <option value="bch" rfund="BitcoinCash">BitcoinCash</option>
+    <option value="btc" rfund="Bitcoin">Bitcoin</option>
+  </select></br>
+ 
+  <input type="radio" id="standard" name="ticket" value="standard" checked="checked">
+  <label for="standard">Standard 49.99 EUR</label></br>
+  <input type="radio" id="vip" name="ticket" value="vip">
+  <label for="vip">VIP 99 EUR</label></br>
+  <label for="quantity">Amount:</label><input type="number" id="quantity" name="quantity" min="1" max="5" value="1"></br>
+  <label for="fname">First name: </label> <input type="text" id="fname" name="fname"></br>
+  <label for="email">Email: </label> <input type="text" id="email" name="email"></br>
+  <label for="consent">I consent to being photographed</label>
+  <input class="checkbox_ticket" type="checkbox" id="consent" checked="checked"></br>
+  <button class="crypto_button" type="submit">Get payment address</button>
+  </div>
+  <div class="spinner_ticket"><img src="/flask/static/images/spinner.gif"></div>
+  <div class="donate_qrcode_ticket">
+    <div id="donate_qrcode_ticket"></div>
+    <div id="pay_uri_ticket"> </div>
+  </div>
+</div>
+</form>
+
+<h1>A wishlist:</h1>
+<div class="withComments">
+
+    <div class="wishlist">{@_WISHLIST_@}</div>
+    <div class="comments">{@_COMMENTS_@} Hello world here is a long sentence , hope you are having a wonderful day</div>
+  </div>
+</div>
+  <script src="/flask/static/js/lightbox-plus-jquery.min.js"></script>
+  <script src="/flask/static/js/appv4.js"></script>
+  <script src="/flask/static/js/jquery.classyqr.min.js"></script>
+  <script src="/flask/static/js/jquery.validate.min.js"></script>
+  <script src="/flask/static/js/form-validation.js"></script>
+  <script src="/flask/static/js/slider.js"></script>
+</body>
+<footer>
+  <p>Powered by plowsofs <a href="https://getwishlisted.xyz">WaaS</a> Funded by BCH <a href="https://flipstarter.cash/">FlipStarter</a></p>
+</footer>
+</html>
+

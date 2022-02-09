@@ -11,6 +11,10 @@ import cryptocompare
 import sqlite3
 import configparser
 
+from main import send_email, ticket_send_email
+
+#os.chdir(os.path.dirname(sys.argv[0]))
+
 cryptocompare.cryptocompare._set_api_key_parameter("-")
 
 wishlist = []
@@ -22,11 +26,12 @@ node_url = "http://localhost:" + config["monero"]["daemon_port"] + "/json_rpc"
 json_fname = os.path.join(config["wishlist"]['www_root'],"data","wishlist-data.json")
 
 
+
 def getPrice(crypto,offset):
     data = cryptocompare.get_price(str(crypto), currency='USD', full=0)
-    #print(f"[{crypto}]:{data[str(crypto)]['USD']}")
+    #logit(f"[{crypto}]:{data[str(crypto)]['USD']}")
     value = float(data[str(crypto)]["USD"])
-    #print(f"value = {value}")
+    #logit(f"value = {value}")
     return(float(value) - (float(value) * float(offset)))
 
 def getJson():
@@ -37,113 +42,323 @@ def getJson():
         return data
 
 def main(tx_id,multi=0):
+    global json_fname, node_url
+    logit(f"node_url = {node_url}")
+    logit(f"json fname = {json_fname}")
     #check height
-    #print("Get json")
+    #logit("Get json")
     saved_wishlist = getJson()
     #pprint.pprint(saved_wishlist)
     if multi == 0:
-        #print("multi = 0")
+        #logit("multi = 0")
         tx_data = checkHeight(tx_id)
     else:
         tx_data = tx_id
-    if tx_data:
-        #print(f"we got funds : {tx_data['address']}")
-        tx_data["amount"] = formatAmount(tx_data["amount"])
-        found = 0
-        main_fund = saved_wishlist["metadata"]["total"]
-        for i in range(len(saved_wishlist["wishlist"])):
-            try:
-                #print(saved_wishlist[i])
-                if saved_wishlist["wishlist"][i]["xmr_address"] == tx_data["address"]:
-                    found = 1
-                    saved_wishlist["wishlist"][i]["modified_date"] = str(datetime.now())
-                    #contributor += 1 
-                    saved_wishlist["wishlist"][i]["contributors"] += 1
-                    #total += amount
-                    saved_wishlist["wishlist"][i]["xmr_total"] += float(tx_data["amount"])
-                    history_tx = {
-                    "amount":float(tx_data["amount"]),
-                    "date_time": str(datetime.now())
-                    }
-                    saved_wishlist["wishlist"][i]["xmr_history"].append(history_tx)
-                    #Percent calculated by JS - or some timed script to periodically check         
-                    break
-            except Exception as e:
-                raise e
-        if found == 0:
-            extra_xmr = tx_data["amount"]
-            #donation received on invalid wishlist
-            saved_wishlist["metadata"]["total"] += float(extra_xmr)
-            saved_wishlist["metadata"]["contributors"] += 1
+    if not tx_data:
+        return
+    in_amount = formatAmount(tx_data["amount"])
+    find_address = tx_data["address"]
+    updateDatabaseJson(find_address,in_amount,"xmr",saved_wishlist)
 
+def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=0,bit_con=0,bit_unc=0):
+    now = int(time.time())
+    db_wish_id = ""
+    found = 0
+    for i in range(len(saved_wishlist["wishlist"])):
+        if saved_wishlist["wishlist"][i][f"{ticker}_address"] == find_address:
+            found = 1
+            if ticker != "xmr":
+                old_balance = float(saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"]) + float(saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"])
+                if old_balance >= bit_balance:
+                    return
+                #print(f"old balance: {old_balance} new balance : {now_balance}")
+                in_amount = float(bit_balance) - float(old_balance)
+                saved_wishlist["wishlist"][i][f"{ticker}_confirmed"] = float(bit_con)
+                saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"] = float(bit_unc)
+            logit("we found the address in the list")
+            saved_wishlist["wishlist"][i]["modified_date"] = now
+            saved_wishlist["metadata"]["modified"] = now
+            db_set_time_wish(int(time.time()))
+            #contributor += 1 
+            saved_wishlist["wishlist"][i]["contributors"] += 1
+            #total += amount
+            saved_wishlist["wishlist"][i][f"{ticker}_total"] += float(in_amount)
+            history_tx = {
+            "amount":float(in_amount),
+            "date_time": now
+            }
+            saved_wishlist["wishlist"][i][f"{ticker}_history"].append(history_tx)
+            db_comment = ""
+            db_comment_name = ""
+            db_date_time = now
+            db_ticker = ticker
+            db_amount = in_amount
+            db_wish_id = saved_wishlist["wishlist"][i]["title"]
+            #Percent calculated by JS - or some timed script to periodically check         
+            break
+    if found == 0:
+        logit(f"We didnt find {find_address} this address in our wishlist")
+        extra_xmr = float(in_amount)
+        address = find_address
+        #donation received on invalid wishlist
+        #Is this address in our 'kyc' database?
+        #get some uid from db
+        # uid (xmr address 1st x chars | email | address | amount)
+        con = sqlite3.connect('receipts.db')
+        cur = con.cursor()
+        create_receipts_table = """ CREATE TABLE IF NOT EXISTS donations (
+                        email text,
+                        amount integer default 0 not null,
+                        fname text,
+                        donation_address text PRIMARY KEY,
+                        zipcode text,
+                        address text,
+                        date_time text,
+                        refund_address text,
+                        crypto_ticker text,
+                        wish_id text,
+                        comment text,
+                        comment_name text,
+                        amount_expected integer default 0 not null,
+                        consent text,
+                        quantity integer default 0,
+                        type text,
+                        comment_bc integer default 0
+                    ); """
+
+        cur.execute(create_receipts_table)
+         
+        logit(f"select * from where address = {address}")
+        cur.execute('SELECT * FROM donations WHERE donation_address = ?',[address])
+        rows = cur.fetchall()
+        pprint.pprint(cur.fetchall())
+        #its a new address. continue
+        if len(rows) == 0:
+            extra_xmr += float(bit_balance)
+            logit("this address doesnt even exist in receipts lol")
+            saved_wishlist["metadata"][f"{ticker}_total"] += float(extra_xmr)
+            saved_wishlist["metadata"]["contributors"] += 1
+        else:
+            db_comment_bc = rows[0][16]
+            db_comment = rows[0][10]
+
+            if db_comment_bc == 0 and db_comment != "":
+                db_comment_bc = 1
+            else:
+                db_comment = ""
+
+            db_amount = rows[0][1]
+            if ticker != "xmr":
+                print(f"db_amount = {db_amount}\nbit_balance = {bit_balance}")
+                if float(db_amount) == float(bit_balance):
+                    return
+                else:
+                    print("amount(balance) in db != balance(now)")
+                    in_amount = float(bit_balance) - float(db_amount)
+                    print(f"in_amount = {in_amount}")
+                    extra_xmr = float(bit_balance)
+            extra_xmr += float(db_amount)
+            logit("We exist in reciepts")
+            sql = ''' UPDATE donations
+                      SET amount = ?,
+                          date_time = ?,
+                          comment_bc = ?
+                      WHERE donation_address = ?'''   
+            cur.execute(sql, (extra_xmr,datetime.now(),db_comment_bc,address))
+            con.commit()
+            #address exists in the receipt db
+            db_email = rows[0][0]
+            db_amount = extra_xmr
+            db_fname = rows[0][2]
+            db_crypto_addr = rows[0][3]
+            db_zip = rows[0][4]
+            db_address = rows[0][5]
+            db_date_time = now #is this a column in the db already?
+            db_refund_addr = rows[0][7]
+            db_ticker = rows[0][8]
+            db_wish_id = rows[0][9]
+            db_comment_name = rows[0][11]
+            db_amount_expected = rows[0][12]
+            db_consent = rows[0][13]
+            db_quantity = rows[0][14]
+            db_type = rows[0][15]
+            print(f"We are looking for wish id {db_wish_id}")
+            found = 0
+            
+            #we need db_wish_id -> wish title
+            for i in range(len(saved_wishlist["wishlist"])):
+                #logit(saved_wishlist[i])
+                if saved_wishlist["wishlist"][i]["id"] == db_wish_id:
+                    found = 1
+                    logit("we found the wish id -> title")
+                    db_wish_id = saved_wishlist["wishlist"][i]["title"]
+                    saved_wishlist["metadata"]["modified"] = now
+                    db_set_time_wish(int(time.time()))
+                    saved_wishlist["wishlist"][i]["modified_date"] = now
+                    saved_wishlist["wishlist"][i]["contributors"] += 1
+                    saved_wishlist["wishlist"][i][f"{ticker}_total"] += float(in_amount)
+                    if ticker != "xmr":
+                        saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"] = bit_unc
+                        saved_wishlist["wishlist"][i][f"{ticker}_confirmed"] = bit_con
+                    history_tx = {
+                    "amount":float(in_amount),
+                    "date_time": now
+                    }
+                    saved_wishlist["wishlist"][i][f"{ticker}_history"].append(history_tx)   
+                    break
+
+            if found == 0:
+                #weird, maybe the wish was put into the archive before being deleted
+                print("Didnt find wish id")
+                db_wish_id = "An already funded wish"
+            #add to the total / history of that wish
+            #send an email / or start a 20~ min timer to check?
+            logit("Time to send an email")
+            print(f"expected: {db_amount_expected}")
+            '''
+            if db_amount_expected == 0:
+                send_email(db_email,in_amount,db_fname,db_crypto_addr,db_zip,db_address,db_date_time,db_refund_addr,db_ticker,db_wish_id)
+            else:
+                if extra_xmr >= db_amount_expected:
+                    #they sent the correct amount
+                    ticket_send_email(db_fname,db_email,db_ticker,db_date_time,db_amount,db_amount_expected,db_consent,db_crypto_addr,db_quantity,db_type,1)
+                else:
+                    #they sent an incorrect amount
+                    ticket_send_email(db_fname,db_email,db_ticker,db_date_time,db_amount,db_amount_expected,db_consent,db_crypto_addr,db_quantity,db_type,0)
+            '''
+    else:
+        #dont need to sort if it was added to total
         saved_wishlist["wishlist"] = sorted(saved_wishlist["wishlist"], key=lambda k: k['percent'],reverse=True)
-        modified = str(datetime.now())
-        saved_wishlist["metadata"]["modified"] = modified
+        saved_wishlist["metadata"]["modified"] = now
+        db_set_time_wish(int(time.time()))
+    if found == 1:
+        #this is just a global history
+        print(f"the comment = {db_comment}")
+        comment = {
+        "comment": db_comment,
+        "comment_name": db_comment_name,
+        "date_time": now,
+        "usd_value": "",
+        "ticker": db_ticker,
+        "amount": in_amount,
+        "id": db_wish_id
+        }
+        saved_wishlist["comments"]["comments"].append(comment)
+        saved_wishlist["comments"]["modified"] = int(time.time())
+        db_set_time_comment(int(time.time()))
         dump_json(saved_wishlist)
+    else:
+        print("this address is unknown.. but still its probably crypto ++")
+
+def db_set_time_comment(time_stamp):
+    con = sqlite3.connect('modified.db')
+    cur = con.cursor()
+    create_modified_table = """ CREATE TABLE IF NOT EXISTS modified (
+                                data integer default 0,
+                                comment integer default 1,
+                                wishlist integer default 1
+                            ); """
+    cur.execute(create_modified_table)
+    sql = ''' UPDATE modified
+              SET comment = ?
+              WHERE data= ?'''   
+    cur.execute(sql, (time_stamp,0))
+    con.commit()
+    con.close()
+
+def db_set_time_wish(time_stamp):
+    con = sqlite3.connect('modified.db')
+    cur = con.cursor()
+    create_modified_table = """ CREATE TABLE IF NOT EXISTS modified (
+                                data integer default 0,
+                                comment integer default 1,
+                                wishlist integer default 1
+                            ); """
+    cur.execute(create_modified_table)
+    sql = ''' UPDATE modified
+              SET wishlist = ?
+              WHERE data= ?'''   
+    cur.execute(sql, (time_stamp,0))
+    con.commit()
+    con.close()
 
 def dump_json(wishlist):
     global json_fname
     lock = json_fname + ".lock"
     with FileLock(lock):
-        #print("Lock acquired.")
+        #logit("Lock acquired.")
         with open(json_fname, 'w+') as f:
-            json.dump(wishlist, f, indent=6)  
+            json.dump(wishlist, f, indent=6,default=str)  
 
-# should be check - exists in database
+# should be check - exists in database first - then dont lockup from rpc
 def checkHeight(tx_id):
     global node_url
+    logit(node_url)
+    con = sqlite3.connect('xmr_ids.db')
+    cur = con.cursor()
+    create_tx_ids_table = """ CREATE TABLE IF NOT EXISTS txids (
+                                id text PRIMARY KEY
+                            ); """
+    cur.execute(create_tx_ids_table)
+    cur.execute('SELECT * FROM txids WHERE id = ?',[tx_id])
+    rows = len(cur.fetchall())
+    if rows == 0:
+        logit("we dont exist")
+        sql = ''' INSERT INTO txids(id)
+                  VALUES(?) '''
+        cur.execute(sql, (tx_id,))
+        con.commit()
+        #continue ..
+    else:
+        logit("we already exist in the db")
+        con.commit()
+        cur.close()
+        return False
+    con.commit()
+    cur.close()
     #loop incase rpc daemon has not started up yet.
     retries = 0
     while True:
         try:
-            print("Trying to download from rpc")
+            logit(f"Trying to download from rpc {node_url}")
             rpc_connection = AuthServiceProxy(service_url=node_url)
-            print("after rpc con")
-            print(tx_id)
+            logit("after rpc con")
+            logit(tx_id)
             params = {
                       "account_index":0,
                       "in":True
                      }
             info = rpc_connection.get_transfers(params)
-            pprint.pprint(info)
+            #pprint.pprint(info)
             params = {
                       "account_index":0,
                       "txid":tx_id
                      }
             info = rpc_connection.get_transfer_by_txid(params)
-            pprint.pprint(info)
+            #pprint.pprint(info)
             break
         except (requests.HTTPError,
           requests.ConnectionError,
           JSONRPCException) as e:
             if retries > 10:
-                print("error: monero rpc connection failed")
+                logit("error: monero rpc connection failed")
                 break
             else:
-                print(e)
-                #print("Retrying connection in 5 seconds.")
+                logit("Retrying connection in 5 seconds")
+                #logit("Retrying connection in 5 seconds.")
                 time.sleep(5)
     if len(info['transfers']) == 1:
-        con = sqlite3.connect('xmr_ids.db')
-        cur = con.cursor()
-        create_tx_ids_table = """ CREATE TABLE IF NOT EXISTS txids (
-                                    id text PRIMARY KEY
-                                ); """
-        cur.execute(create_tx_ids_table)
-        con.commit()
-        cur.execute('SELECT * FROM txids WHERE id = ?',[tx_id])
-        rows = len(cur.fetchall())
-        if rows == 0:
-            sql = ''' INSERT INTO txids(id)
-                      VALUES(?) '''
-            cur.execute(sql, (tx_id,))
-            con.commit()
-            return info["transfer"]
-        cur.close()
+        return info["transfer"]
     else:
         for x in info["transfers"]:
-                main(x,1)
+            main(x,1)
+            time.sleep(1)
 
+def logit(text):
+    with open("get_logged.txt", "a+") as f:
+        f.write("[DEBUG]" + text)
+        f.write("\n")
+    print(text)
 def formatAmount(amount):
     """decode cryptonote amount format to user friendly format.
     Based on C++ code:
@@ -168,4 +383,5 @@ def formatAmount(amount):
 
 if __name__ == '__main__':
     tx_id = sys.argv[1]
+    #tx_id = "457c710fdae5dd8adbd9925044eb95b3617e3b66bf56ab16d0fb6a8b12f89509"
     main(tx_id)

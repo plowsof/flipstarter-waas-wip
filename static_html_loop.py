@@ -16,6 +16,20 @@ prices["bitcoin"] = 0
 def main(config):
     www_root = config["wishlist"]["www_root"]
     funding_page = config["wishlist"]["page_name"]
+    APPLICATION_ID = config["square"]["APPLICATION_ID"]
+    LOCATION_ID = config["square"]["LOCATION_ID"]
+    ACCESS_TOKEN = config["square"]["ACCESS_TOKEN"]
+ 
+    #these can probably be hardcoded
+    client = Client(
+    access_token=ACCESS_TOKEN,
+    environment=config.get("square", "environment"),
+    )
+
+    location = client.locations.retrieve_location(location_id=LOCATION_ID).body["location"]
+    ACCOUNT_CURRENCY = location["currency"]
+    ACCOUNT_COUNTRY = location["country"]
+
     #funding_template = f'template_{funding_page}'
     funding_template = os.path.join(".","html","template_page.html")
     funding_file = os.path.join(www_root,funding_page)
@@ -33,7 +47,7 @@ def main(config):
         sortme = our_data["values"]
 
         sortme = dict(sorted(sortme.items(), key=lambda item: item[1]))
-        pprint.pprint(sortme)
+        #pprint.pprint(sortme)
         xmr_history = get_history(wish["xmr_history"])
         bch_history = get_history(wish["bch_history"])
         btc_history = get_history(wish["btc_history"])
@@ -111,6 +125,14 @@ def main(config):
         for line in f:
             if "{@_WISHLIST_@}" in line:
                 line = line.replace("{@_WISHLIST_@}", html)
+            elif "{@_APPLICATION_ID_@}" in line:
+                line = line.replace("{@_APPLICATION_ID_@}", APPLICATION_ID)
+            elif "{@_LOCATION_ID_@}" in line:
+                line = line.replace("{@_LOCATION_ID_@}", LOCATION_ID)
+            elif "{@_ACCOUNT_CURRENCY_@}" in line:
+                line = line.replace("{@_ACCOUNT_CURRENCY_@}", ACCOUNT_CURRENCY)
+            elif "{@_ACCOUNT_COUNTRY_@}" in line:
+                line = line.replace("{@_ACCOUNT_COUNTRY_@}", ACCOUNT_COUNTRY)
             replacement += line
     lock = funding_template + ".lock"
     with FileLock(lock):

@@ -14,10 +14,13 @@ import random
 import string
 #import _thread as thread
 import psutil
-from start_daemons import start_btc_daemon
+from start_daemons import start_btc_daemon, start_bch_daemon, find_working_node
 import textwrap
 from colorama import Fore, Back, Style
 import shutil
+import threading
+import sqlite3 
+import requests
 #bitcoin - have to ./make_libsecp256k1.sh 
 
 viewkey = ""
@@ -27,7 +30,8 @@ main_address = ""
 
 #need to get these from the monero wallet - these are just placeholders for now
 percent_buffer = 0.05
-
+#include proxy_params;
+#proxy_pass https://localhost:8000
 
 wishes =[]
 btc_info = []
@@ -61,29 +65,52 @@ def secure_delete(path, passes=1):
     print("Removing the file")
     os.remove(path)
 
-def address_create_notify(bin_dir,wallet_path,port,addr="",create=1,notify=1):
+def address_create_notify(bin_dir,wallet_path,port,addr,create,notify,rpcuser,rpcpass,rpcport):
+    port = "http://localhost:" + str(port)
     print("address_create_notify")
     print(f'bin dir = {bin_dir}')
     print(f'walletpath = {wallet_path}')
     print(f'port:{port}')
     if create == 1:
-        thestring = f"./{bin_dir} createnewaddress -w {wallet_path} --testnet"
-        print(f'cmd : {thestring}')
-        stream = os.popen(thestring)
-        output = stream.read()
-        #that was fun. address had a newline on it.
-        address = output.replace("\n","")
+        if "electrum" in bin_dir:
+            thestring = f"./{bin_dir} createnewaddress -w {wallet_path} --offline --testnet "
+            print(f'cmd : {thestring}')
+            stream = os.popen(thestring)
+            output = stream.read()
+            #that was fun. address had a newline on it.
+            address = output.replace("\n","")
+        else:
+            address = curl_address(rpcuser,rpcpass,rpcport)
     if notify == 1:
         if addr != "":
             address = addr
-        thestring = f"./{bin_dir} notify {address} {port} --testnet"
-        print(thestring)
-        stream = os.popen(thestring)
-        output = stream.read()
-        print(output)
+        th = threading.Thread(target=thread_notify,args=(bin_dir,address,port,))
+        th.start()
     return(address)
 
+def thread_notify(bin_dir,address,port):
+    thestring = f"./{bin_dir} notify {address} {port} --testnet"
+    print(thestring)
+    stream = os.popen(thestring)
+    output = stream.read()
+    print(output)
+
+def curl_address(rpcuser,rpcpass,rpcport):
+    url = f"http://{rpcuser}:{rpcpass}@localhost:{rpcport}"
+    print(url)
+    payload = {
+        "method": "createnewaddress",
+        "params": [],
+        "jsonrpc": "2.0",
+        "id": 0,
+    }
+    returnme = requests.post(url, json=payload).json()
+    pprint.pprint(returnme)
+    return returnme["result"] 
+
+
 def get_xmr_subaddress(rpc_url,wallet_file,title):
+    print(f"[DEBUG] : rpc url : {rpc_url}")
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
     xmr_wallet = os.path.basename(wallet_file)
     print(f"xmr wallet file: {xmr_wallet}")
@@ -94,8 +121,14 @@ def get_xmr_subaddress(rpc_url,wallet_file,title):
             "account_index":0,
             "label": title
             }
-    info = rpc_connection.create_address(params)
-    return info["address"]
+    try:
+        info = rpc_connection.create_address(params)
+        return info["address"]
+        pass
+    except Exception as e:
+        print("Error: Your monero node is offline. Ensure that start_daemons.py is running")
+        sys.exit(1)
+    
 
 def formatAmount(amount):
     """decode cryptonote amount format to user friendly format.
@@ -120,10 +153,12 @@ def formatAmount(amount):
     return s
 
 def put_qr_code(address, xmr_btc):
-    global www_root
+    config = configparser.ConfigParser()
+    config.read('wishlist.ini')
+    www_root = config["wishlist"]["www_root"]
     if xmr_btc == "xmr":
         uri = "monero"
-        logo = "monero-xmr-logo.png"
+        logo = "xmr.png"
         thumnail = (60, 60)
         qr = qrcode.QRCode(
         version=None,
@@ -133,7 +168,7 @@ def put_qr_code(address, xmr_btc):
     )
     elif xmr_btc == "btc":
         uri = "bitcoin"
-        logo = "BTC_Logo.png"
+        logo = "btc.png"
         thumnail = (60, 60)
         qr = qrcode.QRCode(
         version=None,
@@ -144,7 +179,7 @@ def put_qr_code(address, xmr_btc):
     else:
         uri = "bchtest"
         
-        logo = "bitcoin-cash-bch-logo.png"
+        logo = "bch.png"
         thumnail = (60, 60)
         qr = qrcode.QRCode(
         version=None,
@@ -153,14 +188,14 @@ def put_qr_code(address, xmr_btc):
         border=4,
     )
     try:
-        if not os.path.isdir(os.path.join(www_root,'qrs')):
-            os.mkdir(os.path.join(www_root,"qrs"))
+        if not os.path.isdir(os.path.join(www_root,'images')):
+            os.mkdir(os.path.join(www_root,"images"))
         pass
     except Exception as e:
         raise e
 
     title = address[0:12]
-    if os.path.isfile(os.path.join(www_root,"qrs",f"{title}.png")):
+    if os.path.isfile(os.path.join(www_root,"images",f"{title}.png")):
         #dont bother recreating the qr image
         #could cause issues if you want to do that though
         return
@@ -171,17 +206,18 @@ def put_qr_code(address, xmr_btc):
     qr.make(fit=True)
     #img = qr.make_image(fill_color="black", back_color=(62,62,62))
     img = qr.make_image(fill_color=(62,62,62), back_color="white")
-    img.save(os.path.join(www_root,"qrs",f"{title}.png"))
-    f_logo = os.path.join("qrs",logo)
+    img.save(os.path.join(www_root,"images",f"{title}.png"))
+    f_logo = os.path.join(www_root,"images",logo)
+    print(f_logo)
     logo = Image.open(f_logo)
     logo = logo.convert("RGBA")
     print(logo.size)
-    im = Image.open(os.path.join(www_root,"qrs",f"{title}.png"))
+    im = Image.open(os.path.join(www_root,"images",f"{title}.png"))
     im = im.convert("RGBA")
     logo.thumbnail(thumnail)
     im.paste(logo,box=(142,142),mask=logo)
     #im.show()
-    im.save(os.path.join(www_root,"qrs",f"{title}.png"))
+    im.save(os.path.join(www_root,"images",f"{title}.png"))
 
 def dump_json(wishlist):
     global www_root
@@ -261,31 +297,34 @@ def create_new_wishlist():
 
         app_this = { 
                     "goal_usd":goal, #these will be in usd
-                    "usd_total":0, #usd - if you cash out for stability
                     "contributors":0,
                     "description": desc,
                     "percent": 0,
                     "hours": hours, # $/h
                     "type": w_type,
+                    "status": "", #e.g. WIP / RELEASED
                     "created_date": str(datetime.now()),
                     "modified_date": str(datetime.now()),
                     "author_name": "",
                     "author_email": "",
                     "id": address[0:12],
-                    "qr_img_url_xmr": f"qrs/{address[0:12]}.png",
-                    "qr_img_url_btc": f"qrs/{btc_address[0:12]}.png",
-                    "qr_img_url_bch": f"qrs/{bch_address[0:12]}.png",
+                    "qr_img_url_xmr": f"flask/static/images/{address[0:12]}.png",
+                    "qr_img_url_btc": f"flask/static/images/{btc_address[0:12]}.png",
+                    "qr_img_url_bch": f"flask/static/images/{bch_address[0:12]}.png",
                     "title": title,
                     "btc_address": btc_address,
                     "bch_address": ("bchtest:" + bch_address),
                     "xmr_address": address,
+                    "usd_total":0, #usd - if you cash out for stability
                     "btc_total": 0,
                     "xmr_total": 0,
                     "bch_total": 0,
                     "hour_goal": usd_hour_goal,
+                    #could combine these into 1 'history' list with 'coin' set for each
                     "xmr_history": [],
                     "bch_history": [],
                     "btc_history": [],
+                    "usd_history": [],
                     "btc_confirmed": 0,
                     "btc_unconfirmed": 0,
                     "bch_confirmed": 0,
@@ -295,27 +334,12 @@ def create_new_wishlist():
         put_qr_code(address,"xmr")
         put_qr_code(btc_address,"btc")
         put_qr_code(bch_address,"bch")
-        info = {
-        "address":btc_address,
-        "confirmed":0,
-        "unconfirmed":0,
-        "contributors":0,
-        "history":[]
-        }
-        btc_info.append(info)
-        info = {
-        "address":bch_address,
-        "confirmed":0,
-        "unconfirmed":0,
-        "contributors":0,
-        "history":[]
-        }
-        bch_info.append(info)
-
     
     thetime = datetime.now()
     total = {
-        "total": 0,
+        "xmr_total": 0,
+        "btc_total": 0,
+        "bch_total": 0,
         "contributors": 0,
         "modified": str(thetime),
         "title": "",
@@ -325,7 +349,7 @@ def create_new_wishlist():
         "viewkey": viewkey,
         "main_address": main_address,
         "status": "OK",
-        "protocol": "v3"
+        "protocol": "v3",
     }
 
     #search wallet for 'in' history, then compare addresses to our new list.
@@ -337,6 +361,9 @@ def create_new_wishlist():
     the_wishlist["wishlist"] = wishes
     the_wishlist["metadata"] = total
     the_wishlist["archive"] = []
+    the_wishlist["comments"] = {}
+    the_wishlist["comments"]["comments"] = []
+    the_wishlist["comments"]["modified"] = 1
 
     #need a file lock on this
 
@@ -355,7 +382,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
             "--daemon-address", remote_node
         ]
     else:
-        print("wallet file was none!")
+        print("wallet file was provided")
         rpc_args = [ 
             f".{rpc_bin_file}", 
             "--wallet-file", wallet_file,
@@ -365,11 +392,9 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
             "--password", ""
         ]
 
-    print("at monero_daemona")
     pprint.pprint(rpc_args)
     monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
 
-    print("problem")
     kill_daemon = 0
     print("Starting Monero rpc...")
     for line in iter(monero_daemon.stdout.readline,''):
@@ -382,13 +407,16 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
             print("Success!")
             rpc_connection = AuthServiceProxy(service_url=rpc_url)
             if wallet_file != None:
-                rpc_remote = remote_node + "/json_rpc"
+                http = ""
+                if "http://" not in remote_node:
+                    http = "http://"
+                rpc_remote = http + remote_node + "/json_rpc"
                 remote_rpc_connection = AuthServiceProxy(service_url=rpc_remote)
                 data = remote_rpc_connection.get_info()
                 info = rpc_connection.refresh({"start_height": (data['height'] - 1)})
                 rpc_connection.store()
             break
-        time.sleep(1)
+        #time.sleep(1)
     if kill_daemon == 1:
         monero_daemon.terminate()
         sys.exit(1)
@@ -433,12 +461,10 @@ def monero_rpc_close_wallet(rpc_url):
 def create_monero_wallet(config):
     global wallet_dir, monero_wallet_rpc, rpc_bin_file
     rpc_port = config["monero"]["daemon_port"]
-    dummy_wallet = os.path.join(wallet_dir,"dummy_wallet")
     if rpc_port == "":
         rpc_port = 18082
     rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
-    remote_node = "http://" + config["monero"]["remote_node"]
-    print(remote_node)
+    print(rpc_url)
     if not os.path.isfile(os.path.join(".", "bin", "monero-wallet-rpc")):
         print("/bin/monero-wallet-rpc missing, unable to create monero walllet, quitting.")
         sys.exit(1)
@@ -450,27 +476,47 @@ def create_monero_wallet(config):
                 proc.kill()
     #start the monero-rpc-wallet daemon
     print("start it up")
-    monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,None,remote_node)
-        
+    list_remote_nodes = []
+    fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
+    for i in range(int(fallback_remote_nodes)):
+        num = (i+1)
+        list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
 
-    print("Creating a Monero wallet..")
+    remote_node = "http://" + str(find_working_node(list_remote_nodes))
+    #remote_node = "http://stagenet.melo.tools:38081"
     letters = string.ascii_lowercase
-    try:
+    wallet_fname = "monero_" + ''.join(random.choice(letters) for i in range(10))
+    wallet_path = os.path.join(wallet_dir,wallet_fname)
+    rpc_remote = remote_node + "/json_rpc"
+    remote_rpc_connection = AuthServiceProxy(service_url=rpc_remote)
+    data = remote_rpc_connection.get_info()
+    #--------------------------------------
+    #  create hot wallet 
+    #--------------------------------------
+    auto_create = 0
+    if prompt_wallet_create("xmr"):
+        auto_create = 1
+        print(monero_wallet_rpc)
+        print(rpc_port)
+        print(rpc_url)
+        print(remote_node)
+        monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,None,remote_node)
+        print("Creating a Monero wallet..")
         #print(rpc_url)
         rpc_connection = AuthServiceProxy(service_url=rpc_url)
         #label could be added
-        wallet_fname = "monero_" + ''.join(random.choice(letters) for i in range(10))
         params={
                 "filename": wallet_fname,
                 "language": "English"
                 }
+        print(wallet_fname)
         info = rpc_connection.create_wallet(params)
+        print("after create wallet")
+        print("try and open the walleta")
+
         info = rpc_connection.open_wallet({"filename": wallet_fname,"password": ""})
-        info = rpc_connection.get_height()
         #to get block height data we need to use /json_rpc
-        rpc_remote = remote_node + "/json_rpc"
-        remote_rpc_connection = AuthServiceProxy(service_url=rpc_remote)
-        data = remote_rpc_connection.get_info()
+
         view_key = rpc_connection.query_key({"key_type": "view_key"})["key"]
         mnemonic = rpc_connection.query_key({"key_type": "mnemonic"})["key"]
         spend_key = rpc_connection.query_key({"key_type": "spend_key"})["key"]
@@ -498,7 +544,7 @@ def create_monero_wallet(config):
         #print("closing hot wallet...")
         rpc_connection.close_wallet()
         #print("deleting hot wallet...")
-        wallet_path = os.path.join(wallet_dir,wallet_fname)
+        
         print("Secure deletion of wallet / keys file (3 passes of random data)...")
         keys = wallet_path + ".keys"
         address_file = wallet_path + ".address.txt"
@@ -515,9 +561,17 @@ def create_monero_wallet(config):
             if "monero-wallet-" in proc.name():
                 #print(proc.name())
                 proc.kill()
-
-        #restore from viewkey
-        
+    else:
+        #view_key
+        #main_address
+        key_data = prompt_monero_keys()
+        view_key = key_data["view_key"]
+        main_address = key_data["main_address"]
+    #--------------------------------------
+    #  restore from view key
+    #--------------------------------------
+    wallet_created = 0
+    while True:
         wallet_json_data = {
             "version":1,
             "filename":wallet_path,
@@ -529,7 +583,7 @@ def create_monero_wallet(config):
         json_path = wallet_path + ".json"
         with open(json_path, "w+") as f:
             json.dump(wallet_json_data,f)
-    
+
         #dummy wallet would be here TODO
         rpc_args = [ 
         f".{monero_wallet_rpc}",
@@ -538,155 +592,169 @@ def create_monero_wallet(config):
         "--daemon-address", remote_node,
         "--generate-from-json", json_path
         ]
-        #pprint.pprint(rpc_args)
-        test_string = ""
-        for x in rpc_args:
-            test_string += x + " "
-        print(test_string)
         monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
         print("Busy creating a view-only Monero wallet...")
-        while not os.path.isfile(wallet_path):
-            time.sleep(1)
-        print("View-only wallet created.")
-        #remove the broken wallet file(??) (in testing i had to remove the wallet file for some reason)
-        monero_daemon.terminate()
-        monero_daemon.communicate()
-        os.remove(wallet_path)
-        #close it so we can set wallet dir(??)
-        
-        #start with the keys file only
-        #special
-        print("Loading view-only wallet...")
+        #wallet_rpc_server.cpp:4509 Error creating wallet: failed to parse view key secret key
+        for line in iter(monero_daemon.stdout.readline,''):
+            #debug output
+            #print(str(line.rstrip()))
+            if b"Error" in line.rstrip() or b"Failed" in line.rstrip():
+                print("View-key / Main address incorrect , try again")
+                key_data = prompt_monero_keys()
+                view_key = key_data["view_key"]
+                main_address = key_data["main_address"]
+                break
+            if os.path.isfile(wallet_path):
+                wallet_created = 1
+                break
+        if wallet_created == 1:
+            break
+    
+    print("View-only wallet created.")
+    #remove the broken wallet file(??) (in testing i had to remove the wallet file for some reason)
+    monero_daemon.terminate()
+    monero_daemon.communicate()
+    os.remove(wallet_path)
+    #close it so we can set wallet dir(??)
+    
+    #start with the keys file only
+    #special
+    print("Loading view-only wallet...")
+    list_remote_nodes = []
+    fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
+    for i in range(int(fallback_remote_nodes)):
+        num = (i+1)
+        list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
+
+    remote_node = "http://" + str(find_working_node(list_remote_nodes))
+    if remote_node:
         monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_path,remote_node)
-        print("Loaded")
+    else:
+        print("Error monero remote unreachable")
+        return
+    
+    print("Loaded")
 
-        #assuming we can still use the same port..
-        print("Confirming view-only wallet is an exact copy of the hot-wallet")
-        new_view_key = rpc_connection.query_key({"key_type": "view_key"})["key"]
-        if new_view_key != view_key:
-            print("Fatal error: new wallet does not match")
-            sys.exit(1)
-        else:
-            print("View-only wallet is an exact copy of the (deleted) hot-wallet")
-        #omiting the wallet-dir makes generate-from-json work (?)
-        #but we need wallet-dir to use it
-        #monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_fname,remote_node)
-        print("Should be online now?")
-        config["monero"]["wallet_file"] = wallet_path
-        #TODO viewkey main_address in config file
-        with open('wishlist.ini', 'w') as configfile:
-            config.write(configfile)
+    #assuming we can still use the same port..
+    print("Confirming view-only wallet is an exact copy of the hot-wallet")
+    new_view_key = rpc_connection.query_key({"key_type": "view_key"})["key"]
+    if new_view_key != view_key:
+        print("Fatal error: new wallet does not match")
+        sys.exit(1)
+    else:
+        print("View-only wallet is an exact copy of the (deleted) hot-wallet")
+    #omiting the wallet-dir makes generate-from-json work (?)
+    #but we need wallet-dir to use it
+    #monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_fname,remote_node)
+    print("Should be online now?")
+    config["monero"]["wallet_file"] = wallet_path
+    #TODO viewkey main_address in config file
+    with open('wishlist.ini', 'w') as configfile:
+        config.write(configfile)
 
-        #delete variables from memory
-        del data 
-        del view_key 
-        del mnemonic 
-        del spend_key 
-        del main_address 
-
-    except Exception as e:
-        print(e)
-        time.sleep(3)
-        print("Connecting to daemon...")
+    #delete variables from memory
+    del data 
+    del view_key 
+    del mnemonic 
+    del spend_key 
+    del main_address 
     return monero_daemon
 
-def create_bch_wallet(config):
-    global wallet_dir
-    electron_bin = config["bch"]["bin"]
-    #todo - strange 
-    for x in os.listdir("bin"):
-        if "Electron-Cash" in x:
-            electron_bin = os.path.join("bin",x,"electron-cash")
-    if electron_bin == "":
+def prompt_wallet_create(ticker):
+    if ticker == "bch":
+        coin = "Bitcoin-Cash"
+    elif ticker == "btc":
+        coin = "Bitcoin"
+    else:
+        coin = "Monero"
+    answer = ""
+    print(f"No {coin} wallet detected. \n 1) Create one automatically. \n 2) Enter your own public view-key")
+    while answer not in [1,2]:
+        answer = int(input("enter 1 or 2 >> "))
+    if answer == 1:
+        return True
+    else: 
         return False
+
+def prompt_monero_keys():
+    view_key = ""
+    main_address = ""
+    while view_key == "":
+        view_key = input("Enter the Monero view-key >>")
+    while main_address == "":
+        main_address = input ("Enter the main wallet address >>")
+    data = {
+    "view_key": viewkey,
+    "main_address": main_address
+    }
+    return data
+
+def create_bit_wallet(config,bchbtc):
+    global wallet_dir
     letters = string.ascii_lowercase
-    wallet_fname = "cash_" + ''.join(random.choice(letters) for i in range(10)) 
-    wallet_path = os.path.join(wallet_dir,wallet_fname)
-    #print(wallet_path)
-    run_args = [
+    if bchbtc == "btc":
+        electron_bin = config["btc"]["bin"]
+        find_me = "electrum-"
+        c_colour = Fore.RED
+        c_name = "Bitcoin"
+        wallet_fname = "bitcoin_" + ''.join(random.choice(letters) for i in range(10)) 
+        wallet_path = os.path.join(wallet_dir,wallet_fname)
+        run_args = [
+        electron_bin, "create", "-w", wallet_path, "--offline", "--testnet"
+        ]
+    else:
+        electron_bin = config["bch"]["bin"]
+        find_me = "Electron"
+        c_colour = Fore.GREEN
+        c_name = "Bitcoin Cash"
+        wallet_fname = "cash_" + ''.join(random.choice(letters) for i in range(10)) 
+        wallet_path = os.path.join(wallet_dir,wallet_fname)
+        run_args = [
         electron_bin, "create", "-w", wallet_path, "--testnet"
         ]
-    bch_bin = subprocess.Popen(run_args,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    try:
+    
+    #python3 run_electrum create -w lol --offline
+    for x in os.listdir("bin"):
+        if find_me in x:
+            electrum_bin = os.path.join("bin",x)
+    if electron_bin == "":
+        return False
+    
+    #print(wallet_path)
+    #--------------------------------------
+    #  create hot wallet
+    #--------------------------------------
+    if prompt_wallet_create(bchbtc):
+        bch_bin = subprocess.Popen(run_args,stdout=subprocess.PIPE)
+        #wait until finished
         bch_bin.communicate(input=b"\n")
+
         with open(wallet_path, "r") as f:
             bch_data = json.load(f)
-        print(f"*************[{Style.BRIGHT}{Fore.GREEN}Bitcoin-Cash {Style.RESET_ALL}wallet]*************")
-        print("Your Bitcoin-Cash wallet seed is:")
+        print(f"*************[{Style.BRIGHT}{c_colour}{c_name} {Style.RESET_ALL}wallet]*************")
+        print(f"Your {c_name} wallet seed is:")
         print(f"{bch_data['keystore']['seed']}")
         print(f"format:{bch_data['keystore']['seed_type']} derivation: {bch_data['keystore']['derivation']}")
         print("Please keep your seed information in a safe place; if you lose it, you will not be able to restore your wallet")
-        print("*************[Bitcoin-Cash wallet]*************")
+        print("*************[Bitcoin wallet]*************")
         input("Write your seed down on paper or you can never spend money you receive \n Press enter to continue >>")
-        config["bch"]["wallet_file"] = wallet_path
+
+        config[bchbtc]["wallet_file"] = wallet_path
+        config[bchbtc]["xpub"] = bch_data['keystore']['xpub']
         with open('wishlist.ini', 'w') as configfile:
             config.write(configfile)
-        #stop bch daemon
-        stop_bit_daemon(electron_bin)
+        #stop_bit_daemon(electrum_bin)
+
         secure_delete(wallet_path,passes=3)
-        run_args = [
-        electron_bin, "restore", "-w", wallet_path, "--testnet", bch_data['keystore']['xpub']
-        ]
-        bch_bin = subprocess.Popen(run_args,stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        bch_bin.communicate()
-        #
-        print("Verifying new view-key matches.")
-        with open(wallet_path, "r") as f:
-            json_data = json.load(f)
-        orig_view_key = bch_data['keystore']['xpub']
-        new_view_key = json_data['keystore']['xpub']
-        if orig_view_key == new_view_key:
-            print("New view-key is a match.")
-        else:
-            print("Fatal error: new wallet does not match the original")
-            sys.exit(1)
-
-        #del bch variables
-        del bch_data
-        del orig_view_key
-        del new_view_key
-        del json_data
-        return config
-        pass
-    except Exception as e:
-        raise e
-
-def create_btc_wallet(config):
-    global wallet_dir
-    electron_bin = config["btc"]["bin"]
-    #python3 run_electrum create -w lol --offline
-    for x in os.listdir("bin"):
-        if "Electrum-" in x:
-            electrum_bin = os.path.join("bin",x,"run_electrum")
-    if electron_bin == "":
-        return False
-    letters = string.ascii_lowercase
-    wallet_fname = "bitcoin_" + ''.join(random.choice(letters) for i in range(10)) 
-    wallet_path = os.path.join(wallet_dir,wallet_fname)
-    #print(wallet_path)
-    run_args = [
-        electron_bin, "create", "-w", wallet_path, "--offline", "--testnet"
-        ]
-    bch_bin = subprocess.Popen(run_args,stdout=subprocess.PIPE)
-    #wait until finished
-    bch_bin.communicate()   
-
-    with open(wallet_path, "r") as f:
-        bch_data = json.load(f)
-    print(f"*************[{Style.BRIGHT}{Fore.RED}Bitcoin {Style.RESET_ALL}wallet]*************")
-    print("Your Bitcoin-Cash wallet seed is:")
-    print(f"{bch_data['keystore']['seed']}")
-    print(f"format:{bch_data['keystore']['seed_type']} derivation: {bch_data['keystore']['derivation']}")
-    print("Please keep your seed information in a safe place; if you lose it, you will not be able to restore your wallet")
-    print("*************[Bitcoin wallet]*************")
-    input("Write your seed down on paper or you can never spend money you receive \n Press enter to continue >>")
-
-    config["btc"]["wallet_file"] = wallet_path
-    with open('wishlist.ini', 'w') as configfile:
-        config.write(configfile)
-    #stop_bit_daemon(electrum_bin)
-
-    secure_delete(wallet_path,passes=3)
+    else:
+        #ask for view keys
+        # set the bch_data['keystore']['xpub']
+        answer = input ("Paste your xpub key, then press enter\n>>")
+        bch_data = { "keystore": { "xpub": answer
+        }}
+    #--------------------------------------
+    #  create view-only
+    #--------------------------------------
     run_args = [
     electron_bin, "restore", "-w", wallet_path, "--offline", "--testnet", bch_data['keystore']['xpub']
     ]
@@ -711,7 +779,6 @@ def create_btc_wallet(config):
     del json_data
 
     return config
-
 
 #set viewkeys for wallets here
 def main(config):
@@ -749,12 +816,23 @@ def main(config):
         else:
             #a wallet file was supplied
             #we still need to start the rpc up
-            remote_node = "http://" + config["monero"]["remote_node"]
-            monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_file,remote_node)
+            list_remote_nodes = []
+            fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
+            for i in range(int(fallback_remote_nodes)):
+                num = (i+1)
+                list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
+
+            remote_node = "http://" + str(find_working_node(list_remote_nodes))
+            if remote_node:
+                monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_file,remote_node)
+            else:
+                print("Error monero remote unreachable")
+                return
+            
 
     if not config["bch"]["wallet_file"]:
         #maybe we dont have to close the daemon in create wallet
-        config = create_bch_wallet(config)
+        config = create_bit_wallet(config,"bch")
     else:
         if not os.path.isfile(config["bch"]["wallet_file"]):
             print("***********************************")
@@ -774,7 +852,7 @@ def main(config):
 
     if not config["btc"]["wallet_file"]:
         print("make a btc wallet")
-        config = create_btc_wallet(config)
+        config = create_bit_wallet(config,"btc")
     else:
         if not os.path.isfile(config["btc"]["wallet_file"]):
             print("***********************************")
@@ -782,11 +860,14 @@ def main(config):
             print("***********************************")
             sys.exit(1)
     print('Start the BTC daemon / open wallet')
-    electrum_bin = config["btc"]["bin"]
+    
 
-    btc_wallet_path = config["btc"]["wallet_file"]
-    print(f"time to break: {btc_wallet_path} {electrum_bin}")
-    start_btc_daemon(electrum_bin,btc_wallet_path)
+    rpcuser = config["bch"]["rpcuser"]
+    rpcpass = config["bch"]["rpcpassword"]
+    rpcport = config["bch"]["rpcport"]
+    bch_wallet_path = config["bch"]["wallet_file"]
+    #print(f"time to break: {btc_wallet_path} {electrum_bin}")
+
     rpc_port = config["monero"]["daemon_port"]
     rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
 
@@ -801,14 +882,25 @@ def main(config):
     config = configparser.ConfigParser()
     config.read('wishlist.ini')
     port = config["callback"]["port"]
+    bch_rpcuser = config["bch"]["rpcuser"]
+    bch_rpcpass = config["bch"]["rpcpassword"]
+    bch_rpcport = config["bch"]["rpcport"]
+    btc_rpcuser = config["btc"]["rpcuser"]
+    btc_rpcpass = config["btc"]["rpcpassword"]
+    btc_rpcport = config["btc"]["rpcport"]
+    electrum_bin = config["btc"]["bin"]
+    btc_wallet_path = config["btc"]["wallet_file"]
+    bch_wallet_path = config["bch"]["wallet_file"]
+    start_btc_daemon(electrum_bin,btc_wallet_path,btc_rpcuser,btc_rpcpass,btc_rpcport)
+    start_bch_daemon(electron_bin,bch_wallet_path,bch_rpcuser,bch_rpcpass,bch_rpcport)
     for wish in wishlist["wishlist"]:
         if not wish["xmr_address"]:
             xmr_wallet = os.path.basename(config['monero']['wallet_file'])
             wish["xmr_address"] = get_xmr_subaddress(rpc_url,xmr_wallet,wish["title"])
         if not wish["btc_address"]:
-            wish["btc_address"] = address_create_notify(electrum_bin,btc_wallet_path,port,addr="",create=1,notify=0)
+            wish["btc_address"] = address_create_notify(electrum_bin,btc_wallet_path,port,"",1,0,btc_rpcuser,btc_rpcpass,btc_rpcport)
         if not wish["bch_address"]:
-            wish["bch_address"] = address_create_notify(electron_bin,bch_wallet_path,port,addr="",create=1,notify=0)
+            wish["bch_address"] = address_create_notify(electron_bin,bch_wallet_path,port,"",1,0,bch_rpcuser,bch_rpcpass,bch_rpcport)
 
 
     #terminate all daemons
@@ -832,41 +924,44 @@ def main(config):
     with open('wishlist.ini', 'w') as configfile:
         config.write(configfile)
 
+    con = sqlite3.connect('crypto_prices.db')
+    cur = con.cursor()
+    create_price_table = """ CREATE TABLE IF NOT EXISTS crypto_prices (
+                                data default 0,
+                                xmr integer,
+                                btc integer,
+                                bch integer
+                            ); """
+    cur.execute(create_price_table)
+    sql = ''' INSERT INTO crypto_prices(data,xmr,btc,bch)
+    VALUES (0,0,0,0)'''
+    cur.execute(sql)
+    con.commit()
+    con.close()
 
-    #move the html files
-    try:
-        #(qrs dir already made)
-        js_dir = os.path.join(www_root,"js")
-        logos_dir = os.path.join(www_root,"logos")
-        images_dir = os.path.join(www_root,"images")
-        if not os.path.isdir(js_dir):
-            os.mkdir(js_dir)
-        if not os.path.isdir(logos_dir):
-            os.mkdir(logos_dir)
-        if not os.path.isdir(images_dir):
-            os.mkdir(images_dir)
-        #copy the js file
-        shutil.copy(os.path.join(".","html","js","app.js"),js_dir)
-        shutil.copy(os.path.join(".","html","simple.css"),www_root)
-        shutil.copy(os.path.join(".","html","lightbox.css"),www_root)
-        shutil.copy(os.path.join(".","qrs","bitcoin-cash-bch-logo.png"),logos_dir)
-        shutil.copy(os.path.join(".","qrs","BTC_Logo.png"),logos_dir)
-        shutil.copy(os.path.join(".","qrs","monero-xmr-logo.png"),logos_dir)
-        shutil.copy(os.path.join(".","html","images","close.png"),images_dir)
-        shutil.copy(os.path.join(".","html","images","loading.gif"),images_dir)
-        shutil.copy(os.path.join(".","html","images","next.png"),images_dir)
-        shutil.copy(os.path.join(".","html","images","plowsof.png"),images_dir)
-        shutil.copy(os.path.join(".","html","images","prev.png"),images_dir)
-        shutil.copy(os.path.join(".","html","js","lightbox-plus-jquery.min.js"),js_dir)
-
-    except Exception as e:
-        raise e
+    db_make_modified()
 
     print("Finished. Run 'start_daemons.py' to complete the install.")
 
     #clear memory cache (linux)
     os.system('sync')
     open('/proc/sys/vm/drop_caches','w').write("1\n")
+
+def db_make_modified():
+    #remove modified.db if exists
+    con = sqlite3.connect('modified.db')
+    cur = con.cursor()
+    create_modified_table = """ CREATE TABLE IF NOT EXISTS modified (
+                                data integer default 0,
+                                comment integer default 1,
+                                wishlist integer default 1
+                            ); """
+    cur.execute(create_modified_table)
+    sql = ''' INSERT INTO modified(data,comment,wishlist)
+    VALUES (?,?,?)'''
+    cur.execute(sql, (0,2,2))
+    con.commit()
+    con.close()
 
 def stop_bit_daemon(daemon_dir):
     if "electron" in daemon_dir:
