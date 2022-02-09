@@ -11,14 +11,19 @@ sudo apt-get install screen
 pip3 install uvicorn 
 pip3 install -r requirements.txt
 
-git clone <repo> 
+git clone https://github.com/plowsof/flipstarter-waas-wip
+
+cd to that directory and run:
 
 python3 make_wishlist.py
 
 screen python3 start_daemons.py
 
 screen python3 -m uvicorn main:app --reload
-    
+
+visit localhost:8000/flask 
+
+(in production this will be using cert files)
 ### TODO
     
 Tutorials will come after:    
