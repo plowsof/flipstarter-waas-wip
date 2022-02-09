@@ -19,5 +19,5 @@ I will then begin work on Pi / VPS tutorials to show how easily you can deploy a
 
 Then fix this: (can go in the static html refresher loop)
 - [x] heartbeat to check if the monero remote node is online. If not try a list of nodes from the monero project (instead of a list of nodes, the "OK" status from the json metadata is removed.
-- [x] Attempt at swithing the monero remote node if/when it goes offline
+- [x] Attempt at switching the monero remote node if/when it goes offline
 
