@@ -1,4 +1,4 @@
-Currently this will create a donation page @ localhost:8000/flask which is an exact copy of rucknium.me/flask 
+Currently this will create a donation page @ localhost:8000/flask which is an exact copy of https://rucknium.me/flask/
 
 ### setup (mistakes likely)
 
