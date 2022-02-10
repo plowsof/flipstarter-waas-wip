@@ -39,6 +39,10 @@ Tutorials will come after:
 - [ ] clean up the prompts / text shown (pretty colours)
 - [x] a prompt if user wants to supply their viewkey (else wallets are made for them)
 - [ ] static version for Non-JS users
+- [ ] Dockerise:
+    - monero-wallet-rpc
+    - uvicorn
+    - nginx 
 I will then begin work on Pi / VPS tutorials to show how easily you can deploy a funding page(and make a real readme! (:)
 
 Then fix this: (can go in the static html refresher loop)
