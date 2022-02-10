@@ -42,12 +42,9 @@ Tutorials will come after:
 - [ ] Dockerise:
     - monero-wallet-rpc
     - uvicorn
-    - nginx 
-I will then begin work on Pi / VPS tutorials to show how easily you can deploy a funding page(and make a real readme! (:)
+    - nginx    
 
-Then fix this: (can go in the static html refresher loop)
-- [x] heartbeat to check if the monero remote node is online. If not try a list of nodes from the monero project (instead of a list of nodes, the "OK" status from the json metadata is removed.
-- [x] Attempt at switching the monero remote node if/when it goes offline
+I will then begin work on Pi / VPS tutorials to show how easily you can deploy a funding page(and make a real readme! (:)
 
 Yes, it runs on a Pi - the source files for electrum/electron wallets must be used instead of the source , and alot more dependencies installed alot with:
 sudo apt install libsecp256k1-dev
