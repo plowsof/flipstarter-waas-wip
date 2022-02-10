@@ -18,9 +18,8 @@ cd to that directory and run:
 python3 make_wishlist.py
 
 screen python3 start_daemons.py
-
 screen python3 -m uvicorn main:app --reload
-
+(press Ctrl+a then Ctrl+d to leave each of those screen sessions running)
 visit localhost:8000/flask 
 
 (in production this will be using cert files)
