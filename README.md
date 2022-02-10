@@ -4,13 +4,13 @@ Currently this will create a donation page @ localhost:8000/flask which is an ex
 
 for debian vps
 
-sudo apt-get install git
-sudo apt-get install python3 
-sudo apt-get install pip3
-sudo apt-get install screen
-pip3 install uvicorn 
-pip3 install fastapi
-pip3 install -r requirements.txt
+sudo apt-get install git    
+sudo apt-get install python3     
+sudo apt-get install pip3    
+sudo apt-get install screen     
+pip3 install uvicorn     
+pip3 install fastapi     
+pip3 install -r requirements.txt    
 
 git clone https://github.com/plowsof/flipstarter-waas-wip
 
