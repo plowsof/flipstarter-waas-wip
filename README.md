@@ -4,7 +4,7 @@ Currently this will create a donation page @ localhost:8000/flask which is an ex
 
 Ubuntu:
 
-(remove screen if you are testing locally)
+(remove screen if you are testing locally)           
 sudo apt-get -y install python3 pip3 git   
 pip3 install uvicorn fastapi         
 pip3 install -r requirements.txt    
