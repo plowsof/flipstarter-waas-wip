@@ -1,15 +1,12 @@
 Currently this will create a donation page @ localhost:8000/flask which is an exact copy of https://rucknium.me/flask/
 
-### setup (mistakes likely)
+### setup (mistakes likely brb learning docker)
 
 for debian vps
 
 sudo apt-get install git    
-sudo apt-get install python3     
-sudo apt-get install pip3    
-sudo apt-get install screen     
-pip3 install uvicorn     
-pip3 install fastapi     
+sudo apt-get -y install python3 pip3 screen     
+pip3 install uvicorn python-fastapi         
 pip3 install -r requirements.txt    
 
 git clone https://github.com/plowsof/flipstarter-waas-wip
