@@ -6,7 +6,7 @@ for debian vps
 
 sudo apt-get install git    
 sudo apt-get -y install python3 pip3 screen     
-pip3 install uvicorn python-fastapi         
+pip3 install uvicorn fastapi         
 pip3 install -r requirements.txt    
 
 git clone https://github.com/plowsof/flipstarter-waas-wip
