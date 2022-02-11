@@ -1,11 +1,11 @@
 Currently this will create a donation page @ localhost:8000/flask which is an exact copy of https://rucknium.me/flask/
 
-### setup (mistakes likely brb learning docker)
+### setup for local testing (mistakes likely brb learning docker)
 
-for debian vps
+Ubuntu:
 
-sudo apt-get install git    
-sudo apt-get -y install python3 pip3 screen     
+(remove screen if you are testing locally)
+sudo apt-get -y install python3 pip3 git   
 pip3 install uvicorn fastapi         
 pip3 install -r requirements.txt    
 
@@ -15,8 +15,8 @@ cd to that directory and run:
 
 python3 make_wishlist.py
 
-screen python3 start_daemons.py    
-screen python3 -m uvicorn main:app --reload    
+python3 start_daemons.py    
+python3 -m uvicorn main:app --reload    
 (press Ctrl+a then Ctrl+d to leave each of those screen sessions running)     
 visit localhost:8000/flask     
 
