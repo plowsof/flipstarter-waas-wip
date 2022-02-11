@@ -1,8 +1,8 @@
 Currently this will create a donation page @ localhost:8000/flask which is an exact copy of https://rucknium.me/flask/
 
-### setup for local testing (mistakes likely brb learning docker)
+### setup for (mistakes likely brb learning docker)
 
-Ubuntu:
+debian vps: 
 
 (remove screen if you are testing locally)           
 sudo apt-get -y install python3 pip3 git   
@@ -13,12 +13,20 @@ git clone https://github.com/plowsof/flipstarter-waas-wip
 
 cd to that directory and run:
 
-python3 make_wishlist.py
+sudo python3 make_wishlist.py
 
-python3 start_daemons.py    
-python3 -m uvicorn main:app --reload    
-(press Ctrl+a then Ctrl+d to leave each of those screen sessions running)     
-visit localhost:8000/flask     
+screen python3 start_daemons.py    
+screen python3 -m uvicorn main:app --reload    
+(press Ctrl+a then Ctrl+d to leave each of those screen sessions running) 
+
+nginx conf:    
+
+location /flask {
+    include proxy_params;
+    proxy_pass https://localhost:8000;
+}
+
+visit <url>/flask     
 
 (in production this will be using cert files)    
 ### TODO
