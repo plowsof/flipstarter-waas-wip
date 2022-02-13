@@ -22,7 +22,7 @@ from urllib.parse import urlparse, parse_qs
 from html import escape
 import json
 from datetime import datetime
-from make_wishlist import create_new_wishlist, address_create_notify, get_xmr_subaddress, put_qr_code
+from make_wishlist import create_new_wishlist, put_qr_code, get_unused_address
 import smtplib
 from email.utils import parseaddr
 import re
@@ -85,6 +85,126 @@ async def return_price(status_code=200):
 async def return_price(status_code=200):
     return db_get_prices()
 
+@app.post("/flask/webhook")
+async def get_body(request: Request,status_code=200):
+    global NOTIFICATION_URL, SIG_KEY, client
+    body = await request.body()
+    length = int(request.headers['content-length'])
+    square_signature = request.headers['x-square-signature']
+
+    #print(length)
+    #print(square_signature)
+
+    url_request_bytes = NOTIFICATION_URL.encode('utf-8') + body
+
+    # create hmac signature
+    hmac_code = hmac.new(SIG_KEY, msg=None, digestmod='sha1')
+    hmac_code.update(url_request_bytes)
+    hash = hmac_code.digest()
+
+    # compare to square signature from header
+    if base64.b64encode(hash) != square_signature.encode('utf-8'):
+        print("sig dont match")
+        return ''
+    data = json.loads(body.decode('utf-8'))
+    #pprint.pprint(data[""]
+    #get order id
+    #get information (email / wish id) using order id
+   
+    print("Hello world")
+    if (data["data"]["object"]["payment"]["status"]) != "COMPLETED":
+        return ''
+
+    order_id = data["data"]["object"]["payment"]["order_id"]
+    #refid
+    result = client.orders.retrieve_order(
+      order_id = order_id
+    )
+    body = result.body
+    #pprint.pprint(body)
+    ref_id = body["order"]["reference_id"]
+    #amount
+    usd = data["data"]["object"]["payment"]["amount_money"]["amount"] / 100
+    #confirm we've never seen this order_id before becaus ei noticed duplicate
+    #if order id not in db - return - or add it and continue  
+    con = sqlite3.connect('card_orders.db')
+    cur = con.cursor()
+    create_orders_table = """ CREATE TABLE IF NOT EXISTS orders (
+                                usd integer,
+                                ref_id text PRIMARY KEY,
+                                email text,
+                                fname text,
+                                lname text,
+                                zip text,
+                                street text,
+                                cc text,
+                                order_id text,
+                                date_time text
+                            ); """
+
+    cur.execute(create_orders_table)
+    cur.execute('SELECT * FROM orders WHERE ref_id = ?',[ref_id])
+    rows = cur.fetchall()
+    print(f"[DEBUG] row data: {rows[0][8]}\n[DEBUG] != {order_id}")
+    if rows[0][8] != order_id:
+        print("We got monEY")
+        sql = ''' UPDATE orders
+          SET order_id = ?,
+          usd = ?
+          WHERE ref_id = ?'''   
+        cur.execute(sql, (order_id,usd,ref_id))
+        db_usd = usd 
+        db_ref_id = rows[0][1]
+        db_email = rows[0][2]
+        db_fname = rows[0][3]
+        db_lname = rows[0][4]
+        db_zip = rows[0][5]
+        db_street = rows[0][6]
+        db_cc = rows[0][7]
+        db_order_id = order_id
+        db_date_time = rows[0][8]
+        wishlist_usd_notify(db_usd,db_ref_id,db_email,db_fname,db_lname,db_zip,db_street,db_cc,db_order_id,db_date_time)
+    con.commit()
+
+def wishlist_usd_notify(db_usd,db_ref_id,db_email,db_fname,db_lname,db_zip,db_street,db_cc,db_order_id,db_date_time):
+    global wish_config
+    www_root = wish_config["wishlist"]["www_root"]
+    wish_id = db_ref_id.split("@")[1]
+    data_fname = os.path.join(www_root,"data","wishlist-data.json")
+    with open(data_fname, "r") as f:
+        data_wishlist = json.load(f)
+    found = 0
+    found_index = -1
+    for i in range(len(data_wishlist["wishlist"])):
+        if data_wishlist["wishlist"][i]["id"] == wish_id:
+            found = 1
+            data_wishlist["wishlist"][i]["usd_total"] += int(db_usd) #in cents i think
+            history_tx = {
+                "amount":int(db_usd),
+                "date_time": db_date_time
+            }
+            data_wishlist["wishlist"][i]["usd_history"].append(history_tx)
+            data_wishlist["wishlist"][i]["contributors"] += 1
+            data_wishlist["wishlist"][i]["modified_date"] = db_date_time
+            found_index = i
+            break
+    if found == 1: 
+        #save new wishlist with file lock
+        lock = data_fname + ".lock"
+        with FileLock(lock):
+            #print("Lock acquired.")
+            with open(data_fname, 'w+') as f:
+                json.dump(data_wishlist, f, indent=6)  
+    else:
+        print("donated to a none existing or archived wish")
+
+    #email alert
+    db_wish_id = data_wishlist["wishlist"][int(found_index)]["title"]
+    db_crypto_addr = "FIAT"
+    db_refund_addr = "FIAT"
+    db_ticker = "USD"
+    send_email(db_email,db_usd,db_fname,db_crypto_addr,db_zip,db_street,db_date_time,db_refund_addr,db_ticker,db_wish_id)
+
 def db_get_timestamp():
     con = sqlite3.connect('modified.db')
     cur = con.cursor()
@@ -130,8 +250,6 @@ async def handle_crypto_form(request: Request):
     global wish_config, ticket_normal, ticket_vip
     body = await request.body()
     #b'amount=1&coins=xmr&choice=tax&fname=&fname=&street=&zip=&email=&rfund='
-    config = configparser.ConfigParser()
-    config.read("wishlist.ini")
     #pprint.pprint(body)
     client_host = request.client.host
     print(client_host)
@@ -168,74 +286,20 @@ async def handle_crypto_form(request: Request):
             the_email = null_if_not_exists(vals,b"email")
             #if not valid_email(the_email):
             #    return
-            while True:
-                #print(f"we chose: {vals[b'coins'][0]}")
-                valid_coin = 0
-                if vals[b'coins'][0] == b"xmr":
-                    rpc_port = wish_config["monero"]["daemon_port"]
-                    rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
-                    wallet_path = os.path.basename(wish_config['monero']['wallet_file'])
-                    address = get_xmr_subaddress(rpc_url,wallet_path,"An address label")
-                    valid_coin = 1
-                    #notify qzr3duvhlknh9we5g8x3wvkj5qvh625tzv36ye9kwl http://localhost:12347 --testnet
-                    print(f"the address is: {address}")
+            #print(f"we chose: {vals[b'coins'][0]}")
+            valid_coin = 0
+            ticker =  null_if_not_exists(vals,b"coins")
+            if ticker == "xmr":
+                valid_coin = 1
+            if ticker == "bch":
+                valid_coin = 1
+            if ticker == "btc":
+                valid_coin = 1
 
-                if vals[b'coins'][0] == b"bch":
-                    wallet_path = wish_config["bch"]["wallet_file"]
-                    bin_dir = wish_config["bch"]["bin"]
-                    port = wish_config["callback"]["port"]
-                    rpcuser = config["bch"]["rpcuser"]
-                    rpcpass = config["bch"]["rpcpassword"]
-                    rpcport = config["bch"]["rpcport"]
-                    address = address_create_notify(bin_dir,wallet_path,port,"",1,1,rpcuser,rpcpass,rpcport)
-                    valid_coin = 1
-                if vals[b'coins'][0] == b"btc":
-                    wallet_path = wish_config["btc"]["wallet_file"]
-                    bin_dir = wish_config["btc"]["bin"]
-                    port = wish_config["callback"]["port"]
-                    rpcuser = config["btc"]["rpcuser"]
-                    rpcpass = config["btc"]["rpcpassword"]
-                    rpcport = config["btc"]["rpcport"]
-                    address = address_create_notify(bin_dir,wallet_path,port,"",1,1,rpcuser,rpcpass,rpcport)
-                    valid_coin = 1
+            if valid_coin == 0:
+                return
 
-                pprint.pprint(address)
-                if "not" in address:
-                    return
-                if valid_coin == 0:
-                    return
-
-                con = sqlite3.connect('receipts.db')
-                cur = con.cursor()
-                create_receipts_table = """ CREATE TABLE IF NOT EXISTS donations (
-                                            email text,
-                                            amount integer default 0 not null,
-                                            fname text,
-                                            donation_address text PRIMARY KEY,
-                                            zipcode text,
-                                            address text,
-                                            date_time text,
-                                            refund_address text,
-                                            crypto_ticker text,
-                                            wish_id text,
-                                            comment text,
-                                            comment_name text,
-                                            amount_expected integer default 0 not null,
-                                            consent integer default 0,
-                                            quantity integer default 0,
-                                            type text,
-                                            comment_bc integer default 0
-                                        ); """
-
-                cur.execute(create_receipts_table)
-                con.commit()
-                cur.execute('SELECT * FROM donations WHERE address = ?',[address])
-                rows = len(cur.fetchall())
-                pprint.pprint(cur.fetchall())
-                #its a used address. continue loop
-                if rows == 0:
-                    break
-
+            address = get_unused_address(wish_config,ticker)
             #does there need to be a time contraint on when donations can receive a receipt?
             #or they can only be used once?
 
@@ -244,7 +308,7 @@ async def handle_crypto_form(request: Request):
             expected = 0
             wish_id = null_if_not_exists(vals,b"uid")
             #enforce ticker symbols
-            ticker =  null_if_not_exists(vals,b"coins")
+            
             ticket_amount = null_if_not_exists(vals,b'quantity')
 
             if ticker == "xmr":

@@ -1,7 +1,7 @@
 import configparser
 import json
 #address_create_notify == get btc or bch address
-from make_wishlist import create_new_wishlist, address_create_notify, get_xmr_subaddress, put_qr_code
+from make_wishlist import create_new_wishlist, address_create_notify, get_xmr_subaddress, put_qr_code, get_unused_address
 import pprint
 import os 
 import sys
@@ -169,18 +169,18 @@ def wish_add(wish,config):
         port = config["callback"]["port"]
         wallet_path = config["bch"]["wallet_file"]
         print(f'the port is {port}')
-        new_wish["bch_address"] = address_create_notify(bin_dir,wallet_path,port,addr="",create=1,notify=1)
+        new_wish["bch_address"] = get_unused_address(config,"bch")
         put_qr_code(new_wish["bch_address"], "bch")
         bin_dir = config["btc"]["bin"]
         wallet_path = config["btc"]["wallet_file"]
-        new_wish["btc_address"] = address_create_notify(bin_dir,wallet_path,port,addr="",create=1,notify=1)
+        new_wish["btc_address"] = get_unused_address(config,"btc")
         put_qr_code(new_wish["btc_address"], "btc")
         rpc_port = config["monero"]["daemon_port"]
         if rpc_port == "":
             rpc_port = 18082
         rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
         wallet_path = os.path.basename(config['monero']['wallet_file'])
-        new_wish["xmr_address"] = get_xmr_subaddress(rpc_url,wallet_path,wish["title"])
+        new_wish["xmr_address"] = get_unused_address(config,"xmr")
         put_qr_code(new_wish["xmr_address"], "xmr")
         new_wish = new_wish.copy()
         wishlist["wishlist"].append(new_wish)
@@ -236,7 +236,6 @@ def wish_add(wish,config):
         pass
     except Exception as e:
         raise e
-
 
 def wish_prompt(config):
     wish={}

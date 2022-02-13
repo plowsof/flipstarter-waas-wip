@@ -114,8 +114,7 @@ def get_xmr_subaddress(rpc_url,wallet_file,title):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
     xmr_wallet = os.path.basename(wallet_file)
     print(f"xmr wallet file: {xmr_wallet}")
-    #i dont think we need to open one
-    #rpc_connection.open_wallet({"filename": wallet_file, "password": "" })
+    #they must check if the address exists in the receipts DB already / add it there
     #label could be added
     params={
             "account_index":0,
@@ -128,7 +127,59 @@ def get_xmr_subaddress(rpc_url,wallet_file,title):
     except Exception as e:
         print("Error: Your monero node is offline. Ensure that start_daemons.py is running")
         sys.exit(1)
-    
+
+def get_unused_address(config,ticker,title=None):
+    while True:
+        if ticker == "xmr":
+            rpc_port = config["monero"]["daemon_port"]
+            rpc_url = "http://localhost:" + str(rpc_port) + "/json_rpc"
+            wallet_path = os.path.basename(config["monero"]["wallet_file"])
+            address = get_xmr_subaddress(rpc_url,wallet_path,title)
+            valid_coin = 1
+            #notify qzr3duvhlknh9we5g8x3wvkj5qvh625tzv36ye9kwl http://localhost:12347 --testnet
+            print(f"the address is: {address}")
+
+        if ticker == "bch" or ticker == "btc":
+            wallet_path = config[ticker]["wallet_file"]
+            bin_dir = config[ticker]["bin"]
+            port = config["callback"]["port"]
+            rpcuser = config[ticker]["rpcuser"]
+            rpcpass = config[ticker]["rpcpassword"]
+            rpcport = config[ticker]["rpcport"]
+            address = address_create_notify(bin_dir,wallet_path,port,"",1,1,rpcuser,rpcpass,rpcport)
+        if "not" in address:
+            continue
+        con = sqlite3.connect('receipts.db')
+        cur = con.cursor()
+        create_receipts_table = """ CREATE TABLE IF NOT EXISTS donations (
+                                    email text,
+                                    amount integer default 0 not null,
+                                    fname text,
+                                    donation_address text PRIMARY KEY,
+                                    zipcode text,
+                                    address text,
+                                    date_time text,
+                                    refund_address text,
+                                    crypto_ticker text,
+                                    wish_id text,
+                                    comment text,
+                                    comment_name text,
+                                    amount_expected integer default 0 not null,
+                                    consent integer default 0,
+                                    quantity integer default 0,
+                                    type text,
+                                    comment_bc integer default 0
+                                ); """
+
+        cur.execute(create_receipts_table)
+        con.commit()
+        cur.execute('SELECT * FROM donations WHERE address = ?',[address])
+        rows = len(cur.fetchall())
+        pprint.pprint(cur.fetchall())
+        #its a used address. continue loop
+        if rows == 0:
+            break
+    return address
 
 def formatAmount(amount):
     """decode cryptonote amount format to user friendly format.
@@ -896,11 +947,11 @@ def main(config):
     for wish in wishlist["wishlist"]:
         if not wish["xmr_address"]:
             xmr_wallet = os.path.basename(config['monero']['wallet_file'])
-            wish["xmr_address"] = get_xmr_subaddress(rpc_url,xmr_wallet,wish["title"])
+            wish["xmr_address"] = get_unused_address(config,"xmr",wish["title"])
         if not wish["btc_address"]:
-            wish["btc_address"] = address_create_notify(electrum_bin,btc_wallet_path,port,"",1,0,btc_rpcuser,btc_rpcpass,btc_rpcport)
+            wish["btc_address"] = get_unused_address(config,"btc")
         if not wish["bch_address"]:
-            wish["bch_address"] = address_create_notify(electron_bin,bch_wallet_path,port,"",1,0,bch_rpcuser,bch_rpcpass,bch_rpcport)
+            wish["bch_address"] = get_unused_address(config,"bch")
 
 
     #terminate all daemons
