@@ -24,13 +24,14 @@ sudo python3 make_wishlist.py
 
 screen python3 start_daemons.py    
 screen python3 -m uvicorn main:app --reload    
+in production you would be using ssl cert files too. e.g.    
+sudo screen -L -Logfile uvicorn-output.txt uvicorn main:app --reload --ssl-keyfile /var/www/letsencrypt/.lego/certificates/rucknium.me.key --ssl-certfile /var/www/letsencrypt/.lego/certificates/rucknium.me.crt
 (press Ctrl+a then Ctrl+d to leave each of those screen sessions running) 
 
 
 
 visit <url>/flask         
-
-(in production this will be using cert files)    
+ 
 ### TODO
     
 Tutorials will come after:    
