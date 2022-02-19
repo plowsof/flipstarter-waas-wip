@@ -205,11 +205,13 @@ span.c_for{
   font-size: small;
 }
 
-button {
+label.donate_button, label.btn, button{
   background-color: white;
   color: green;
-  border-radius: 8px;
+  padding: 4px;
+  border-radius: 3px;
 }
+
 
 textarea {
     resize: none;
