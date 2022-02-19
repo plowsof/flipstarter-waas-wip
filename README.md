@@ -46,7 +46,7 @@ Tutorials will come after:
 - [x] update monero / bch / btc wallet files
 - [ ] clean up the prompts / text shown (pretty colours)
 - [x] a prompt if user wants to supply their viewkey (else wallets are made for them)
-- [ ] static version for Non-JS users
+- [x] static version for Non-JS users
 - [ ] Dockerise:
     - monero-wallet-rpc
     - uvicorn
