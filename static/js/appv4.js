@@ -280,7 +280,7 @@ function updateWishlist(data)
     //is it fully 'FUNDED' or revert title = title
     if (total >= wish.goal_usd){
       console.log(`fully funded ${wish.title}`)
-      $(".prog_" + wish.id).text("FUNDED")
+      $(".prog_" + wish.id).text("FUNDED ")
       $(`.main_buttons_${wish.id}`).hide()
       //hide buttons
     }else{
@@ -318,12 +318,12 @@ function init_wish(one,two,three,four,end,total,wish)
     }
   </style>
   <div class="wish" id="${wish.id}">
-    <span class="wish_title" id="${wish.id}"><h3>${wish.title} </span><span class="prog_${wish.id}"></span><span class="status_${wish.id}"></span></h3></br>
+    <span class="wish_title" id="${wish.id}"><h3>${wish.title} </span><span class="prog_${wish.id}"></span><span class="status_${wish.id}">${wish.status}</span></h3></br>
     <div class="progress_${wish["id"]}"></div></br>
     <span class="fundgoal_${wish.id}">Raised: $<span class="raised_${wish.id}">${total}</span> of $<span class="goal_${wish.id}">${wish.goal_usd}</span></span><span class="contributors" id="${wish.id}">Contributors: ${wish.contributors}</span>
     <p class="description">${wish.description}</p>
     <div class="main_buttons_${wish.id}" id="${wish.id}">
-      <button class="donate_button" id="button_${wish["id"]}" type="button" onclick="cryptoClick('${wish.id}')">Donate</button>
+      <label class="donate_button" id="button_${wish["id"]}" type="button" onclick="cryptoClick('${wish.id}')">Donate</label>
       <div class="crypto_donate" id="crypto_donate_${wish["id"]}"></div>
     </div>
   </div> <hr>`
