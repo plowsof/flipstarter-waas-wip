@@ -5,7 +5,6 @@ import json
 import pprint
 from math import ceil
 from main import db_get_prices
-#todo handle when goal is overfunded
 
 prices = {}
 prices["monero"] = 0
