@@ -301,6 +301,8 @@ def main(config):
     th.start()
     th = threading.Thread(target=save_prices)
     th.start()
+    th = threading.Thread(target=refresh_html_loop_1)
+    th.start()
     #start the bitcoin listener
     os.system(f'/usr/bin/python3 notify_bch_btc.py {http_port}')
 
@@ -342,6 +344,11 @@ def delete_clicks_db():
             os.remove("clicks.db")
         time.sleep(60*60*24)
 
+def refresh_html_loop_1():
+    while True:
+        os.system(f'/usr/bin/python3 static_html_loop.py')
+        time.sleep(5*60)
+
 def refresh_html_loop(remote_node,local_node,config):
     global www_root
     print(f"remotenode: {remote_node}\n localnode : {local_node}")
@@ -349,8 +356,6 @@ def refresh_html_loop(remote_node,local_node,config):
     rpc_url = "http://" + str(remote_node) + "/json_rpc"
     counter = 1
     while True: 
-        #os.system(f'/usr/bin/python3 static_html_loop.py')
-        
         www_root = config["wishlist"]["www_root"]
         wishlist = getJson()
         node_status = wishlist["metadata"]["status"]

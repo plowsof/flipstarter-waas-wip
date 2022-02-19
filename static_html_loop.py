@@ -5,7 +5,6 @@ import json
 import pprint
 from math import ceil
 from main import db_get_prices
-#todo handle when goal is overfunded
 
 prices = {}
 prices["monero"] = 0
@@ -181,9 +180,10 @@ def wish_html(one,two,three,four,end,total,wish):
                           <label for="reveal-donate" class="btn">Donate</label>
                           <input type="checkbox" class="checkbox_{wish["id"]}" id="reveal-donate" role="button">
                           <div class="crypto_donate_{wish["id"]}" id="crypto_donate_{wish["id"]}">
-                            <p>{img_xmr}{wish["xmr_address"]}</p>
-                            <p>{img_bch}{wish["bch_address"]}</p>
-                            <p>{img_btc}{wish["btc_address"]}</p>
+                            <p>To leave a comment, javascript must be enabled. Donations should appear within 5 minutes</p>
+                            <p><span class="njs_ticker">{img_xmr} Monero </span></br>{wish["xmr_address"]}</p>
+                            <p><span class="njs_ticker">{img_bch} Bitcoin Cash</span></br>{wish["bch_address"]}</p>
+                            <p><span class="njs_ticker">{img_btc} Bitcoin </span></br>{wish["btc_address"]}</p>
                           </div>
                     """
     wish_html += """</div> <hr>"""
@@ -243,4 +243,3 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('wishlist.ini')
     main(config)
-#need to take into account the usd value (for recurring payments e.g. vps)
