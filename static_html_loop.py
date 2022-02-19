@@ -5,6 +5,7 @@ import json
 import pprint
 from math import ceil
 from main import db_get_prices
+#todo handle when goal is overfunded
 
 prices = {}
 prices["monero"] = 0
@@ -118,10 +119,15 @@ def comments_html(comments):
         coin_image = f'<img id="crypto_ticker" src="/flask/static/images/{comments[i]["ticker"]}.png" alt="{comments[i]["ticker"]}" height="20px" width="20px">'
         comment = comments[i]["comment"]
         wish_title = comments[i]["id"]
+        rounded = str(round(float(amount),4))
+        trail_0 = "0000"
+        if len(rounded.split(".")[1]) != 4:
+            rounded += trail_0[0:(4-len(rounded.split(".")[1]))]
+
         commentSegment += f""" 
         <div class="comment">
         <span class="c_name">{name}</span>
-        <span class="c_amount">+{round(float(amount),4)} {coin_image}</span></br>
+        <span class="c_amount">+{rounded} {coin_image}</span></br>
         """
         if comment != "":
             commentSegment += f"""<span class="c_comment">"{comment}"</span></br>"""
