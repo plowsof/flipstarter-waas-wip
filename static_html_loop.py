@@ -1,7 +1,4 @@
 import configparser
-import shutil
-import requests 
-import random 
 from filelock import FileLock
 import os
 import json
