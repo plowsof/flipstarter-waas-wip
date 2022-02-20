@@ -12,6 +12,13 @@
   word-wrap:break-word;
 }
 
+.bch_address{
+  color: #ff4f00 ;
+  font-family: monospace ;
+  cursor: pointer ;
+  word-wrap:break-word;
+}
+
 .xmr_address:hover {
   background-color: gray;
 }
@@ -26,12 +33,7 @@
 .bch_address:hover {
   background-color: gray;
 }
-.bch_address{
-  color: #ff4f00 ;
-  font-family: monospace ;
-  cursor: pointer ;
-  word-wrap:break-word;
-}
+
 
 .ticker{
     width:50px; /* you can use % */
