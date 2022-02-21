@@ -141,6 +141,7 @@ def set_up_notify(bin_path,wallet_path,address,http_server,symbol):
     output = stream.read()
     #print(output)
     return(address)
+#def rpc_notify(rpcuser,rpcpass,rpcport,address,url):
 
 def getJson():
     global www_root
@@ -227,23 +228,6 @@ def start_btc_daemon(electrum_bin,wallet_file,rpcuser,rpcpass,rpcport):
 
     #btc_open_wallet(wallet_file,rpcuser,rpcpass,rpcport)
 
-#this does not work
-#the wallet_path params must be wrong
-def btc_rpc_createnewaddress(wallet,rpcuser,rpcpass,rpcport):
-    print(f"try open {wallet}")
-    url = f"http://{rpcuser}:{rpcpass}@localhost:{rpcport}"
-    payload = {
-        "method": "createnewaddress",
-        "params": [{
-        "wallet_path": wallet
-        }
-        ],
-        "jsonrpc": "2.0",
-        "id": 0,
-    }
-    returnme = requests.post(url, json=payload).json()
-    pprint.pprint(returnme)
-
 def main(config):
     global www_root
     rpc_bin_file = config["monero"]["bin"]
@@ -268,10 +252,10 @@ def main(config):
 
     electrum_path = config["btc"]["bin"]
     btc_wallet_path = config["btc"]["wallet_file"]
-    rpcuser = config["btc"]["rpcuser"]
-    rpcpass = config["btc"]["rpcpassword"]
-    rpcport = config["btc"]["rpcport"]
-    start_btc_daemon(electrum_path,btc_wallet_path,rpcuser,rpcpass,rpcport)
+    b_rpcuser = config["btc"]["rpcuser"]
+    b_rpcpass = config["btc"]["rpcpassword"]
+    b_rpcport = config["btc"]["rpcport"]
+    start_btc_daemon(electrum_path,btc_wallet_path,b_rpcuser,b_rpcpass,b_rpcport)
     electron_path = config["bch"]["bin"]
     bch_wallet_path = config["bch"]["wallet_file"]
     rpcuser = config["bch"]["rpcuser"]
@@ -288,12 +272,12 @@ def main(config):
     for wish in wish_list["wishlist"]:
         if wish["btc_address"]:
             address = wish["btc_address"]
-            set_up_notify(electrum_path,btc_wallet_path,address,http_server,"btc")
-
+            #rpc_notify(b_rpcuser,b_rpcpass,b_rpcport,address,http_server)
+            thread_notify(electrum_path,address,http_server)
         if wish["bch_address"]:
             address = wish["bch_address"]
-            print(address)
-            set_up_notify(electron_path,bch_wallet_path,address,http_server,"bch")
+            #rpc_notify(rpcuser,rpcpass,rpcport,address,http_server)
+            thread_notify(electron_path,address,http_server)
 
     th = threading.Thread(target=refresh_html_loop, args=(remote_node,rpc_url,config,))
     th.start()
@@ -306,6 +290,27 @@ def main(config):
     #start the bitcoin listener
     os.system(f'/usr/bin/python3 notify_bch_btc.py {http_port}')
 
+def thread_notify(bin_dir,address,port):
+    thestring = f"./{bin_dir} notify {address} {port} --testnet"
+    print(thestring)
+    stream = os.popen(thestring)
+    output = stream.read()
+    print(output)
+
+def rpc_notify(rpcuser,rpcpass,rpcport,address,url):
+    url = f"http://{rpcuser}:{rpcpass}@localhost:{rpcport}"
+    print(url)
+    payload = {
+        "method": "notify",
+        "params": {
+        "address": address,
+        "URL": url
+        },
+        "jsonrpc": "2.0",
+        "id": "curltext",
+    }
+    returnme = requests.post(url, json=payload).json()
+    pprint.pprint(returnme)
 
 def getPrice(crypto):
     data = cryptocompare.get_price(str(crypto), currency='USD', full=0)
