@@ -73,19 +73,15 @@ def address_create_notify(bin_dir,wallet_path,port,addr,create,notify,rpcuser,rp
     print(f'port:{port}')
     if create == 1:
         if "electrum" in bin_dir:
-            thestring = f"./{bin_dir} createnewaddress -w {wallet_path} --offline --testnet "
-            print(f'cmd : {thestring}')
-            stream = os.popen(thestring)
-            output = stream.read()
-            #that was fun. address had a newline on it.
-            address = output.replace("\n","")
+            address = btc_curl_address(wallet_path,rpcuser,rpcpass,rpcport)
         else:
             address = curl_address(rpcuser,rpcpass,rpcport)
     if notify == 1:
         if addr != "":
             address = addr
-        th = threading.Thread(target=thread_notify,args=(bin_dir,address,port,))
-        th.start()
+        if address != "Error":
+            th = threading.Thread(target=thread_notify,args=(bin_dir,address,port,))
+            th.start()
     return(address)
 
 def thread_notify(bin_dir,address,port):
@@ -102,12 +98,34 @@ def curl_address(rpcuser,rpcpass,rpcport):
         "method": "createnewaddress",
         "params": [],
         "jsonrpc": "2.0",
-        "id": 0,
+        "id": "curltext",
     }
     returnme = requests.post(url, json=payload).json()
-    pprint.pprint(returnme)
-    return returnme["result"] 
+    try:
+        return returnme['result']
+        pass
+    except Exception as e:
+        return "Error"
 
+def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
+    print(f"try open {wallet}")
+    url = f"http://{rpcuser}:{rpcpass}@localhost:{rpcport}"
+    print(url)
+    payload = {
+        "method": "createnewaddress",
+        "params": {
+        "wallet": wallet
+        },
+        "jsonrpc": "2.0",
+        "id": "curltext",
+    }
+    returnme = requests.post(url, json=payload).json()
+    try:
+        return returnme['result']
+        pass
+    except Exception as e:
+        return "Error"
+    
 
 def get_xmr_subaddress(rpc_url,wallet_file,title):
     print(f"[DEBUG] : rpc url : {rpc_url}")
@@ -359,9 +377,9 @@ def create_new_wishlist():
                     "author_name": "",
                     "author_email": "",
                     "id": address[0:12],
-                    "qr_img_url_xmr": f"flask/static/images/{address[0:12]}.png",
-                    "qr_img_url_btc": f"flask/static/images/{btc_address[0:12]}.png",
-                    "qr_img_url_bch": f"flask/static/images/{bch_address[0:12]}.png",
+                    "qr_img_url_xmr": f"static/images/{address[0:12]}.png",
+                    "qr_img_url_btc": f"static/images/{btc_address[0:12]}.png",
+                    "qr_img_url_bch": f"static/images/{bch_address[0:12]}.png",
                     "title": title,
                     "btc_address": btc_address,
                     "bch_address": ("bchtest:" + bch_address),
