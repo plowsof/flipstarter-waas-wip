@@ -80,32 +80,24 @@ def address_create_notify(bin_dir,wallet_path,port,addr,create,notify,rpcuser,rp
         if addr != "":
             address = addr
         if address != "Error":
-            #th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
-            th = threading.Thread(target=thread_notify,args=(bin_dir,address,port,))
+            th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
             th.start()
     return(address)
 
-def rpc_notify(rpcuser,rpcpass,rpcport,address,url):
+def rpc_notify(rpcuser,rpcpass,rpcport,address,callback):
     url = f"http://{rpcuser}:{rpcpass}@localhost:{rpcport}"
     print(url)
     payload = {
         "method": "notify",
         "params": {
         "address": address,
-        "URL": url
+        "URL": callback
         },
         "jsonrpc": "2.0",
         "id": "curltext",
     }
     returnme = requests.post(url, json=payload).json()
     pprint.pprint(returnme)
-
-def thread_notify(bin_dir,address,port):
-    thestring = f"./{bin_dir} notify {address} {port} --testnet"
-    print(thestring)
-    stream = os.popen(thestring)
-    output = stream.read()
-    print(output)
 
 def curl_address(rpcuser,rpcpass,rpcport):
     url = f"http://{rpcuser}:{rpcpass}@localhost:{rpcport}"

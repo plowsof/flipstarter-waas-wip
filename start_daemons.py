@@ -128,21 +128,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
                 sys.exit(1)
             time.sleep(1)
             num_retries += 1
-
-def set_up_notify(bin_path,wallet_path,address,http_server,symbol):
-    if ":" in address:
-        address = address.split(':')[1]
-    if symbol == "btc":
-        thestring = f"{bin_path} notify {address} {http_server} --testnet"
-    else:
-        thestring = f"{bin_path} notify {address} {http_server} --testnet"
-    print(thestring)
-    stream = os.popen(thestring)
-    output = stream.read()
-    #print(output)
-    return(address)
-#def rpc_notify(rpcuser,rpcpass,rpcport,address,url):
-
+    
 def getJson():
     global www_root
     wishlist_file  = os.path.join(www_root,"data","wishlist-data.json")
@@ -272,12 +258,12 @@ def main(config):
     for wish in wish_list["wishlist"]:
         if wish["btc_address"]:
             address = wish["btc_address"]
-            #rpc_notify(b_rpcuser,b_rpcpass,b_rpcport,address,http_server)
-            thread_notify(electrum_path,address,http_server)
+            rpc_notify(b_rpcuser,b_rpcpass,b_rpcport,address,http_server)
+            #thread_notify(electrum_path,address,http_server)
         if wish["bch_address"]:
             address = wish["bch_address"]
-            #rpc_notify(rpcuser,rpcpass,rpcport,address,http_server)
-            thread_notify(electron_path,address,http_server)
+            rpc_notify(rpcuser,rpcpass,rpcport,address,http_server)
+            #thread_notify(electron_path,address,http_server)
 
     th = threading.Thread(target=refresh_html_loop, args=(remote_node,rpc_url,config,))
     th.start()
@@ -290,21 +276,14 @@ def main(config):
     #start the bitcoin listener
     os.system(f'/usr/bin/python3 notify_bch_btc.py {http_port}')
 
-def thread_notify(bin_dir,address,port):
-    thestring = f"./{bin_dir} notify {address} {port} --testnet"
-    print(thestring)
-    stream = os.popen(thestring)
-    output = stream.read()
-    print(output)
-
-def rpc_notify(rpcuser,rpcpass,rpcport,address,url):
+def rpc_notify(rpcuser,rpcpass,rpcport,address,callback):
     url = f"http://{rpcuser}:{rpcpass}@localhost:{rpcport}"
     print(url)
     payload = {
         "method": "notify",
         "params": {
         "address": address,
-        "URL": url
+        "URL": callback
         },
         "jsonrpc": "2.0",
         "id": "curltext",
