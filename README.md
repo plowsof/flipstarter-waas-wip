@@ -17,3 +17,4 @@ Tutorials will come after:
 - [x] static version for Non-JS users
 - [x] Dockerise:  
 - [ ] RSS feed!
+- [ ] Get people using it :)
