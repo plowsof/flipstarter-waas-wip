@@ -35,7 +35,6 @@ def main(config):
         our_data = get_total(wish)
         total = round(our_data["total_usd"],2)
         sortme = our_data["values"]
-
         sortme = dict(sorted(sortme.items(), key=lambda item: item[1]))
         #pprint.pprint(sortme)
         wish["percent"] = (total / float(wish["goal_usd"])) * 100
@@ -108,6 +107,7 @@ def comments_html(comments):
         comments[i]["usd_value"] = (float(comments[i]["amount"]) * float(prices[ticker]))
     #sort comments from high -> low
     #pprint.pprint(comments)
+    comments = sorted(comments, key=lambda k:k["date_time"],reverse=True)
     comments = sorted(comments, key=lambda k:k["usd_value"],reverse=True)
     for i in range(len(comments)):
         commentSegment = ""
