@@ -290,13 +290,13 @@ def save_prices():
 def delete_clicks_db():
     while True:
         #20 clicks/day per ip.
-        if os.path.isfile("clicks.db"):
-            os.remove("clicks.db")
+        if os.path.isfile("./db/clicks.db"):
+            os.remove("./db/clicks.db")
         time.sleep(60*60*24)
 
 def refresh_html_loop_1():
     while True:
-        os.system(f'/usr/local/bin/python3 static_html_loop.py')
+        os.system(f'python3 static_html_loop.py')
         time.sleep(5*60)
 
 def refresh_html_loop(remote_node,local_node,config):
