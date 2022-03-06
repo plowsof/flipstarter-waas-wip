@@ -513,7 +513,6 @@ def monero_rpc_online(rpc_url):
         info = rpc_connection.get_version()
         return True
     except Exception as e:
-        print("Offline as an error")
         return False
 
 def monero_rpc_close_wallet(rpc_url):
@@ -587,16 +586,16 @@ def create_monero_wallet(config):
     rpc_remote = remote_node + "/json_rpc"
     remote_rpc_connection = AuthServiceProxy(service_url=rpc_remote)
     data = remote_rpc_connection.get_info()
+    rpc_connection = AuthServiceProxy(service_url=rpc_url)
     #--------------------------------------
     #  create hot wallet 
     #--------------------------------------
     auto_create = 0
+    mnemonic = ""
+    seed = ""
     if prompt_wallet_create("xmr"):
         auto_create = 1
         monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,None,remote_node)
-
-        #print(rpc_url)
-        rpc_connection = AuthServiceProxy(service_url=rpc_url)
         #label could be added
         params={
                 "filename": wallet_fname,
@@ -610,11 +609,10 @@ def create_monero_wallet(config):
         #to get block height data we need to use /json_rpc
         view_key = rpc_connection.query_key({"key_type": "view_key"})["key"]
         mnemonic = rpc_connection.query_key({"key_type": "mnemonic"})["key"]
-        spend_key = rpc_connection.query_key({"key_type": "spend_key"})["key"]
+        #spend_key = rpc_connection.query_key({"key_type": "spend_key"})["key"]
         main_address = rpc_connection.get_address()["address"]
         config["monero"]["viewkey"] = view_key
         config["monero"]["mainaddress"] = main_address
-        wrapper = textwrap.TextWrapper(width=70)
         seed = numbered_seed(mnemonic)
         print_msg(f"************* [{Style.BRIGHT}{Fore.RED}Monero {Style.RESET_ALL}Wallet] *************")
         print_msg(f"Your wallet seed is:") 
@@ -723,8 +721,8 @@ def create_monero_wallet(config):
     #delete variables from memory
     del data 
     del view_key 
-    del mnemonic 
-    del spend_key 
+    del mnemonic
+    del seed
     del main_address 
     return monero_daemon
 
@@ -751,11 +749,11 @@ def prompt_monero_keys():
     view_key = ""
     main_address = ""
     while view_key == "":
-        view_key = input("Enter the Monero view-key >>")
+        view_key = input("Enter the Monero Secret view key >>")
     while main_address == "":
-        main_address = input ("Enter the main wallet address >>")
+        main_address = input ("Enter the Primary adress >>")
     data = {
-    "view_key": viewkey,
+    "view_key": view_key,
     "main_address": main_address
     }
     return data
@@ -763,40 +761,34 @@ def prompt_monero_keys():
 def create_bit_wallet(config,bchbtc):
     global wallet_dir
     letters = string.ascii_lowercase
+    electron_bin = config[bchbtc]["bin"]
+    seed = ""
+    mnemonic = ""
+    rand_string = ''.join(random.choice(letters) for i in range(10)) 
     if bchbtc == "btc":
-        electron_bin = config["btc"]["bin"]
-        find_me = "electrum-"
-        c_colour = Fore.RED
-        c_name = "Bitcoin"
-        wallet_fname = "bitcoin_" + ''.join(random.choice(letters) for i in range(10)) 
+        wallet_fname = "bitcoin_" + rand_string
         wallet_path = os.path.join(wallet_dir,wallet_fname)
-        run_args = [
-        electron_bin, "create", "-w", wallet_path, "--offline", "--testnet"
-        ]
     else:
-        electron_bin = config["bch"]["bin"]
-        find_me = "Electron"
-        c_colour = Fore.GREEN
-        c_name = "Bitcoin Cash"
-        wallet_fname = "cash_" + ''.join(random.choice(letters) for i in range(10)) 
+        wallet_fname = "cash_" + rand_string
         wallet_path = os.path.join(wallet_dir,wallet_fname)
-        run_args = [
-        electron_bin, "create", "-w", wallet_path, "--testnet"
-        ]
-    
-    #python3 run_electrum create -w lol --offline
-    for x in os.listdir("bin"):
-        if find_me in x:
-            electrum_bin = os.path.join("bin",x)
-    if electron_bin == "":
-        return False
-    
-    #print(wallet_path)
-    #--------------------------------------
-    #  create hot wallet
-    #--------------------------------------
-
     if prompt_wallet_create(bchbtc):
+        #create a wallet for us
+        #print(wallet_path)
+        #--------------------------------------
+        #  create hot wallet
+        #--------------------------------------
+        if bchbtc == "btc":
+            c_colour = Fore.RED
+            c_name = "Bitcoin"
+            run_args = [
+            electron_bin, "create", "-w", wallet_path, "--offline", "--testnet"
+            ]
+        else:
+            c_colour = Fore.GREEN
+            c_name = "Bitcoin Cash"
+            run_args = [
+            electron_bin, "create", "-w", wallet_path, "--testnet"
+            ]
         bch_bin = subprocess.Popen(run_args,stdout=subprocess.PIPE)
         #wait until finished
         bch_bin.communicate(input=b"\n")
@@ -812,13 +804,6 @@ def create_bit_wallet(config,bchbtc):
         print_msg(f"format:{bch_data['keystore']['seed_type']} derivation: {bch_data['keystore']['derivation']}")
         print_msg("Please keep your seed information in a safe place; if you lose it, you will not be able to restore your wallet")
         input("Press enter to continue >>")
-
-        config[bchbtc]["wallet_file"] = wallet_path
-        config[bchbtc]["xpub"] = bch_data['keystore']['xpub']
-        with open('./db/wishlist.ini', 'w') as configfile:
-            config.write(configfile)
-        #stop_bit_daemon(electrum_bin)
-
         secure_delete(wallet_path,passes=3)
     else:
         #ask for view keys
@@ -847,11 +832,18 @@ def create_bit_wallet(config,bchbtc):
         print_err("Fatal error: new wallet does not match the original")
         sys.exit(1)
 
+    config[bchbtc]["wallet_file"] = wallet_path
+    config[bchbtc]["xpub"] = bch_data['keystore']['xpub']
+    with open('./db/wishlist.ini', 'w') as configfile:
+        config.write(configfile)
+    #stop_bit_daemon(electrum_bin)
     #del bch variables
     del bch_data
     del orig_view_key
     del new_view_key
     del json_data
+    del seed
+    del mnemonic
 
     return config
 
