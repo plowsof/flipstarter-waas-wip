@@ -323,10 +323,10 @@ if __name__ == "__main__":
         print("Run make_wishlist.py")
     #ssl certs should be in ./ssl folder 
     if os.path.isfile("./ssl/privkey.pem") and os.path.isfile("./ssl/fullchain.pem"):
-        uvicorn.run(app, port=8000, host="0.0.0.0", key_file="privkey.pem", ssl_certificate="fullchain.pem")
+        uvicorn.run("main:app", port=8000, host="0.0.0.0", key_file="privkey.pem", ssl_certificate="fullchain.pem", reload=True)
         #fullchain.pem  privkey.pem
         #sudo screen -L -Logfile--ssl-keyfile rurucknium.me.crt sudo screen -L -Logfile uvicorn-output.txt uvicorn main:app --reload --ssl-keyfile rucknium.me.key --ssl-certfile rucknium.me.crt
     else:
         print("Defaulting to http: place privkey.pem and fullchain.pem in ./ssl folder and restart for https")
-        uvicorn.run(app, port=8000, host="0.0.0.0")
+        uvicorn.run("main:app", port=8000, host="0.0.0.0", reload=True)
     #if wishilist has been created. start 'start_daemons.py' too

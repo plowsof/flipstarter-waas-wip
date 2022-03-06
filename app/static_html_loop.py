@@ -16,7 +16,7 @@ comments_per_page = 8
 def main(config):
     global comments_per_page
     www_root = config["wishlist"]["www_root"]
-    funding_page = os.path.join("db",config["wishlist"]["page_name"])
+    funding_page = os.path.join("static",config["wishlist"]["page_name"])
  
     #funding_template = f'template_{funding_page}'
     funding_template = "./static/template_index.html"
