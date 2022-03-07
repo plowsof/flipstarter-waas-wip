@@ -1,4 +1,6 @@
-Docker repo/instructions here https://hub.docker.com/r/plowsof/waas4rucknium-testnet
+Docker repo/instructions here https://hub.docker.com/r/plowsof/waas4rucknium-testnet   
+
+Currently, this will just create a mirror of the page @ rucknium.me/flask, however, i will eventually be making a generic version, and use the rucknium page as an example of installing a template (just copy and pasting a folder) 
 
 ### TODO
     
