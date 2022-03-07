@@ -22,3 +22,7 @@ Tutorials will come after:
 - [ ] testing
 - [ ] RSS feed!
 - [ ] Get people using it :)
+
+###Support
+The initial funding for this project was obtained through Bitcoin-cash' crowdfunding system - FlipStarter.
+I will not be asking for any donations for this particular projects further development until someone using this WaaS receives their first (mainnet) donation / and i have fulfilled my FlipStarter promises. I think thats fair right? :) 
