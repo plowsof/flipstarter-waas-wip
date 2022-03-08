@@ -299,7 +299,7 @@ function updateWishlist(data)
     $(".raised_" + wish.id).text(total)
     $(".goal_" + wish.id).text(wish.goal_usd)
     //set num contributors
-    $(".contributors_" + wish.id).text("Contributors: " + wish.contributors)
+    $(".contributors#" + wish.id).text("Contributors: " + wish.contributors)
 
   }
 }
@@ -323,7 +323,7 @@ function init_wish(one,two,three,four,end,total,wish)
   <div class="wish" id="${wish.id}">
     <span class="wish_title" id="${wish.id}"><h3>${wish.title} </span><span class="prog_${wish.id}"></span><span class="status_${wish.id}">${wish.status}</span></h3></br>
     <div class="progress_${wish["id"]}"></div></br>
-    <span class="fundgoal_${wish.id}">Raised: $<span class="raised_${wish.id}">${total}</span> of $<span class="goal_${wish.id}">${wish.goal_usd}</span></span><span class="contributors_${wish.id}">Contributors: ${wish.contributors}</span>
+    <span class="fundgoal_${wish.id}">Raised: $<span class="raised_${wish.id}">${total}</span> of $<span class="goal_${wish.id}">${wish.goal_usd}</span></span><span class="contributors" id="${wish.id}">Contributors: ${wish.contributors}</span>
     <p class="description">${wish.description}</p>
     <div class="main_buttons_${wish.id}" id="${wish.id}">
       <label class="donate_button" id="button_${wish["id"]}" type="button" onclick="cryptoClick('${wish.id}')">Donate</label>

@@ -7,6 +7,7 @@ import os
 import sys
 from filelock import FileLock
 from datetime import datetime
+from rss_feed import add_to_rfeed
 config = ""
 
 def main():
@@ -16,11 +17,11 @@ def main():
         Lets begin!''')
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
-    if not os.path.isfile("your_wishlist.json"):
+    if not os.path.isfile("./db/your_wishlist.json"):
         print("Error: please run make_wishlist.py first.")
         sys.exit(1)
 
-    with open("your_wishlist.json", "r") as f:
+    with open("./db/your_wishlist.json", "r") as f:
         wishlist = json.load(f)
     if not wishlist["wishlist"]:
         print("Empty wishlist detected. Please add a wish")
@@ -118,7 +119,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                 wishlist = delete_wish(wishlist,index)
                 break
     pprint.pprint(wishlist)
-    with open("your_wishlist.json","w") as f:
+    with open("./db/your_wishlist.json","w") as f:
         json.dump(wishlist,f, indent=6)
 #tidy this up
 def delete_wish(wishlist,index):
@@ -139,7 +140,7 @@ def delete_wish(wishlist,index):
         with open(data_json, "w+") as f:
             json.dump(now_wishlist, f, indent=2) 
     wishlist["wishlist"].pop(index)
-    with open('your_wishlist.json','w+') as f:
+    with open('./db/your_wishlist.json','w+') as f:
         json.dump(wishlist, f, indent=6)
     return wishlist
     #lets find the wish in our data.json file in www_root 
@@ -149,9 +150,9 @@ def delete_wish(wishlist,index):
 def wish_add(wish,config):
     local_ip = "localhost"
     try:
-        if os.path.isfile("your_wishlist.json"):
+        if os.path.isfile("./db/your_wishlist.json"):
             print("why")
-            with open('your_wishlist.json', "r") as f:
+            with open('./db/your_wishlist.json', "r") as f:
                 wishlist = json.load(f)
         else:
             wishlist = {}
@@ -166,6 +167,7 @@ def wish_add(wish,config):
         "xmr_address":"",
         "type": "gift"
         }
+        add_to_rfeed(new_wish)
         bin_dir = config["bch"]["bin"]
         port = config["callback"]["port"]
         wallet_path = config["bch"]["wallet_file"]
@@ -185,7 +187,7 @@ def wish_add(wish,config):
         put_qr_code(new_wish["xmr_address"], "xmr")
         new_wish = new_wish.copy()
         wishlist["wishlist"].append(new_wish)
-        with open('your_wishlist.json','w+') as f:
+        with open('./db/your_wishlist.json','w+') as f:
             json.dump(wishlist, f,indent=6)
 
         orig_goal = wish["goal"]
@@ -240,6 +242,7 @@ def wish_add(wish,config):
 
 def wish_prompt(config):
     wish={}
+    reality = 0
     while True:
         try:
             wish["title"]
@@ -269,7 +272,5 @@ def wish_prompt(config):
     if 'y' in add.lower():
         wish={}
         wish_prompt(config)
-    
-
 
 main()

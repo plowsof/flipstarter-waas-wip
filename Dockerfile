@@ -36,14 +36,15 @@ RUN gpg --status-fd=1 --verify run_electrum.asc 2>/dev/null | grep "GOODSIG CA9E
 RUN gpg --status-fd=1 --verify run_electrum.asc 2>/dev/null | grep "GOODSIG 3152347D07DA627C Stephan Oeste (it) <it@oeste.de>" || exit 1
 
 
-#the actual wishlist people will use
+FROM python:3.8-slim as dependencies
+
+COPY ./app/requirements.txt .
+RUN pip install --user -r requirements.txt
+
 FROM python:3.8-slim
 
 #app images require fuse to function
-RUN apt-get update \ 
-	&& apt-get install -y fuse cron \
-	&& apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+
 
 
 #get the rpc binary from seths docker image
@@ -56,13 +57,25 @@ COPY ./app /home/app
 #default port of uvicorn is 8000 - nginx will proxy pass to this
 EXPOSE 8000
 
+WORKDIR /home/app/bin
+RUN chmod +x run_electrum \ 
+	&& chmod +x electron-cash \
+	&& apt-get update \ 
+	&& apt-get install -y --no-install-recommends fuse cron \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& apt-get clean \
+	&& apt-get autoclean \
+	&& apt-get autoremove
+
+COPY --from=dependencies /root/.local /root/.local
+# Make sure scripts in .local are usable:
+ENV PATH=/root/.local/bin:$PATH
+
 WORKDIR /home/app
-RUN python3 -m pip install -r requirements.txt \
-&& cd /home/app/bin \
-&& chmod +x run_electrum \ 
-&& chmod +x electron-cash
 #main.py starts the /donate webpage/server
 CMD ["python3", "./main.py"]
 #users must then shell into the container and run the 'make_wishlist.py'
 #get ip
-#sudo docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ca9e71ec5656
+#sudo docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' fresh
+#sudo docker volume rm $(sudo docker volume ls -q)
+

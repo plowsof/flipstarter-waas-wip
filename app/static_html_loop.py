@@ -77,6 +77,17 @@ def main(config):
                 line = line.replace("{@_COMMENTS_@}", htmlComments)
             elif "{@_PAGES_@}" in line:
                 line = line.replace("{@_PAGES_@}", str(pages))
+            elif "{@_RSS_@}" in line:
+                if config["RSS"]["enable"] == 1:
+                    rss_feed = "/flask/static/rss/rss.xml"
+                    rss_img =  "/flask/static/images/rss.png"
+                    rss_link = f""" <a href='{rss_feed}'>
+                                   <img alt='Qries' src='{rss_img}'"""
+                    line=line.replace("{@_RSS_@}",rss_link)
+                    #add an rss feed icon
+                else:
+                    line=line.replace("{@_RSS_@}","")
+
             replacement += line
     lock = funding_template + ".lock"
     with FileLock(lock):

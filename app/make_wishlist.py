@@ -6,6 +6,7 @@ import qrcode
 from PIL import Image
 import os
 from monerorpc.authproxy import AuthServiceProxy, JSONRPCException
+from rss_feed import add_to_rfeed
 import time
 import subprocess
 import configparser
@@ -337,7 +338,7 @@ def create_new_wishlist():
     main_address = config["monero"]["mainaddress"]
     percent_buffer = config["wishlist"]["percent_buffer"]
     www_root = config["wishlist"]["www_root"]
-    with open("your_wishlist.json", "r") as f:
+    with open("./db/your_wishlist.json", "r") as f:
         wishlist = json.load(f)
 
     for wish in wishlist["wishlist"]:
@@ -435,7 +436,6 @@ def create_new_wishlist():
 
     with open(os.path.join(www_root,"data","wishlist-data.json"), "w+") as f:
         json.dump(the_wishlist,f, indent=4) 
-    os.remove("your_wishlist.json")
 
 
 def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None):
@@ -932,7 +932,7 @@ def main(config):
     #create 'your_wishlist.json'
     print_msg("Lets create your wishlist :)")
     wish_prompt()
-    with open('your_wishlist.json') as f:
+    with open('./db/your_wishlist.json') as f:
             wishlist = json.load(f)
 
     #scan wishes and assign addresses if none given
@@ -973,7 +973,7 @@ def main(config):
     monero_rpc_close_wallet(rpc_url)
     monero_daemon.terminate()
     monero_daemon.communicate()
-    with open('your_wishlist.json', 'w+') as f:
+    with open('./db/your_wishlist.json', 'w+') as f:
         json.dump(wishlist, f, indent=6) 
     create_new_wishlist()
     config["bch"]["bin"] = electron_bin
@@ -1048,8 +1048,8 @@ def wish_prompt():
 
 
 def wish_add(wish):
-    if os.path.isfile("your_wishlist.json"):
-        with open('your_wishlist.json') as f:
+    if os.path.isfile("./db/your_wishlist.json"):
+        with open('./db/your_wishlist.json') as f:
             wishlist = json.load(f)
     else:
         wishlist = {}
@@ -1065,9 +1065,10 @@ def wish_add(wish):
     "xmr_address":"",
     "type": "gift"
     }
+    add_to_rfeed(wish)
     wish = wish.copy()
     wishlist["wishlist"].append(wish)
-    with open('your_wishlist.json','w+') as f:
+    with open('./db/your_wishlist.json','w+') as f:
         json.dump(wishlist, f,indent=6)
 
 def print_msg(text):

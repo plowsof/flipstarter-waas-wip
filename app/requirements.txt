@@ -1,5 +1,3 @@
-certifi==2021.10.8
-charset-normalizer==2.0.11
 colorama==0.4.4
 cryptocompare==0.7.5
 filelock==3.4.2
@@ -11,4 +9,4 @@ requests==2.27.1
 urllib3==1.26.8
 uvicorn 
 fastapi
-#dnspython[DNSSEC]
+feedgen
