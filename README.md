@@ -18,10 +18,11 @@ Tutorials will come after:
 - [x] a prompt if user wants to supply their viewkey (else wallets are made for them)
 - [x] static version for Non-JS users
 - [x] Dockerise:  
-- [ ] fix bugs in install wizard/edit wishlist 
+- fix bugs in
+    - [x]install wizard
+    - [ ] edit wishlist 
 - [ ] testing
-- [ ] RSS feed!
-- [ ] Get people using it :)
+- [x] RSS feed!
 
 ### Support
 The initial funding for this project was obtained through Bitcoin-cash' crowdfunding system - FlipStarter.
