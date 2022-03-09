@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   waas:
-    image: plowsof/waas4rucknium-testnet:beta-3
+    image: plowsof/waas4rucknium-testnet:beta-4
     container_name: fresh
     volumes:
       - waas-db:/home/app/db
@@ -11,6 +11,7 @@ services:
       - waas-electron:/home/.electron-cash
       - ./ssl:/home/app/ssl
       - /proc:/writable_proc
+      - waas-cron:/etc/cron.d/
     expose:
       - 8000
     cap_add:
@@ -25,3 +26,4 @@ volumes:
   waas-static:
   waas-electrum:
   waas-electron:
+  waas-cron:

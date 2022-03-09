@@ -67,7 +67,7 @@ def wish_edit(wishlist,edit_delete,www_root):
             print("1) Title")
             print("2) Goal")
             print("3) Description")
-            print("4) Make recurring")
+            print("4) Add monthly fee (e.g. -$100 / month")
             answer = ""
             goal = ""
             description = ""
@@ -89,8 +89,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                 wishlist["wishlist"][index]["type"] = "recurring:" + str(cost)
                 pprint.pprint(wishlist["wishlist"][index])
                 wish_id = wishlist["wishlist"][index]["xmr_address"][0:12]
-                w_dir = os.getcwd()
-                print(f"Fee added. Pass wishlist_recurring.py this id: {wish_id} to deduct the amount \n Add this in crontab to deduct the amount monthly: \n0 0 1 * * /usr/bin/python3 {w_dir}/wishlist_recurring.py {wish_id}")
+                add_to_cron(wish_id)
             again = 0
             finish = ""
             while finish.lower() not in ["y","yes","no","n"]:
@@ -121,6 +120,11 @@ def wish_edit(wishlist,edit_delete,www_root):
     pprint.pprint(wishlist)
     with open("./db/your_wishlist.json","w") as f:
         json.dump(wishlist,f, indent=6)
+
+def add_to_cron(wish_id):
+    os.system(f"(crontab -u $(whoami) -l; echo '0 0 1 * * (cd /home/app && /usr/local/bin/python3 wishlist_recurring.py {wish_id})' ) | crontab -u $(whoami) -")
+    print("Added recurring payment to happen on the 1st day of each month")
+
 #tidy this up
 def delete_wish(wishlist,index):
     global config
@@ -196,7 +200,7 @@ def wish_add(wish,config):
         goal = int(orig_goal) + int(percent)
 
         new_wish = { 
-                    "goal_usd":wish["goal"], #these will be in usd
+                    "goal_usd":int(wish["goal"]), #these will be in usd
                     "usd_total":0, #usd - if you cash out for stability
                     "contributors":0,
                     "description": wish["desc"],

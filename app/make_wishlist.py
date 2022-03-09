@@ -1005,8 +1005,9 @@ def main(config):
         open('/writable_proc/sys/vm/drop_caches','w').write("1\n")
     except:
         pass
-    th = threading.Thread(target=start_main, args=(config,))
-    th.start()
+    os.system('nohup python3 start_daemons.py &')
+    #th = threading.Thread(target=start_main, args=(config,))
+    #th.start()
 
 def db_make_modified():
     #remove modified.db if exists

@@ -5,14 +5,15 @@ import os
 import sqlite3
 from notify_xmr_vps_pi import db_set_time_wish
 import time
+import sys
 
-wishlist_file = "static/data/wishlist-data.json"
+wishlist_file = "/home/app/static/data/wishlist-data.json"
 
 def main(wish_id):
     global wishlist_file
     if not os.path.isfile(wishlist_file):
         return
-    lock = "static/data/wishlist-data.json.lock"
+    lock = "/home/app/static/data/wishlist-data.json.lock"
     with FileLock(lock):
         #print("Lock acquired.")
         with open(wishlist_file, 'r') as f:

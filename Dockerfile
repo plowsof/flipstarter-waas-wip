@@ -62,10 +62,15 @@ RUN chmod +x run_electrum \
 	&& chmod +x electron-cash \
 	&& apt-get update \ 
 	&& apt-get install -y --no-install-recommends fuse cron \
+	&& touch waas-crontab \
+	&& cp waas-crontab /etc/cron.d/waas-crontab \
+	&& chmod 0644 /etc/cron.d/waas-crontab \ 
+	&& crontab /etc/cron.d/waas-crontab \
+	&& (crontab -u $(whoami) -l; echo "#WaaS recurring fees" ) | crontab -u $(whoami) - \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& apt-get clean \
 	&& apt-get autoclean \
-	&& apt-get autoremove
+	&& apt-get autoremove 
 
 COPY --from=dependencies /root/.local /root/.local
 # Make sure scripts in .local are usable:
@@ -78,4 +83,3 @@ CMD ["python3", "./main.py"]
 #get ip
 #sudo docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' fresh
 #sudo docker volume rm $(sudo docker volume ls -q)
-

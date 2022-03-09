@@ -20,6 +20,7 @@ def create_fresh_feed(config):
     with open('./static/rss/feed.obj', 'wb') as f:
         pickle.dump(fg, f)
 
+#could be made to be generic, for other rss notifications e.g. 'funded'
 def add_to_rfeed(wish):
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
