@@ -19,7 +19,7 @@ Tutorials will come after:
 - [x] static version for Non-JS users
 - [x] Dockerise:  
 - fix bugs in
-    - [x]install wizard
+    - [x] install wizard
     - [ ] edit wishlist 
 - [ ] testing
 - [x] RSS feed!
