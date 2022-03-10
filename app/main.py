@@ -16,7 +16,7 @@ from urllib.parse import urlparse, parse_qs
 from html import escape
 import json
 from datetime import datetime
-from make_wishlist import create_new_wishlist, put_qr_code, get_unused_address
+from make_wishlist import create_new_wishlist, put_qr_code, get_unused_address, monero_rpc_online, bit_online
 import sqlite3
 import time
 from fastapi.responses import JSONResponse
@@ -159,7 +159,22 @@ async def handle_crypto_form(request: Request):
 
             if valid_coin == 0:
                 return
-
+            if ticker != "xmr":
+                bchuser = wish_config["bch"]["rpcuser"]
+                bchpass = wish_config["bch"]["rpcpassword"]
+                bchport = wish_config["bch"]["rpcport"]
+                btcuser = wish_config["btc"]["rpcuser"]
+                btcpass = wish_config["btc"]["rpcpassword"]
+                btcport = wish_config["btc"]["rpcport"]
+                if not bit_online(bchuser,bchpass,bchport):
+                    return
+                if not bit_online(btcuser,btcpass,btcport):
+                    return
+            else:
+                xmrport = wish_config["monero"]["daemon_port"]
+                rpc_url = "http://localhost:" + str(xmrport) + "/json_rpc"
+                if not monero_rpc_online(rpc_url):
+                    return
             address = get_unused_address(wish_config,ticker)
             #does there need to be a time contraint on when donations can receive a receipt?
             #or they can only be used once?
@@ -315,6 +330,13 @@ def db_receipts_add(data):
     con.commit()
 
 if __name__ == "__main__":
+    #use ENV variables from docker compose
+    wish_config["RSS"]["enable"] = os.environ['waas_RSS_ON']
+    wish_config["RSS"]["title"] = os.environ['waas_RSS_TITLE']
+    wish_config["RSS"]["description"] = os.environ['waas_RSS_DESC']
+    wish_config["RSS"]["link"] = os.environ['waas_RSS_LINK']
+    with open('./db/wishlist.ini', 'w') as configfile:
+        wish_config.write(configfile)
     #if wishlist file exists - assume we can start_daemons
     if os.path.isfile("./static/data/wishlist-data.json"):        
         th = threading.Thread(target=main_start_daemons, args=(wish_config,))
@@ -329,4 +351,3 @@ if __name__ == "__main__":
     else:
         print("Defaulting to http: place privkey.pem and fullchain.pem in ./ssl folder and restart for https")
         uvicorn.run("main:app", port=8000, host="0.0.0.0", reload=True)
-    #if wishilist has been created. start 'start_daemons.py' too

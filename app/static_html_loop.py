@@ -78,7 +78,7 @@ def main(config):
             elif "{@_PAGES_@}" in line:
                 line = line.replace("{@_PAGES_@}", str(pages))
             elif "{@_RSS_@}" in line:
-                if config["RSS"]["enable"] == 1:
+                if config["RSS"]["enable"] == "1":
                     rss_feed = "/flask/static/rss/rss.xml"
                     rss_img =  "/flask/static/images/rss.png"
                     rss_link = f""" <a href='{rss_feed}'>

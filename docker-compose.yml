@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   waas:
-    image: plowsof/waas4rucknium-testnet:beta-4
+    image: plowsof/waas4rucknium-testnet:beta-6
     container_name: fresh
     volumes:
       - waas-db:/home/app/db
@@ -20,6 +20,11 @@ services:
       - /dev/fuse
     security_opt:
       - apparmor:unconfined 
+    environment:
+      - waas_RSS_ON=1
+      - waas_RSS_TITLE="Ruckniums Funding Page"
+      - waas_RSS_DESC="Help support my projects and running costs"
+      - waas_RSS_LINK="https://rucknium.me" 
 volumes:
   waas-db:
   waas-wallets:
