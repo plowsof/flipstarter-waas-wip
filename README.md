@@ -4,6 +4,7 @@ Currently, this will just create a mirror of the page @ rucknium.me/flask, howev
 
 ### TODO
 - [ ] Fix Negative bitcoin donations :) 
+- [ ] non-js version incorrect and donations should trigger an update 
 - fix bugs in
     - [x] install wizard
     - [ ] edit wishlist 
