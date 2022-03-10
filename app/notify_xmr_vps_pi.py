@@ -68,7 +68,7 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
         if saved_wishlist["wishlist"][i][f"{ticker}_address"] == find_address:
             found = 1
             if ticker != "xmr":
-                old_balance = float(saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"]) + float(saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"])
+                old_balance = float(saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"]) + float(saved_wishlist["wishlist"][i][f"{ticker}_confirmed"])
                 if old_balance >= bit_balance:
                     return
                 #print(f"old balance: {old_balance} new balance : {now_balance}")
@@ -235,9 +235,11 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
         saved_wishlist["comments"]["comments"].append(comment)
         saved_wishlist["comments"]["modified"] = int(time.time())
         db_set_time_comment(int(time.time()))
-        dump_json(saved_wishlist)
+        
     else:
         print("this address is unknown.. but still its probably crypto ++")
+
+    dump_json(saved_wishlist)
 
 def db_set_time_comment(time_stamp):
     con = sqlite3.connect('./db/modified.db')

@@ -143,6 +143,7 @@ def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
         return returnme['result']
         pass
     except Exception as e:
+        print(e)
         return "Error"
 
 def get_xmr_subaddress(rpc_url,wallet_file,title):
@@ -172,17 +173,21 @@ def get_unused_address(config,ticker,title=None):
             address = get_xmr_subaddress(rpc_url,wallet_path,title)
             valid_coin = 1
             #notify qzr3duvhlknh9we5g8x3wvkj5qvh625tzv36ye9kwl http://127.0.1.1--testnet
-
-        if ticker == "bch" or ticker == "btc":
+        else:
             wallet_path = config[ticker]["wallet_file"]
             bin_dir = config[ticker]["bin"]
             port = config["callback"]["port"]
             rpcuser = config[ticker]["rpcuser"]
             rpcpass = config[ticker]["rpcpassword"]
             rpcport = config[ticker]["rpcport"]
-            address = address_create_notify(bin_dir,wallet_path,port,"",1,1,rpcuser,rpcpass,rpcport)
+            #bin_dir,wallet_path,port,addr,create,notify,rpcuser,rpcpass,rpcport
+            #create address - check if unused - then create a notify
+            address = address_create_notify(bin_dir,wallet_path,port,"",1,0,rpcuser,rpcpass,rpcport)
         if "not" in address:
             continue
+        if "Error" in address:
+            continue
+        print(f"Checking address: {address}")
         con = sqlite3.connect('./db/receipts.db')
         cur = con.cursor()
         create_receipts_table = """ CREATE TABLE IF NOT EXISTS donations (
@@ -211,6 +216,9 @@ def get_unused_address(config,ticker,title=None):
         rows = len(cur.fetchall())
         #its a used address. continue loop
         if rows == 0:
+            if ticker != "xmr":
+                th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
+                th.start()
             break
     return address
 
@@ -1139,6 +1147,7 @@ def print_err(text):
 
 if __name__ == "__main__":
     #os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    '''
     for proc in psutil.process_iter():
         # check whether the process name matches
         if "monero-wallet-" in proc.name():
@@ -1148,6 +1157,7 @@ if __name__ == "__main__":
             proc.kill()
         if 'electron' in proc.name().lower():
             proc.kill()
+    '''
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
     main(config)

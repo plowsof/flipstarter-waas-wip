@@ -204,7 +204,7 @@ def wish_add(wish,config):
                 break
             else:
                 print_err("Waiting for Monero daemon to come online")
-                if retries == 4:
+                if retries == 7:
                     print_err("Monero not online after 40 seconds")
                     sys.exit(1)
                 time.sleep(10)
@@ -281,7 +281,7 @@ def is_bit_online(rpcuser,rpcpass,rpcport):
             break
         else:
             print_err("Waiting for Monero daemon to come online")
-            if retries == 4:
+            if retries == 7:
                 print_err("Monero not online after 40 seconds")
                 sys.exit(1)
             time.sleep(10)

@@ -65,7 +65,7 @@ class S(BaseHTTPRequestHandler):
         address_con = output["confirmed"]
         address_unc = output["unconfirmed"]
         bit_balance = float(address_con) + float(address_unc)
-        data_fname = os.path.join(config["wishlist"]['www_root'],"data","wishlist-data.json")
+        data_fname = "./static/data/wishlist-data.json"
         with open(data_fname, "r") as f:
             data_wishlist = json.load(f)
         updateDatabaseJson(address,0,ticker,data_wishlist,bit_balance,address_con,address_unc)
