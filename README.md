@@ -3,7 +3,7 @@ Docker repo/instructions here https://hub.docker.com/r/plowsof/waas4rucknium-tes
 Currently, this will just create a mirror of the page @ rucknium.me/flask, however, i will eventually be making a generic version, and use the rucknium page as an example of installing a template (just copy and pasting a folder) 
 
 ### TODO
-- [ ] Fix Negative bitcoin donations :) 
+- [x] Fix Negative bitcoin donations :) 
 - [ ] non-js version incorrect and donations should trigger an update 
 - fix bugs in
     - [x] install wizard

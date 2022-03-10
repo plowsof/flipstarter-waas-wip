@@ -1,7 +1,11 @@
 version: '3.3'
 services:
   waas:
+<<<<<<< HEAD
     image: plowsof/waas4rucknium-testnet:beta-6
+=======
+    image: plowsof/waas4rucknium-testnet:beta-5
+>>>>>>> 21b59c57900c8ed3acb579b88cf7f63e95e06304
     container_name: fresh
     volumes:
       - waas-db:/home/app/db
