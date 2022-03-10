@@ -1,13 +1,14 @@
 import configparser
 import json
 #address_create_notify == get btc or bch address
-from make_wishlist import create_new_wishlist, address_create_notify, get_xmr_subaddress, put_qr_code, get_unused_address
+from make_wishlist import create_new_wishlist, address_create_notify, get_xmr_subaddress, put_qr_code, get_unused_address, monero_rpc_online, bit_online, print_err, pre_receipts_add
 import pprint
 import os 
 import sys
 from filelock import FileLock
 from datetime import datetime
 from rss_feed import add_to_rfeed
+import time
 config = ""
 
 def main():
@@ -68,12 +69,13 @@ def wish_edit(wishlist,edit_delete,www_root):
             print("2) Goal")
             print("3) Description")
             print("4) Add monthly fee (e.g. -$100 / month")
+            print("5) Status (WIP / RELEASED)")
             answer = ""
             goal = ""
             description = ""
             cost = ""
             title = ""
-            while answer not in [1,2,3,4]:
+            while answer not in [1,2,3,4,5]:
                 answer = int(input(">> "))
             if answer == 1:
                 wishlist["wishlist"][index]["title"] = input("New title >> ")
@@ -90,6 +92,8 @@ def wish_edit(wishlist,edit_delete,www_root):
                 pprint.pprint(wishlist["wishlist"][index])
                 wish_id = wishlist["wishlist"][index]["xmr_address"][0:12]
                 add_to_cron(wish_id)
+            if answer == 5:
+                wishlist["wishlist"][index]["status"] = input("New Status >> ")
             again = 0
             finish = ""
             while finish.lower() not in ["y","yes","no","n"]:
@@ -175,11 +179,18 @@ def wish_add(wish,config):
         bin_dir = config["bch"]["bin"]
         port = config["callback"]["port"]
         wallet_path = config["bch"]["wallet_file"]
-        print(f'the port is {port}')
+        bchuser = config["bch"]["rpcuser"]
+        bchpass = config["bch"]["rpcpassword"]
+        bchport = config["bch"]["rpcport"]
+        btcuser = config["btc"]["rpcuser"]
+        btcpass = config["btc"]["rpcpassword"]
+        btcport = config["btc"]["rpcport"]
+        is_bit_online(bchuser,bchpass,bchport)
         new_wish["bch_address"] = get_unused_address(config,"bch")
         put_qr_code(new_wish["bch_address"], "bch")
         bin_dir = config["btc"]["bin"]
         wallet_path = config["btc"]["wallet_file"]
+        is_bit_online(btcuser,btcpass,btcport)
         new_wish["btc_address"] = get_unused_address(config,"btc")
         put_qr_code(new_wish["btc_address"], "btc")
         rpc_port = config["monero"]["daemon_port"]
@@ -187,7 +198,25 @@ def wish_add(wish,config):
             rpc_port = 18082
         rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
         wallet_path = os.path.basename(config['monero']['wallet_file'])
+        retries = 0
+        while True:
+            if monero_rpc_online(rpc_url):
+                break
+            else:
+                print_err("Waiting for Monero daemon to come online")
+                if retries == 4:
+                    print_err("Monero not online after 40 seconds")
+                    sys.exit(1)
+                time.sleep(10)
+                retries += 1
         new_wish["xmr_address"] = get_unused_address(config,"xmr")
+        
+        #insert the addresses into the database
+        wish_id = new_wish["xmr_address"][0:12]
+        pre_receipts_add(new_wish["xmr_address"],"xmr",wish_id)
+        pre_receipts_add(new_wish["bch_address"],"bch",wish_id)
+        pre_receipts_add(new_wish["btc_address"],"btc",wish_id)
+
         put_qr_code(new_wish["xmr_address"], "xmr")
         new_wish = new_wish.copy()
         wishlist["wishlist"].append(new_wish)
@@ -203,6 +232,7 @@ def wish_add(wish,config):
                     "goal_usd":int(wish["goal"]), #these will be in usd
                     "usd_total":0, #usd - if you cash out for stability
                     "contributors":0,
+                    "status": "", #e.g. WIP / RELEASED
                     "description": wish["desc"],
                     "percent": 0,
                     "hours": 0, # $/h
@@ -243,6 +273,21 @@ def wish_add(wish,config):
         pass
     except Exception as e:
         raise e
+
+def is_bit_online(rpcuser,rpcpass,rpcport):
+    retries=0
+    while True:
+        if bit_online(rpcuser,rpcpass,rpcport):
+            break
+        else:
+            print_err("Waiting for Monero daemon to come online")
+            if retries == 4:
+                print_err("Monero not online after 40 seconds")
+                sys.exit(1)
+            time.sleep(10)
+            retries += 1
+    #broken out of the loop / nodes is online
+    return
 
 def wish_prompt(config):
     wish={}

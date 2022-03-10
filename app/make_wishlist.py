@@ -74,14 +74,9 @@ def address_create_notify(bin_dir,wallet_path,port,addr,create,notify,rpcuser,rp
     if notify == 1:
         if addr != "":
             address = addr
-        if address != "Error":
-            if "electrum" in bin_dir:
-                #thread_notify(bin_dir,address,port)
-                th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
-                th.start()
-            else:
-                th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
-                th.start()
+        if "Error" not in address:
+            th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
+            th.start()
     return(address)
 
 def rpc_notify(rpcuser,rpcpass,rpcport,address,callback):
@@ -97,6 +92,23 @@ def rpc_notify(rpcuser,rpcpass,rpcport,address,callback):
         "id": "curltext",
     }
     returnme = requests.post(url, json=payload).json()
+
+def bit_online(rpcuser,rpcpass,rpcport):
+    local_ip = "localhost"
+    url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
+    payload = {
+        "method": "getbalance",
+        "params": [],
+        "jsonrpc": "2.0",
+        "id": "curltext",
+    }
+    try:
+        returnme = requests.post(url, json=payload).json()
+        print("it worked")
+        return True
+    except:
+        print("it didnt worked")
+        return False
 
 def curl_address(rpcuser,rpcpass,rpcport):
     local_ip = "localhost"
@@ -195,7 +207,7 @@ def get_unused_address(config,ticker,title=None):
 
         cur.execute(create_receipts_table)
         con.commit()
-        cur.execute('SELECT * FROM donations WHERE address = ?',[address])
+        cur.execute('SELECT * FROM donations WHERE donation_address = ?',[address])
         rows = len(cur.fetchall())
         #its a used address. continue loop
         if rows == 0:
@@ -437,6 +449,10 @@ def create_new_wishlist():
     with open(os.path.join(www_root,"data","wishlist-data.json"), "w+") as f:
         json.dump(the_wishlist,f, indent=4) 
 
+def build_wish():
+    wish = "todo"
+    print("Hello")
+    return wish
 
 def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None):
     global wallet_dir
@@ -849,6 +865,9 @@ def create_bit_wallet(config,bchbtc):
 
 #set viewkeys for wallets here
 def main(config):
+    if os.path.isfile("./static/data/wishlist-data.json"):
+        print_err("Wishlist already created. Please use edit_wishlist.py")
+        sys.exit(1)
     print_msg("Wishlist As A Service wizard v1.0")
     print_msg("Disclaimer: Wallets are view only. Write the seeds down or you will have no access to your funds!")
     local_ip = "localhost"
@@ -959,6 +978,11 @@ def main(config):
             wish["btc_address"] = get_unused_address(config,"btc")
         if not wish["bch_address"]:
             wish["bch_address"] = get_unused_address(config,"bch")
+        #insert the addresses into the database
+        wish_id = wish["xmr_address"][0:12]
+        pre_receipts_add(wish["xmr_address"],"xmr",wish_id)
+        pre_receipts_add(wish["bch_address"],"bch",wish_id)
+        pre_receipts_add(wish["btc_address"],"btc",wish_id)
 
 
     #terminate all daemons
@@ -997,6 +1021,8 @@ def main(config):
     con.commit()
     con.close()
     db_make_modified()
+    input("Press Enter to clear the console (last chance to write your seeds down!")
+    os.system("clear")
     print_msg("Finished. Run edit_wishlist.py to add/edit wishes. Goodluck!")
 
     #clear memory cache (linux)
@@ -1008,6 +1034,38 @@ def main(config):
     os.system('nohup python3 start_daemons.py &')
     #th = threading.Thread(target=start_main, args=(config,))
     #th.start()
+
+def pre_receipts_add(address,ticker,wish_id):
+    db_data = {
+    "email": "",
+    #the amount selected by the form is meaningless
+    #we only care about what gets deposited at the end
+    #"amount": null_if_not_exists(vals,b"amount"),
+    "amount": 0,
+    "fname": "",
+    "donation_address": address,
+    "zipcode": "",
+    "address": "",
+    "date_time": datetime.now(),
+    "refund_address": "",
+    "crypto_ticker": ticker,
+    "wish_id": wish_id,
+    "comment": "",
+    "comment_name": "",
+    "amount_expected": 0,
+    "consent":"",
+    "quantity":0,
+    "type": wish_id
+    }
+    db_receipts_add(db_data)
+
+def db_receipts_add(data):
+    con = sqlite3.connect('./db/receipts.db')
+    cur = con.cursor()
+    sql = ''' INSERT INTO donations (email,amount,fname,donation_address,zipcode,address,date_time,refund_address,crypto_ticker,wish_id,comment,comment_name,amount_expected,consent,quantity,type)
+              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) '''
+    cur.execute(sql, (data["email"],data["amount"],data["fname"],data["donation_address"],data["zipcode"],data["address"],data["date_time"],data["refund_address"],data["crypto_ticker"],data["wish_id"],data["comment"],data["comment_name"],data["amount_expected"],data["consent"],data["quantity"],data["type"]))
+    con.commit()
 
 def db_make_modified():
     #remove modified.db if exists
