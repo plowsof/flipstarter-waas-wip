@@ -12,7 +12,7 @@ Currently, this will just create a mirror of the page @ rucknium.me/flask, howev
 
 also todo ~ make a tutorial based on these notes
 ```
-hello, my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. I need nginx/dockercompose/docker  
+hello, lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. I need nginx/dockercompose/docker and the docker-compose.yml file  
 
 dockercompose 
 https://docs.docker.com/compose/install/
@@ -55,7 +55,7 @@ Certificate is saved at: /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.p
 Key is saved at:         /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem
 
 cd to the ssl folder next to your docker-compose.yml file (maybe a needless step to create this folder)
-ssl# cp /etc/letsencrypt/live/www.getwishlisted.xyz/* .
+cp /etc/letsencrypt/live/www.getwishlisted.xyz/* .
 
 docker stop fresh
 docker-compose up
