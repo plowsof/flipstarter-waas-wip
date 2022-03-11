@@ -345,7 +345,7 @@ if __name__ == "__main__":
         print("Run make_wishlist.py")
     #ssl certs should be in ./ssl folder 
     if os.path.isfile("./ssl/privkey.pem") and os.path.isfile("./ssl/fullchain.pem"):
-        uvicorn.run("main:app", port=8000, host="0.0.0.0", key_file="privkey.pem", ssl_certificate="fullchain.pem", reload=True)
+        uvicorn.run("main:app", port=8000, host="0.0.0.0", ssl_keyfile="privkey.pem", ssl_certificate="fullchain.pem", reload=True)
         #fullchain.pem  privkey.pem
         #sudo screen -L -Logfile--ssl-keyfile rurucknium.me.crt sudo screen -L -Logfile uvicorn-output.txt uvicorn main:app --reload --ssl-keyfile rucknium.me.key --ssl-certfile rucknium.me.crt
     else:
