@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   waas:
-    image: plowsof/waas4rucknium-testnet:beta-6
+    image: fresh
     container_name: fresh
     volumes:
       - waas-db:/home/app/db
@@ -12,6 +12,9 @@ services:
       - ./ssl:/home/app/ssl
       - /proc:/writable_proc
       - waas-cron:/etc/cron.d/
+    networks:
+      static-network:
+        ipv4_address: 172.20.111.2
     expose:
       - 8000
     cap_add:
@@ -19,7 +22,7 @@ services:
     devices:
       - /dev/fuse
     security_opt:
-      - apparmor:unconfined 
+      - apparmor:unconfined
     environment:
       - waas_RSS_ON=1
       - waas_RSS_TITLE="Ruckniums Funding Page"
@@ -32,3 +35,8 @@ volumes:
   waas-electrum:
   waas-electron:
   waas-cron:
+networks:
+  static-network:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
