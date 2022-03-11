@@ -10,6 +10,57 @@ Currently, this will just create a mirror of the page @ rucknium.me/flask, howev
     - [ ] edit wishlist 
 - [ ] sanity checks
 
+also todo ~ make a tutorial based on these notes
+```
+dockercompose 
+https://docs.docker.com/compose/install/
+docker
+https://docs.docker.com/engine/install/debian/
+
+curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/main/docker-compose.yml -o docker-compose.yml
+
+docker-compose up -d
+
+172.20.111.2
+
+server {
+    listen 80;
+    listen [::]:80;
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+    server_name moneroresearch.info www.moneroresearch.info;
+        location /flask {
+          proxy_pass http://172.20.111.2:8000;
+        }
+}
+
+sudo ln -s /etc/nginx/sites-available/getwishlisted.xyz /etc/nginx/sites-enabled/ 
+
+sudo /etc/init.d/nginx restart
+
+lets get certs:
+https://www.linode.com/docs/guides/enabling-https-using-certbot-with-nginx-on-debian/
+
+apt install snapd
+snap install --classic certbot
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
+
+I had an error 'to many redirects' because my dns providers ssl setting was off, i needed to change it to 'Full'
+
+Successfully received certificate.
+Certificate is saved at: /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem
+Key is saved at:         /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem
+
+cd to the ssl folder next to your docker-compose.yml file (maybe a needless step to create this folder)
+ssl# cp /etc/letsencrypt/live/www.getwishlisted.xyz/* .
+
+docker stop fresh
+docker-compose up
+docker exec -it fresh /bin/bash
+python3 make_wishlist.py
+
+when finished press ctrl+p then ctrl+q to detatch from the docker container
+```
 ### Support
 The initial funding for this project was obtained through Bitcoin-cash' crowdfunding system - FlipStarter.
 I will not be asking for any donations for this particular projects further development until someone using this WaaS receives their first (mainnet) donation / and i have fulfilled my FlipStarter promises. I think thats fair right? :) 
