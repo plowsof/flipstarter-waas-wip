@@ -12,6 +12,8 @@ Currently, this will just create a mirror of the page @ rucknium.me/flask, howev
 
 also todo ~ make a tutorial based on these notes
 ```
+hello, my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. I need nginx/dockercompose/docker  
+
 dockercompose 
 https://docs.docker.com/compose/install/
 docker
@@ -21,7 +23,9 @@ curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/main/docker-
 
 docker-compose up -d
 
-172.20.111.2
+
+cd /etc/nginx/sites-available
+nano getwishlisted.xyz
 
 server {
     listen 80;
@@ -39,7 +43,6 @@ sudo ln -s /etc/nginx/sites-available/getwishlisted.xyz /etc/nginx/sites-enabled
 sudo /etc/init.d/nginx restart
 
 lets get certs:
-https://www.linode.com/docs/guides/enabling-https-using-certbot-with-nginx-on-debian/
 
 apt install snapd
 snap install --classic certbot
