@@ -1,36 +1,36 @@
-.btc_address{
-  color: #ff4f00 ;
+.btc_address, div .anon_address_btc{
+  color: #f2a900 ;
   font-family: monospace ;
   cursor: pointer ;
   word-wrap:break-word;
 }
 
-.xmr_address{
-  color: #ff4f00 ;
+.xmr_address, div .anon_address_xmr{
+  color: #ff6600 ;
   font-family: monospace ;
   cursor: pointer ;
   word-wrap:break-word;
 }
 
-.bch_address{
-  color: #ff4f00 ;
+.bch_address, div .anon_address_bch{
+  color: #0AC18E ;
   font-family: monospace ;
   cursor: pointer ;
   word-wrap:break-word;
 }
 
-.xmr_address:hover {
+.xmr_address:hover, div .anon_address_xmr:hover{
   background-color: gray;
 }
 
-.btc_address:hover {
+.btc_address:hover, div .anon_address_btc:hover {
   background-color: gray;
 }
 .wishtitle{
   color: cyan ;
 }
 
-.bch_address:hover {
+.bch_address:hover, div .anon_address_bch:hover {
   background-color: gray;
 }
 
@@ -236,3 +236,25 @@ span.c_tip{
   display: inline;
 }
 
+.launch_wallet a:link {
+  color: red;
+}
+
+/* visited link */
+.launch_wallet a:visited {
+  color: green;
+}
+
+/* mouse over link */
+.launch_wallet a:hover {
+  color: hotpink;
+}
+
+/* selected link */
+.launch_wallet a:active {
+  color: blue;
+}
+
+img.rss_logo{
+    display:inline;
+}

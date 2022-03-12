@@ -16,7 +16,7 @@ comments_per_page = 8
 def main(config):
     global comments_per_page
     www_root = config["wishlist"]["www_root"]
-    funding_page = os.path.join("static",config["wishlist"]["page_name"])
+    funding_page = "./static/index.html"
  
     #funding_template = f'template_{funding_page}'
     funding_template = "./static/template_index.html"
@@ -33,11 +33,11 @@ def main(config):
         i-=1
         wish = wishlist["wishlist"][i]
         our_data = get_total(wish)
-        total = round(our_data["total_usd"],2)
+        total = "%.2f" % (our_data["total_usd"])
         sortme = our_data["values"]
         sortme = dict(sorted(sortme.items(), key=lambda item: item[1]))
         #pprint.pprint(sortme)
-        wish["percent"] = (total / float(wish["goal_usd"])) * 100
+        wish["percent"] = (float(total) / float(wish["goal_usd"])) * 100
         colours = {
           "monero": "#f26822",
           "bitcoin-cash": "#0ac18e",
@@ -79,10 +79,11 @@ def main(config):
                 line = line.replace("{@_PAGES_@}", str(pages))
             elif "{@_RSS_@}" in line:
                 if config["RSS"]["enable"] == "1":
-                    rss_feed = "/flask/static/rss/rss.xml"
-                    rss_img =  "/flask/static/images/rss.png"
-                    rss_link = f""" <a href='{rss_feed}'>
-                                   <img alt='Qries' src='{rss_img}'"""
+                    rss_feed = "/donate/static/rss/rss.xml"
+                    rss_img =  "/donate/static/images/rss.png"
+                    rss_link = f""" <a href='{rss_feed}' width=16" height="16">
+                                     <img class="rss_logo" alt='rss' src='{rss_img}'>
+                                    </a>"""
                     line=line.replace("{@_RSS_@}",rss_link)
                     #add an rss feed icon
                 else:
@@ -126,7 +127,7 @@ def comments_html(comments):
         if name == "":
             name = "Anonymous"
         amount = comments[i]["amount"]
-        coin_image = f'<img id="crypto_ticker" src="/flask/static/images/{comments[i]["ticker"]}.png" alt="{comments[i]["ticker"]}" height="20px" width="20px">'
+        coin_image = f'<img id="crypto_ticker" src="/donate/static/images/{comments[i]["ticker"]}.png" alt="{comments[i]["ticker"]}" height="20px" width="20px">'
         comment = comments[i]["comment"]
         wish_title = comments[i]["id"]
         rounded = str(round(float(amount),4))
@@ -151,7 +152,7 @@ def comments_html(comments):
 
 def wish_html(one,two,three,four,end,total,wish):
     funded = ""
-    if total >= wish["goal_usd"]:
+    if float(total) >= wish["goal_usd"]:
         funded = "FUNDED "
     wish_html = f"""  
                   <style>
@@ -184,9 +185,9 @@ def wish_html(one,two,three,four,end,total,wish):
                     <p class="description">{wish["description"]}</p>
                     """
     if funded == "": #draw a donate button
-        img_xmr = f'<img id="crypto_ticker" src="/flask/static/images/xmr.png" alt="xmr" height="20px" width="20px">'
-        img_bch = f'<img id="crypto_ticker" src="/flask/static/images/bch.png" alt="bch" height="20px" width="20px">'
-        img_btc = f'<img id="crypto_ticker" src="/flask/static/images/btc.png" alt="btc" height="20px" width="20px">'
+        img_xmr = f'<img id="crypto_ticker" src="/donate/static/images/xmr.png" alt="xmr" height="20px" width="20px">'
+        img_bch = f'<img id="crypto_ticker" src="/donate/static/images/bch.png" alt="bch" height="20px" width="20px">'
+        img_btc = f'<img id="crypto_ticker" src="/donate/static/images/btc.png" alt="btc" height="20px" width="20px">'
         wish_html+= f"""
                           <label for="reveal-donate" class="btn">Donate</label>
                           <input type="checkbox" class="checkbox_{wish["id"]}" id="reveal-donate" role="button">

@@ -40,7 +40,7 @@ import math
 
 import random
 import requests
-NOTIFICATION_URL = 'https://getwishlisted.xyz/flask/webhook'
+NOTIFICATION_URL = 'https://getwishlisted.xyz/donate/webhook'
 
 # The event notification subscription signature key (sigKey) defined in dev portal for app.
 SIG_KEY = b'iMC2A7ZgK1M02FSJWBSe8Q';
@@ -79,7 +79,7 @@ class Webhook(BaseModel):
 #ssl_certificate ;
 #ssl_certificate_key 
 app = FastAPI()
-app.mount("/flask/static", StaticFiles(directory="static"), name="static")
+app.mount("/donate/static", StaticFiles(directory="static"), name="static")
 
 ##
 ##Ticket price 
@@ -94,15 +94,15 @@ allow_methods=["*"], # Allows all methods
 allow_headers=["*"], # Allows all headers
 )
 
-@app.get("/flask/", response_class=HTMLResponse)
+@app.get("/donate/", response_class=HTMLResponse)
 async def read_root():
     return FileResponse('index.html')
 
-@app.post("/flask/checkout")
+@app.post("/donate/checkout")
 async def get_body(request: Request,status_code=200):
     print("hello world")
 
-@app.post("/flask/webhook")
+@app.post("/donate/webhook")
 async def get_body(request: Request,status_code=200):
     global NOTIFICATION_URL, SIG_KEY, client
     body = await request.body()
@@ -223,7 +223,7 @@ def wishlist_usd_notify(db_usd,db_ref_id,db_email,db_fname,db_lname,db_zip,db_st
     send_email(db_email,db_usd,db_fname,db_crypto_addr,db_zip,db_street,db_date_time,db_refund_addr,db_ticker,db_wish_id)
 
 
-@app.post("/flask/crypto_donate")
+@app.post("/donate/crypto_donate")
 async def handle_crypto_form(request: Request):
     global wish_config, ticket_normal, ticket_vip
     body = await request.body()
@@ -576,7 +576,7 @@ class FiatDonate(BaseModel):
     id: str
     usd: int
     zip: str
-@app.post("/flask/fiat_donate")
+@app.post("/donate/fiat_donate")
 def square_checkout(fiatDonate: FiatDonate):
     global LOCATION_ID
     print("Geklo")
@@ -652,7 +652,7 @@ def square_checkout(fiatDonate: FiatDonate):
       "idempotency_key": str(uuid.uuid4())
     },
     "pre_populate_buyer_email": email,
-    #"redirect_url" : 'https://getwishlisted.xyz/flask/checkout',
+    #"redirect_url" : 'https://getwishlisted.xyz/donate/checkout',
     "merchant_support_email" : "support@magicgrants.org"
     });
 

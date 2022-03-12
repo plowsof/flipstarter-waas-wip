@@ -40,7 +40,7 @@ function anonUri(){
   $('#donate_qrcode').children("img").css('height', "auto")
   $(".spinner").hide()
 
-  $("#pay_uri").html(`<a href="${payment_uri}">Launch in wallet</a> 1 ${coin} = $${price}`)
+  $("#pay_uri").html(`<a class="launch_wallet" href="${payment_uri}">Launch in wallet</a> 1 ${coin} = $${price}`)
 }
 
 function getPriceSingle(symbol){

@@ -4,10 +4,10 @@ import configparser
 import os
 
 def create_fresh_feed(config):
-    rss_link = config["RSS"]["link"] + "/flask"
+    rss_link = config["RSS"]["link"] + "/donate"
     rss_description = config["RSS"]["description"]
     rss_title = config["RSS"]["title"]
-    rss_self = rss_link + "/flask/static/rss/rss.xml"
+    rss_self = rss_link + "/donate/static/rss/rss.xml"
     fg = FeedGenerator()
     fg.title(rss_title)
     fg.description(rss_description)
@@ -40,7 +40,7 @@ def add_to_rfeed(wish):
     rss_title = wish["title"]
     rss_description = wish["description"]
     rss_goal = wish["goal_usd"]
-    rss_link = config["RSS"]["link"] + "/flask"
+    rss_link = config["RSS"]["link"] + "/donate"
     #load the current feed
     with open('./static/rss/feed.obj', 'rb') as f:
         fg = pickle.load(f)

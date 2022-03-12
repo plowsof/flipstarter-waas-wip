@@ -126,7 +126,7 @@ async function card_validate() {
       }
       console.log(send_this)
       $.ajax({
-        url: "/flask/fiat_donate",
+        url: "/donate/fiat_donate",
         type: "POST",
         data: JSON.stringify(send_this),
         contentType: "application/json; charset=utf-8",
@@ -144,7 +144,7 @@ async function card_validate() {
 function fiatSubmit(id){
   $.ajax({
 
-  url: "/flask/fiat_donate",
+  url: "/donate/fiat_donate",
   type: "POST",
   data: JSON.stringify({"wish_id":id,"usd_amount":usd_amount, "uuid": "someid"}),
   contentType: "application/json; charset=utf-8",

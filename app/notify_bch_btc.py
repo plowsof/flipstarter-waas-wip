@@ -14,6 +14,7 @@ import string
 import configparser
 import sqlite3
 from notify_xmr_vps_pi import updateDatabaseJson
+
 #This file is run once to host the http server
 #values taken from a config file once
 
@@ -100,7 +101,6 @@ if __name__ == '__main__':
     from sys import argv
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
-
     if len(argv) == 2:
         run(port=int(argv[1]),config=config)
     else:

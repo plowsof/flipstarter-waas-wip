@@ -10,6 +10,7 @@ from filelock import FileLock
 import cryptocompare
 import sqlite3
 import configparser
+from static_html_loop import main as static_main
 
 
 #os.chdir(os.path.dirname(sys.argv[0]))
@@ -240,7 +241,7 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
         print("this address is unknown.. but still its probably crypto ++")
 
     dump_json(saved_wishlist)
-
+    static_main(config)
 def db_set_time_comment(time_stamp):
     con = sqlite3.connect('./db/modified.db')
     cur = con.cursor()

@@ -39,7 +39,7 @@ wish_config.read("./db/wishlist.ini")
 #ssl_certificate ;
 #ssl_certificate_key 
 app = FastAPI()
-app.mount("/flask/static", StaticFiles(directory="static"), name="static")
+app.mount("/donate/static", StaticFiles(directory="static"), name="static")
 
 ##
 ##Ticket price 
@@ -54,15 +54,15 @@ allow_methods=["*"], # Allows all methods
 allow_headers=["*"], # Allows all headers
 )
 
-@app.get("/flask/", response_class=HTMLResponse)
+@app.get("/donate/", response_class=HTMLResponse)
 async def read_root():
     return FileResponse('./static/index.html')
 
-@app.get("/flask/api/timestamp")
+@app.get("/donate/api/timestamp")
 async def return_price(status_code=200):
     return db_get_timestamp()
 
-@app.get("/flask/api/price")
+@app.get("/donate/api/price")
 async def return_price(status_code=200):
     return db_get_prices()
 
@@ -77,14 +77,19 @@ def db_get_timestamp():
     cur.execute(create_modified_table)
     cur.execute('SELECT * FROM modified where data = 0')
     rows = cur.fetchall()
-    pprint.pprint(rows)
-    return_me = {
-    "comments": rows[0][1],
-    "wishlist": rows[0][2]
-    }
     con.commit()
     con.close()
-    return return_me
+    pprint.pprint(rows)
+    try:
+        return_me = {
+        "comments": rows[0][1],
+        "wishlist": rows[0][2]
+        }
+        return return_me
+        pass
+    except:
+        return False
+
 
 def db_get_prices():
     con = sqlite3.connect('./db/crypto_prices.db')
@@ -98,15 +103,19 @@ def db_get_prices():
     cur.execute(create_price_table)
     cur.execute('SELECT * FROM crypto_prices WHERE data = ?',[0])
     rows = cur.fetchall()
-    return_me = {
-    "bitcoin-cash": rows[0][3],
-    "monero": rows[0][1],
-    "bitcoin": rows[0][2]
-    }
     con.close()
-    return return_me
+    try:
+        return_me = {
+        "bitcoin-cash": rows[0][3],
+        "monero": rows[0][1],
+        "bitcoin": rows[0][2]
+        }
+        return return_me
+    except:
+        return False
+        
 
-@app.post("/flask/crypto_donate")
+@app.post("/donate/crypto_donate")
 async def handle_crypto_form(request: Request):
     global wish_config, ticket_normal, ticket_vip
     body = await request.body()
@@ -138,8 +147,8 @@ async def handle_crypto_form(request: Request):
             print("Rejected")
             return
         #add into database? a thread to remove in 15 mins? hm
-        pprint.pprint(vals)
-        print(f"the choise is {vals[b'choice'][0]}")
+        #pprint.pprint(vals)
+        #print(f"the choise is {vals[b'choice'][0]}")
         if vals[b'choice'][0] == b'tax':
             #database entry
             #tax receipt
@@ -166,6 +175,7 @@ async def handle_crypto_form(request: Request):
                 btcuser = wish_config["btc"]["rpcuser"]
                 btcpass = wish_config["btc"]["rpcpassword"]
                 btcport = wish_config["btc"]["rpcport"]
+                print("check is online")
                 if not bit_online(bchuser,bchpass,bchport):
                     return
                 if not bit_online(btcuser,btcpass,btcport):
@@ -176,6 +186,8 @@ async def handle_crypto_form(request: Request):
                 if not monero_rpc_online(rpc_url):
                     return
             address = get_unused_address(wish_config,ticker)
+            if not address:
+                return
             #does there need to be a time contraint on when donations can receive a receipt?
             #or they can only be used once?
 
@@ -351,3 +363,4 @@ if __name__ == "__main__":
     else:
         print("Defaulting to http: place privkey.pem and fullchain.pem in ./ssl folder and restart for https")
         uvicorn.run("main:app", port=8000, host="0.0.0.0", reload=True)
+

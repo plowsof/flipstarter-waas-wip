@@ -104,9 +104,11 @@ def bit_online(rpcuser,rpcpass,rpcport):
     }
     try:
         returnme = requests.post(url, json=payload).json()
+        pprint.pprint(returnme)
         print("it worked")
         return True
-    except:
+    except Exception as e:
+        print(e)
         print("it didnt worked")
         return False
 
@@ -121,10 +123,11 @@ def curl_address(rpcuser,rpcpass,rpcport):
     }
     returnme = requests.post(url, json=payload).json()
     try:
-        return returnme['result']
+        if returnme['result']:
+            return returnme['result']
         pass
     except Exception as e:
-        return "Error"
+        return False
 
 def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
     local_ip = "localhost"
@@ -140,11 +143,11 @@ def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
     }
     returnme = requests.post(url, json=payload).json()
     try:
-        return returnme['result']
-        pass
+        pprint.pprint(returnme)
+        if returnme['error']:
+            return False
     except Exception as e:
-        print(e)
-        return "Error"
+        return returnme['result']
 
 def get_xmr_subaddress(rpc_url,wallet_file,title):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
@@ -165,6 +168,7 @@ def get_xmr_subaddress(rpc_url,wallet_file,title):
 
 def get_unused_address(config,ticker,title=None):
     local_ip = "localhost"
+    counter = 1
     while True:
         if ticker == "xmr":
             rpc_port = config["monero"]["daemon_port"]
@@ -183,6 +187,8 @@ def get_unused_address(config,ticker,title=None):
             #bin_dir,wallet_path,port,addr,create,notify,rpcuser,rpcpass,rpcport
             #create address - check if unused - then create a notify
             address = address_create_notify(bin_dir,wallet_path,port,"",1,0,rpcuser,rpcpass,rpcport)
+        if not address:
+            continue
         if "not" in address:
             continue
         if "Error" in address:
@@ -219,6 +225,11 @@ def get_unused_address(config,ticker,title=None):
             if ticker != "xmr":
                 th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
                 th.start()
+            break
+        counter += 1
+        if counter == 20:
+            print(f"broken address = {address}")
+            address = False
             break
     return address
 
@@ -585,7 +596,7 @@ def create_monero_wallet(config):
     if rpc_port == "":
         rpc_port = 18082
     rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
-    print(rpc_url)
+    #print(rpc_url)
     if not os.path.isfile(os.path.join(".", "bin", "monero-wallet-rpc")):
         print_err("/bin/monero-wallet-rpc missing, unable to create monero walllet.")
         sys.exit(1)
@@ -1032,6 +1043,7 @@ def main(config):
     input("Press Enter to clear the console (last chance to write your seeds down!")
     os.system("clear")
     print_msg("Finished. Run edit_wishlist.py to add/edit wishes. Goodluck!")
+    print_msg("Access your page locally @ 172.20.111.2:8000/donate")
 
     #clear memory cache (linux)
     try:

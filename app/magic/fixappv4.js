@@ -3,7 +3,7 @@ let window.num_wishes = 0
 function async_getWishlist() 
 {
   let ran_int = Math.floor(Math.random() * 100000)
-  let url_get = "/flask/static/data/wishlist-data.json?uid=" + ran_int;
+  let url_get = "/donate/static/data/wishlist-data.json?uid=" + ran_int;
   //let url_get = '../data/wishlist-data.json'
   let something = {}
   $.ajax({

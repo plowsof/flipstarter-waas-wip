@@ -70,8 +70,9 @@ async function form_validate() {
             $('#donate_qrcode').html(qr.createImgTag());
             $('#donate_qrcode').children("img").css('width', "70%")
             $('#donate_qrcode').children("img").css('height', "auto")
-            let comment_tip = `</br> <span class="c_tip"> (Once your donation is in the mempool, your comment will be displayed. You do not have to send the exact amount promised either. Thank you!)`
-            $("#pay_uri").html(payment_uri += comment_tip)
+            let comment_tip = `<span class="c_tip"> (Once your donation is in the mempool, your comment will be displayed. You do not have to send the exact amount promised either. Thank you!)`
+            //the coin
+            $("#pay_uri").html(`<div class="anon_address_${the_coin}">${payment_uri}</div>${comment_tip}`)
          }         
       });
     } 

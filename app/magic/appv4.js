@@ -14,14 +14,14 @@ function drawCryptoDonate(id){
     max = Math.ceil(total[`${id}`])
     let donate_crypto = `
     <div class="donate_crypto_${wish["id"]}">
-  <form name="donate" id="${wish["id"]}" action="/flask/crypto_donate" method="POST">
+  <form name="donate" id="${wish["id"]}" action="/donate/crypto_donate" method="POST">
   <input type="range" min="1" max="${max}" value="1" class="slider" id="myRange">
   <p>Amount: <input type="text" id="demo" name="amount" value="1"></p>
   <label for="coins_select">Crypto:</label>
   <select class="coins" name="coins" id="coin_select"> 
-    <option id="xmr_${wish["id"]}" value="xmr" rfund="Monero"><img src="/flask/static/images/xmr.png">Monero</option>
-    <option id="bch_${wish["id"]}" value="bch" rfund="BitcoinCash"><img src="/flask/static/images/bch.png">BitcoinCash</option>
-    <option id="btc_${wish["id"]}" value="btc" rfund="Bitcoin"><img src="/flask/static/images/btc.png">Bitcoin</option>
+    <option id="xmr_${wish["id"]}" value="xmr" rfund="Monero"><img src="/donate/static/images/xmr.png">Monero</option>
+    <option id="bch_${wish["id"]}" value="bch" rfund="BitcoinCash"><img src="/donate/static/images/bch.png">BitcoinCash</option>
+    <option id="btc_${wish["id"]}" value="btc" rfund="Bitcoin"><img src="/donate/static/images/btc.png">Bitcoin</option>
   </select></br>
  
   <input type="radio" id="anon" name="choice" value="anon" checked="checked">
@@ -58,7 +58,7 @@ function drawCryptoDonate(id){
   
 </form>
 </div>
-  <div class="spinner"><img src="/flask/static/images/spinner.gif"></div>
+  <div class="spinner"><img src="/donate/static/images/spinner.gif"></div>
   <div class="donate_qrcode">
     <div id="donate_qrcode"></div>
     <div id="pay_uri"> </div>
@@ -84,7 +84,7 @@ function drawCardDonate(id){
     `
     <div class="card_donate">
       <input type="range" min="1" max="${max}" value="1" class="slider" id="myRange">
-      <form name="card_donate" id="${wish["id"]}" action="/flask/fiat_donate" method="POST">
+      <form name="card_donate" id="${wish["id"]}" action="/donate/fiat_donate" method="POST">
       <div class="card_kyc">
         <label for="fname">First name: </label>
         <input type="text" id="fname" name="fname"></br>
@@ -229,7 +229,7 @@ function get_history(inputs){
 function async_getWishlist() 
 {
   let ran_int = Math.floor(Math.random() * 100000)
-  let url_get = "/flask/static/data/wishlist-data.json?uid=" + ran_int;
+  let url_get = "/donate/static/data/wishlist-data.json?uid=" + ran_int;
   //let url_get = '../data/wishlist-data.json'
   let something = {}
   $.ajax({

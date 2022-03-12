@@ -20,14 +20,14 @@ function drawCryptoDonate(id){
     max = Math.ceil(total[`${id}`])
     let donate_crypto = `
     <div class="donate_crypto_${wish["id"]}">
-  <form name="donate" id="${wish["id"]}" action="/flask/crypto_donate" method="POST">
+  <form name="donate" id="${wish["id"]}" action="/donate/crypto_donate" method="POST">
   <input type="range" min="1" max="${max}" value="1" class="slider" id="myRange">
   <p>Amount: <input type="text" id="demo" name="amount" value="1"></p>
   <label for="coins_select">Crypto:</label>
   <select class="coins" name="coins" id="coin_select"> 
-    <option id="xmr_${wish["id"]}" value="xmr" rfund="Monero"><img src="/flask/static/images/xmr.png">Monero</option>
-    <option id="bch_${wish["id"]}" value="bch" rfund="BitcoinCash"><img src="/flask/static/images/bch.png">BitcoinCash</option>
-    <option id="btc_${wish["id"]}" value="btc" rfund="Bitcoin"><img src="/flask/static/images/btc.png">Bitcoin</option>
+    <option id="xmr_${wish["id"]}" value="xmr" rfund="Monero"><img src="/donate/static/images/xmr.png">Monero</option>
+    <option id="bch_${wish["id"]}" value="bch" rfund="BitcoinCash"><img src="/donate/static/images/bch.png">BitcoinCash</option>
+    <option id="btc_${wish["id"]}" value="btc" rfund="Bitcoin"><img src="/donate/static/images/btc.png">Bitcoin</option>
   </select></br>
   <input type="radio" id="anon" name="choice" value="anon" checked="checked">
   <label for="anon">Anonymous</label></br>
@@ -46,7 +46,7 @@ function drawCryptoDonate(id){
   
 </form>
 </div>
-  <div class="spinner"><img src="/flask/static/images/spinner.gif"></div>
+  <div class="spinner"><img src="/donate/static/images/spinner.gif"></div>
   <div class="donate_qrcode">
     <div id="donate_qrcode"></div>
     <div id="pay_uri"> </div>
@@ -73,7 +73,7 @@ function cryptoClick(id){
 
 
 async function getPrice(){
-  let url_get = `/flask/api/price`
+  let url_get = `/donate/api/price`
   let price_info
   try {
           price_info = await $.ajax({
@@ -91,7 +91,7 @@ async function getPrice(){
 }
 
 function getTimestamps(){
-  let url_get = `/flask/api/timestamp` 
+  let url_get = `/donate/api/timestamp` 
   try {
         return $.ajax({
           dataType: "json",
@@ -183,7 +183,7 @@ function get_history(inputs){
 
 async function download_wishlist(){
   let ran_int = Math.floor(Math.random() * 100000)
-  let url_get = "/flask/static/data/wishlist-data.json?uid=" + ran_int;
+  let url_get = "/donate/static/data/wishlist-data.json?uid=" + ran_int;
   return $.ajax({
     type: 'GET',
     url: url_get,
@@ -365,7 +365,7 @@ async function pagination(comments){
       name = "Anonymous"
     }
     let amount = comments[i].amount
-    let ticker = `<img id="crypto_ticker" src="/flask/static/images/${comments[i].ticker}.png" alt="${comments[i].ticker}" height="20px" width="20px">`
+    let ticker = `<img id="crypto_ticker" src="/donate/static/images/${comments[i].ticker}.png" alt="${comments[i].ticker}" height="20px" width="20px">`
     let comment = comments[i].comment
     let wish_title = comments[i].id
     commentSegment += ` 

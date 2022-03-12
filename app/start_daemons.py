@@ -104,7 +104,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
     print("Starting Monero rpc...")
     for line in iter(monero_daemon.stdout.readline,''):
         print(str(line.rstrip()))
-        if b"Error" in line.rstrip() or b"Failed" in line.rstrip():
+        if b"Error" in line.rstrip() or b"Failed" in line.rstrip() or b'specify --wallet-file' in line.rstrip():
             kill_daemon = 1
             break
         if b"Starting wallet RPC server" in line.rstrip():
@@ -114,6 +114,8 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
     if kill_daemon == 1:
         print(line.rstrip())
         monero_daemon.terminate()
+        print_err(line.rstrip())
+        sys.exit(1)
 
 
     #Starting rpc server successful. lets wait until its fully online
