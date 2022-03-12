@@ -112,6 +112,7 @@ def bit_online(rpcuser,rpcpass,rpcport):
         print("it didnt worked")
         return False
 
+#if result not a string > x chars
 def curl_address(rpcuser,rpcpass,rpcport):
     local_ip = "localhost"
     url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
@@ -123,9 +124,10 @@ def curl_address(rpcuser,rpcpass,rpcport):
     }
     returnme = requests.post(url, json=payload).json()
     try:
-        if returnme['result']:
+        if len(returnme['result']) > 30:
             return returnme['result']
-        pass
+        else:
+            return false
     except Exception as e:
         return False
 
@@ -144,10 +146,12 @@ def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
     returnme = requests.post(url, json=payload).json()
     try:
         pprint.pprint(returnme)
-        if returnme['error']:
+        if len(returnme['result']) > 30:
+            return returnme['result']
+        else:
             return False
     except Exception as e:
-        return returnme['result']
+        return False
 
 def get_xmr_subaddress(rpc_url,wallet_file,title):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)

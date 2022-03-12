@@ -109,6 +109,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                         now_wishlist["wishlist"][i]["title"] = wishlist["wishlist"][index]["title"]
                         now_wishlist["wishlist"][i]["description"] = wishlist["wishlist"][index]["description"]
                         now_wishlist["wishlist"][i]["type"] = wishlist["wishlist"][index]["type"]
+                        now_wishlist["wishlist"][i]["status"] = wishlist["wishlist"][index]["status"]
                         break
                 lock = FileLock(f"{data_json}.lock")
                 with lock:
