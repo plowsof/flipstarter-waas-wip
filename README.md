@@ -33,7 +33,7 @@ server {
     root /var/www/html;
     index index.html index.htm index.nginx-debian.html;
     server_name moneroresearch.info www.moneroresearch.info;
-        location /flask {
+        location /donate {
           proxy_pass http://172.20.111.2:8000;
         }
 }
