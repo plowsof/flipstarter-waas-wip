@@ -435,7 +435,7 @@ def get_unused_address(config,ticker,title=None):
             rpcport = config[ticker]["rpcport"]
             #bin_dir,wallet_path,port,addr,create,notify,rpcuser,rpcpass,rpcport
             #create address - check if unused - then create a notify
-            address = address_create_notify(bin_dir,wallet_path,port,"",1,0,rpcuser,rpcpass,rpcport)
+            address = address_create_notify(bin_dir,wallet_path,port,"",1,1,rpcuser,rpcpass,rpcport)
         if not address:
             break
         if "not" in address:
