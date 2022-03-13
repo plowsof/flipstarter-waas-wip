@@ -1,0 +1,42 @@
+version: '3.3'
+services:
+  waas:
+    image: plowsof/waas4rucknium-testnet:beta-14
+    container_name: fresh
+    volumes:
+      - waas-db:/home/app/db
+      - waas-wallets:/home/app/wallets
+      - waas-static:/home/app/static
+      - waas-electrum:/home/.electrum
+      - waas-electron:/home/.electron-cash
+      - ./ssl:/home/app/ssl
+      - /proc:/writable_proc
+      - waas-cron:/etc/cron.d/
+    networks:
+      static-network:
+        ipv4_address: 172.20.111.2
+    expose:
+      - 8000
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse
+    security_opt:
+      - apparmor:unconfined
+    environment:
+      - waas_RSS_ON=1
+      - waas_RSS_TITLE="Ruckniums Funding Page"
+      - waas_RSS_DESC="Help support my projects and running costs"
+      - waas_RSS_LINK="https://rucknium.me" 
+volumes:
+  waas-db:
+  waas-wallets:
+  waas-static:
+  waas-electrum:
+  waas-electron:
+  waas-cron:
+networks:
+  static-network:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
