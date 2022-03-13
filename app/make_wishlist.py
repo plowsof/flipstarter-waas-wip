@@ -196,15 +196,6 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
         #open this wallet
         info = rpc_connection.open_wallet({"filename": wallet_file, "password" :""})
 
-def monero_rpc_close_wallet(rpc_url):
-    rpc_connection = AuthServiceProxy(service_url=rpc_url)
-    try:
-        info = rpc_connection.close_wallet()
-        pass
-    except Exception as e:
-        print(e)
-        sys.exit(1)
-
 def numbered_seed(seed):
     print(f"orig seed = {seed}")
     nbsp = "\u00A0"
@@ -520,6 +511,7 @@ def create_bit_wallet(config,bchbtc):
     with open('./db/wishlist.ini', 'w') as configfile:
         config.write(configfile)
     #stop_bit_daemon(electrum_bin)
+    #stop_bit_daemon(electron_bin)
     #del bch variables
     del bch_data
     del orig_view_key
@@ -548,9 +540,19 @@ def main(config):
     electrum_bin = config["btc"]["bin"]
     electron_bin = config["bch"]["bin"]
     if monero_rpc_online(rpc_url) == True:
+        print("rpc is online")
+        #although its online, if it doesnt have a wallet file open this will error
+        #but its fine
         monero_rpc_close_wallet(rpc_url)
+        for proc in psutil.process_iter():
+            # check whether the process name matches
+            if "-rpc" in proc.name():
+                proc.kill()
         #monero_rpc_open_wallet(rpc_url,wallet_file)
     #Error checks needed here on user inputs
+    print("stop bchbtc")
+    stop_bit_daemon(electrum_bin)
+    stop_bit_daemon(electron_bin)
     www_root = "static"
     www_data_dir = os.path.join(www_root,"data")
     www_qr_dir = os.path.join(www_root,"qrs")
@@ -563,29 +565,25 @@ def main(config):
         os.mkdir(www_js_dir)
     #Monero setup
     wallet_file = config["monero"]["wallet_file"]
-    if not wallet_file:
+    if wallet_file == "" or not os.path.isfile(wallet_file):
         monero_online = 1
         monero_daemon = create_monero_wallet(config)
     else:
         monero_online = 0
-        if not os.path.isfile(config["monero"]["wallet_file"]):
-            print_err("Monero wallet missing! see wishlist.ini @ Docker volume waas-db")
-            sys.exit(1)
-        else:
-            #a wallet file was supplied
-            #we still need to start the rpc up
-            list_remote_nodes = []
-            fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
-            for i in range(int(fallback_remote_nodes)):
-                num = (i+1)
-                list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
+        #a wallet file was supplied
+        #we still need to start the rpc up
+        list_remote_nodes = []
+        fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
+        for i in range(int(fallback_remote_nodes)):
+            num = (i+1)
+            list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
 
-            remote_node = "http://" + str(find_working_node(list_remote_nodes))
-            if remote_node:
-                monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_file,remote_node)
-            else:
-                print_err("Error Monero remote unreachable")
-                return
+        remote_node = "http://" + str(find_working_node(list_remote_nodes))
+        if remote_node:
+            monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_file,remote_node)
+        else:
+            print_err("Error Monero remote unreachable")
+            return
             
 
     if not config["bch"]["wallet_file"]:
@@ -714,4 +712,3 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
     main(config)
-

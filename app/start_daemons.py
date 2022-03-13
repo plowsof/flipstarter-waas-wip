@@ -185,15 +185,13 @@ def main(config):
     b_rpcuser = config["btc"]["rpcuser"]
     b_rpcpass = config["btc"]["rpcpassword"]
     b_rpcport = config["btc"]["rpcport"]
-    if not bit_online(b_rpcuser,b_rpcpass,b_rpcport):
-        start_bit_daemon(electrum_path,btc_wallet_path,b_rpcuser,b_rpcpass,b_rpcport)
+    start_bit_daemon(electrum_path,btc_wallet_path,b_rpcuser,b_rpcpass,b_rpcport)
     electron_path = config["bch"]["bin"]
     bch_wallet_path = config["bch"]["wallet_file"]
     rpcuser = config["bch"]["rpcuser"]
     rpcpass = config["bch"]["rpcpassword"]
     rpcport = config["bch"]["rpcport"]
-    if not bit_online(rpcuser,rpcpass,rpcport):
-        start_bit_daemon(electron_path,bch_wallet_path,rpcuser,rpcpass,rpcport)
+    start_bit_daemon(electron_path,bch_wallet_path,rpcuser,rpcpass,rpcport)
 
     http_port = config["callback"]["port"]
     http_server = "http://" + str(local_ip) + ":" + str(http_port)
