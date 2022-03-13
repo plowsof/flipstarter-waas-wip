@@ -101,13 +101,15 @@ def wish_edit(wishlist,edit_delete,www_root):
                 total_bch = wishlist["wishlist"][index]["bch_total"]
                 total_btc = wishlist["wishlist"][index]["btc_total"]
                 total_usd = wishlist["wishlist"][index]["usd_total"]
+                goal = wishlist["wishlist"][index]["goal_usd"]
                 choice = {"1": "xmr", "2": "bch", "3": "btc", "4": "usd"}
                 print("Coin [total]")
                 print(f"1) XMR [{total_xmr}]")
                 print(f"2) BCH [{total_bch}]")
                 print(f"3) BTC [{total_btc}]")
                 print(f"4) USD [{total_usd}]")
-                while answer not in [1,2,3,4]:
+                print(f"5) 'Cash out' - Zero totals and set USD to [{goal}].")
+                while answer not in [1,2,3,4,5]:
                     answer = int(input(">> "))
                 coin = choice[str(answer)]
                 while True:
@@ -117,7 +119,15 @@ def wish_edit(wishlist,edit_delete,www_root):
                         break
                     except ValueError:
                         print("That's not an int!")
-                wishlist["wishlist"][index][f"{coin}_total"] = val
+                if val != 5:
+                    wishlist["wishlist"][index][f"{coin}_total"] = val
+                else:
+                    #zero values
+                    for x in choice:
+                        coin = choice[x]
+                        wishlist["wishlist"][index][f"{coin}_total"] = 0
+                    wishlist["wishlist"][index]["usd_total"] = goal
+
             again = 0
             finish = ""
             while finish.lower() not in ["y","yes","no","n"]:

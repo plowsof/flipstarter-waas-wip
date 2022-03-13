@@ -33,9 +33,6 @@ import threading
 #config = configparser.ConfigParser()
 #config.read("config.ini")
 
-wish_config = configparser.ConfigParser()
-wish_config.read("./db/wishlist.ini")
-
 #screen -L -Logfile lolokk.txt uvicorn main:app --reload --ssl-keyfile /var/www/letsencrypt/.lego/certificates/rucknium.me.key --ssl-certfile /var/www/letsencrypt/.lego/certificates/rucknium.me.crt
 #ssl_certificate ;
 #ssl_certificate_key 
@@ -118,8 +115,11 @@ def db_get_prices():
 
 @app.post("/donate/crypto_donate")
 async def handle_crypto_form(request: Request):
-    global wish_config, ticket_normal, ticket_vip
+    global ticket_normal, ticket_vip
     body = await request.body()
+    #old ini file! :'(
+    wish_config = configparser.ConfigParser()
+    wish_config.read("./db/wishlist.ini")
     #b'amount=1&coins=xmr&choice=tax&fname=&fname=&street=&zip=&email=&rfund='
     #pprint.pprint(body)
     client_host = request.client.host
@@ -344,6 +344,9 @@ def db_receipts_add(data):
 
 if __name__ == "__main__":
     #use ENV variables from docker compose
+    #old ini file! :'(
+    wish_config = configparser.ConfigParser()
+    wish_config.read("./db/wishlist.ini")
     wish_config["RSS"]["enable"] = os.environ['waas_RSS_ON']
     wish_config["RSS"]["title"] = os.environ['waas_RSS_TITLE']
     wish_config["RSS"]["description"] = os.environ['waas_RSS_DESC']

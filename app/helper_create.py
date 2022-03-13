@@ -14,7 +14,7 @@ from colorama import Fore, Back, Style
 import time
 from datetime import datetime
 from filelock import FileLock
-
+import subprocess
 def init_wishlist():
     #load wishlist from json file
     config = configparser.ConfigParser()
@@ -158,6 +158,7 @@ def wish_add(wish,config):
 
 def bit_online(rpcuser,rpcpass,rpcport):
     local_ip = "localhost"
+    print(f"trying bit online with {rpcuser} {rpcport} {rpcpass}")
     url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
     payload = {
         "method": "getbalance",
@@ -345,7 +346,7 @@ def get_xmr_subaddress(rpc_url,wallet_file,title):
 def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
     local_ip = "localhost"
     url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
-    print("btc_curl_address")
+    print(f"btc_curl_address: {wallet} {rpcuser} {rpcpass} {rpcport}")
     print(url)
     payload = {
         "method": "createnewaddress",
@@ -356,14 +357,21 @@ def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
         "id": "curltext",
     }
     returnme = requests.post(url, json=payload).json()
+    recover = 0
     try:
         pprint.pprint(returnme)
         if len(returnme['result']) > 30:
             return returnme['result']
         else:
-            return False
+            recover = 1
     except Exception as e:
-        return False
+        recover = 1
+    if recover == 1:
+        #assume wallet not loaded. attempt to load
+        load_wallet = ["bin/run_electrum", "load_wallet", "-w", wallet, "--testnet"]
+        btc_daemon = subprocess.Popen(load_wallet)
+        btc_daemon.communicate()
+    return False
 
 #notify twice removes the notify, not good
 def address_create_notify(bin_dir,wallet_path,port,addr,create,notify,rpcuser,rpcpass,rpcport):
@@ -417,6 +425,7 @@ def curl_address(rpcuser,rpcpass,rpcport):
 
 def get_unused_address(config,ticker,title=None):
     local_ip = "localhost"
+    print(f"unused address ticker = {ticker}")
     counter = 1
     while True:
         if ticker == "xmr":

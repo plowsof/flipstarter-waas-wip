@@ -510,8 +510,7 @@ def create_bit_wallet(config,bchbtc):
     config[bchbtc]["xpub"] = bch_data['keystore']['xpub']
     with open('./db/wishlist.ini', 'w') as configfile:
         config.write(configfile)
-    #stop_bit_daemon(electrum_bin)
-    #stop_bit_daemon(electron_bin)
+    stop_bit_daemon(electron_bin)
     #del bch variables
     del bch_data
     del orig_view_key
@@ -618,6 +617,8 @@ def main(config):
 
     btc_wallet_path = config["btc"]["wallet_file"]
     bch_wallet_path = config["bch"]["wallet_file"]
+    print(f"btc wallet path = {btc_wallet_path}")
+    print(f"bch wallet path = {bch_wallet_path}")
     
     start_bit_daemon(electrum_bin,btc_wallet_path,btc_rpcuser,btc_rpcpass,btc_rpcport)
     start_bit_daemon(electron_bin,bch_wallet_path,bch_rpcuser,bch_rpcpass,bch_rpcport)
