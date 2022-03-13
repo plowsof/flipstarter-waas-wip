@@ -2,8 +2,6 @@
 import pprint
 import json
 from datetime import datetime
-import qrcode 
-from PIL import Image
 import os
 from monerorpc.authproxy import AuthServiceProxy, JSONRPCException
 from rss_feed import add_to_rfeed
@@ -15,13 +13,14 @@ import random
 import string
 #import _thread as thread
 import psutil
-from start_daemons import start_bit_daemon, find_working_node, main as start_main
+from start_daemons import start_bit_daemon, find_working_node, main as start_main, monero_rpc_close_wallet
 import textwrap
 from colorama import Fore, Back, Style
 import shutil
 import threading
 import sqlite3 
 import requests
+from helper_create import init_wishlist, wish_add, wish_prompt, pre_receipts_add, get_unused_address, print_msg, print_err, monero_rpc_online
 #bitcoin - have to ./make_libsecp256k1.sh 
 
 viewkey = ""
@@ -62,181 +61,6 @@ def secure_delete(path, passes=1):
         f.close()
     os.remove(path)
 
-#notify twice removes the notify, not good
-def address_create_notify(bin_dir,wallet_path,port,addr,create,notify,rpcuser,rpcpass,rpcport):
-    local_ip = "localhost"
-    port = "http://" + str(local_ip) + ":" + str(port)
-    if create == 1:
-        if "electrum" in bin_dir:
-            address = btc_curl_address(wallet_path,rpcuser,rpcpass,rpcport)
-        else:
-            address = curl_address(rpcuser,rpcpass,rpcport)
-    if notify == 1:
-        if addr != "":
-            address = addr
-        if "Error" not in address:
-            th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
-            th.start()
-    return(address)
-
-def rpc_notify(rpcuser,rpcpass,rpcport,address,callback):
-    local_ip = "localhost"
-    url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
-    payload = {
-        "method": "notify",
-        "params": {
-        "address": address,
-        "URL": callback
-        },
-        "jsonrpc": "2.0",
-        "id": "curltext",
-    }
-    returnme = requests.post(url, json=payload).json()
-
-def bit_online(rpcuser,rpcpass,rpcport):
-    local_ip = "localhost"
-    url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
-    payload = {
-        "method": "getbalance",
-        "params": [],
-        "jsonrpc": "2.0",
-        "id": "curltext",
-    }
-    try:
-        returnme = requests.post(url, json=payload).json()
-        pprint.pprint(returnme)
-        print("it worked")
-        return True
-    except Exception as e:
-        print(e)
-        print("it didnt worked")
-        return False
-
-#if result not a string > x chars
-def curl_address(rpcuser,rpcpass,rpcport):
-    local_ip = "localhost"
-    url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
-    payload = {
-        "method": "createnewaddress",
-        "params": [],
-        "jsonrpc": "2.0",
-        "id": "curltext",
-    }
-    returnme = requests.post(url, json=payload).json()
-    try:
-        if len(returnme['result']) > 30:
-            return returnme['result']
-        else:
-            return false
-    except Exception as e:
-        return False
-
-def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
-    local_ip = "localhost"
-    url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
-    print(url)
-    payload = {
-        "method": "createnewaddress",
-        "params": {
-        "wallet": wallet
-        },
-        "jsonrpc": "2.0",
-        "id": "curltext",
-    }
-    returnme = requests.post(url, json=payload).json()
-    try:
-        pprint.pprint(returnme)
-        if len(returnme['result']) > 30:
-            return returnme['result']
-        else:
-            return False
-    except Exception as e:
-        return False
-
-def get_xmr_subaddress(rpc_url,wallet_file,title):
-    rpc_connection = AuthServiceProxy(service_url=rpc_url)
-    xmr_wallet = os.path.basename(wallet_file)
-    #they must check if the address exists in the receipts DB already / add it there
-    #label could be added
-    params={
-            "account_index":0,
-            "label": title
-            }
-    try:
-        info = rpc_connection.create_address(params)
-        return info["address"]
-        pass
-    except Exception as e:
-        print("Error: Your monero node is offline. Ensure that start_daemons.py is running")
-        sys.exit(1)
-
-def get_unused_address(config,ticker,title=None):
-    local_ip = "localhost"
-    counter = 1
-    while True:
-        if ticker == "xmr":
-            rpc_port = config["monero"]["daemon_port"]
-            rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
-            wallet_path = os.path.basename(config["monero"]["wallet_file"])
-            address = get_xmr_subaddress(rpc_url,wallet_path,title)
-            valid_coin = 1
-            #notify qzr3duvhlknh9we5g8x3wvkj5qvh625tzv36ye9kwl http://127.0.1.1--testnet
-        else:
-            wallet_path = config[ticker]["wallet_file"]
-            bin_dir = config[ticker]["bin"]
-            port = config["callback"]["port"]
-            rpcuser = config[ticker]["rpcuser"]
-            rpcpass = config[ticker]["rpcpassword"]
-            rpcport = config[ticker]["rpcport"]
-            #bin_dir,wallet_path,port,addr,create,notify,rpcuser,rpcpass,rpcport
-            #create address - check if unused - then create a notify
-            address = address_create_notify(bin_dir,wallet_path,port,"",1,0,rpcuser,rpcpass,rpcport)
-        if not address:
-            continue
-        if "not" in address:
-            continue
-        if "Error" in address:
-            continue
-        print(f"Checking address: {address}")
-        con = sqlite3.connect('./db/receipts.db')
-        cur = con.cursor()
-        create_receipts_table = """ CREATE TABLE IF NOT EXISTS donations (
-                                    email text,
-                                    amount integer default 0 not null,
-                                    fname text,
-                                    donation_address text PRIMARY KEY,
-                                    zipcode text,
-                                    address text,
-                                    date_time text,
-                                    refund_address text,
-                                    crypto_ticker text,
-                                    wish_id text,
-                                    comment text,
-                                    comment_name text,
-                                    amount_expected integer default 0 not null,
-                                    consent integer default 0,
-                                    quantity integer default 0,
-                                    type text,
-                                    comment_bc integer default 0
-                                ); """
-
-        cur.execute(create_receipts_table)
-        con.commit()
-        cur.execute('SELECT * FROM donations WHERE donation_address = ?',[address])
-        rows = len(cur.fetchall())
-        #its a used address. continue loop
-        if rows == 0:
-            if ticker != "xmr":
-                th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
-                th.start()
-            break
-        counter += 1
-        if counter == 20:
-            print(f"broken address = {address}")
-            address = False
-            break
-    return address
-
 def formatAmount(amount):
     """decode cryptonote amount format to user friendly format.
     Based on C++ code:
@@ -258,71 +82,6 @@ def formatAmount(amount):
         else:
             trailing = 1
     return s
-
-def put_qr_code(address, xmr_btc):
-    config = configparser.ConfigParser()
-    config.read('./db/wishlist.ini')
-    www_root = config["wishlist"]["www_root"]
-    if xmr_btc == "xmr":
-        uri = "monero"
-        logo = "xmr.png"
-        thumnail = (60, 60)
-        qr = qrcode.QRCode(
-        version=None,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
-        box_size=7,
-        border=4,
-    )
-    elif xmr_btc == "btc":
-        uri = "bitcoin"
-        logo = "btc.png"
-        thumnail = (60, 60)
-        qr = qrcode.QRCode(
-        version=None,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=7,
-        border=4,
-    )
-    else:
-        uri = "bchtest"
-        
-        logo = "bch.png"
-        thumnail = (60, 60)
-        qr = qrcode.QRCode(
-        version=None,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=7,
-        border=4,
-    )
-    try:
-        if not os.path.isdir(os.path.join(www_root,'images')):
-            os.mkdir(os.path.join(www_root,"images"))
-        pass
-    except Exception as e:
-        raise e
-
-    title = address[0:12]
-    if os.path.isfile(os.path.join(www_root,"images",f"{title}.png")):
-        #dont bother recreating the qr image
-        #could cause issues if you want to do that though
-        return
-
-
-    data = f"{uri}:{address}"
-    qr.add_data(data)
-    qr.make(fit=True)
-    #img = qr.make_image(fill_color="black", back_color=(62,62,62))
-    img = qr.make_image(fill_color=(62,62,62), back_color="white")
-    img.save(os.path.join(www_root,"images",f"{title}.png"))
-    f_logo = os.path.join(www_root,"images",logo)
-    logo = Image.open(f_logo)
-    logo = logo.convert("RGBA")
-    im = Image.open(os.path.join(www_root,"images",f"{title}.png"))
-    im = im.convert("RGBA")
-    logo.thumbnail(thumnail)
-    im.paste(logo,box=(142,142),mask=logo)
-    #im.show()
-    im.save(os.path.join(www_root,"images",f"{title}.png"))
 
 def dump_json(wishlist):
     global www_root
@@ -361,121 +120,12 @@ def load_old_txs():
                         wishes[wi]["percent"] = float(wishes[wi]["total"]) / float(wishes[wi]["goal"]) * 100  
                         #pprint.pprint(wishes[wi])
                 except Exception as e:
-                   continue
-                
+                   continue  
 
-def create_new_wishlist():
+def create_new_wishlist(config):
     #load wishlist from json file
-    config = configparser.ConfigParser()
-    config.read('./db/wishlist.ini')
-
-    viewkey = config["monero"]["viewkey"]
-    main_address = config["monero"]["mainaddress"]
-    percent_buffer = config["wishlist"]["percent_buffer"]
-    www_root = config["wishlist"]["www_root"]
-    with open("./db/your_wishlist.json", "r") as f:
-        wishlist = json.load(f)
-
-    for wish in wishlist["wishlist"]:
-        goal = wish["goal_usd"]
-
-        desc = wish["description"]
-        address = wish["xmr_address"]
-        btc_address = wish["btc_address"]
-        bch_address = wish["bch_address"]
-        hours = wish["hours"]
-        w_type = wish["type"]
-        title = wish["title"]
-
-        usd_hour_goal = wish["hours"]
-        if hours:
-            goal += (float(usd_hour_goal) * float(percent_buffer)) 
-            goal *= hours
-        else:
-            orig_goal = goal
-            percent = int(percent_buffer) / 100
-            percent = float(percent) * int(orig_goal)
-            goal = int(goal) + int(percent)
-
-        app_this = { 
-                    "goal_usd":goal, #these will be in usd
-                    "contributors":0,
-                    "description": desc,
-                    "percent": 0,
-                    "hours": hours, # $/h
-                    "type": w_type,
-                    "status": "", #e.g. WIP / RELEASED
-                    "created_date": str(datetime.now()),
-                    "modified_date": str(datetime.now()),
-                    "author_name": "",
-                    "author_email": "",
-                    "id": address[0:12],
-                    "qr_img_url_xmr": f"static/images/{address[0:12]}.png",
-                    "qr_img_url_btc": f"static/images/{btc_address[0:12]}.png",
-                    "qr_img_url_bch": f"static/images/{bch_address[0:12]}.png",
-                    "title": title,
-                    "btc_address": btc_address,
-                    "bch_address": ("bchtest:" + bch_address),
-                    "xmr_address": address,
-                    "usd_total":0, #usd - if you cash out for stability
-                    "btc_total": 0,
-                    "xmr_total": 0,
-                    "bch_total": 0,
-                    "hour_goal": usd_hour_goal,
-                    #could combine these into 1 'history' list with 'coin' set for each
-                    "xmr_history": [],
-                    "bch_history": [],
-                    "btc_history": [],
-                    "usd_history": [],
-                    "btc_confirmed": 0,
-                    "btc_unconfirmed": 0,
-                    "bch_confirmed": 0,
-                    "bch_unconfirmed": 0
-        } 
-        wishes.append(app_this)
-        put_qr_code(address,"xmr")
-        put_qr_code(btc_address,"btc")
-        put_qr_code(bch_address,"bch")
-    
-    thetime = datetime.now()
-    total = {
-        "xmr_total": 0,
-        "btc_total": 0,
-        "bch_total": 0,
-        "contributors": 0,
-        "modified": str(thetime),
-        "title": "",
-        "description": "",
-        "image": "",
-        "url": "",
-        "viewkey": viewkey,
-        "main_address": main_address,
-        "status": "OK",
-        "protocol": "v3",
-    }
-
-    #search wallet for 'in' history, then compare addresses to our new list.
-    #if matching address are found then contributors are +=1'd and amount+=amount.
-    #monero-wallet-rpc daemon must be running ofcourse
-    #load_old_txs()
-
-    the_wishlist = {}
-    the_wishlist["wishlist"] = wishes
-    the_wishlist["metadata"] = total
-    the_wishlist["archive"] = []
-    the_wishlist["comments"] = {}
-    the_wishlist["comments"]["comments"] = []
-    the_wishlist["comments"]["modified"] = 1
-
-    #need a file lock on this
-
-    with open(os.path.join(www_root,"data","wishlist-data.json"), "w+") as f:
-        json.dump(the_wishlist,f, indent=4) 
-
-def build_wish():
-    wish = "todo"
-    print("Hello")
-    return wish
+    init_wishlist()
+    wish_prompt(config)
 
 def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None):
     global wallet_dir
@@ -545,14 +195,6 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
     if wallet_file:
         #open this wallet
         info = rpc_connection.open_wallet({"filename": wallet_file, "password" :""})
-
-def monero_rpc_online(rpc_url):
-    rpc_connection = AuthServiceProxy(service_url=rpc_url)
-    try:
-        info = rpc_connection.get_version()
-        return True
-    except Exception as e:
-        return False
 
 def monero_rpc_close_wallet(rpc_url):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
@@ -712,6 +354,8 @@ def create_monero_wallet(config):
         for line in iter(monero_daemon.stdout.readline,''):
             #debug output
             #print(str(line.rstrip()))
+            if b"Resource temporarily unavailable" in line.rstrip():
+                print_err("Please stop this docker container using 'docker stop <name>")
             if b"Error" in line.rstrip() or b"Failed" in line.rstrip():
                 print_err("View-key / Main address incorrect , try again")
                 key_data = prompt_monero_keys()
@@ -891,6 +535,7 @@ def main(config):
     if os.path.isfile("./static/data/wishlist-data.json"):
         print_err("Wishlist already created. Please use edit_wishlist.py")
         sys.exit(1)
+
     print_msg("Wishlist As A Service wizard v1.0")
     print_msg("Disclaimer: Wallets are view only. Write the seeds down or you will have no access to your funds!")
     local_ip = "localhost"
@@ -900,6 +545,11 @@ def main(config):
     if rpc_port == "":
         rpc_port = 18082
     rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
+    electrum_bin = config["btc"]["bin"]
+    electron_bin = config["bch"]["bin"]
+    if monero_rpc_online(rpc_url) == True:
+        monero_rpc_close_wallet(rpc_url)
+        #monero_rpc_open_wallet(rpc_url,wallet_file)
     #Error checks needed here on user inputs
     www_root = "static"
     www_data_dir = os.path.join(www_root,"data")
@@ -945,16 +595,6 @@ def main(config):
         if not os.path.isfile(config["bch"]["wallet_file"]):
             print_err("BCH wallet missing! see wishlist.ini @ Docker volume waas-db")
             sys.exit(1)
-    #start / open the BCH daemon / wallet
-    print_msg('Loading BCH/BTC wallets')
-    bch_wallet_path = config["bch"]["wallet_file"]
-    electron_bin = config["bch"]["bin"]
-    run_args = [
-    electron_bin, "daemon", "load_wallet", "-w", bch_wallet_path, "--testnet"
-    ]
-    bch_daemon = subprocess.Popen(run_args)
-    bch_daemon.communicate()
-    print_msg("Loaded")
 
     if not config["btc"]["wallet_file"]:
         config = create_bit_wallet(config,"btc")
@@ -962,20 +602,9 @@ def main(config):
         if not os.path.isfile(config["btc"]["wallet_file"]):
             print_msg("BTC wallet missing! see wishlist.ini @ Docker volume waas-db")
             sys.exit(1)
-    
-    rpcuser = config["bch"]["rpcuser"]
-    rpcpass = config["bch"]["rpcpassword"]
-    rpcport = config["bch"]["rpcport"]
-    bch_wallet_path = config["bch"]["wallet_file"]
 
     rpc_port = config["monero"]["daemon_port"]
     rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
-
-    #create 'your_wishlist.json'
-    print_msg("Lets create your wishlist :)")
-    wish_prompt()
-    with open('./db/your_wishlist.json') as f:
-            wishlist = json.load(f)
 
     #scan wishes and assign addresses if none given
     #get new saved variables
@@ -988,44 +617,22 @@ def main(config):
     btc_rpcuser = config["btc"]["rpcuser"]
     btc_rpcpass = config["btc"]["rpcpassword"]
     btc_rpcport = config["btc"]["rpcport"]
-    electrum_bin = config["btc"]["bin"]
+
     btc_wallet_path = config["btc"]["wallet_file"]
     bch_wallet_path = config["bch"]["wallet_file"]
+    
     start_bit_daemon(electrum_bin,btc_wallet_path,btc_rpcuser,btc_rpcpass,btc_rpcport)
     start_bit_daemon(electron_bin,bch_wallet_path,bch_rpcuser,bch_rpcpass,bch_rpcport)
-    for wish in wishlist["wishlist"]:
-        if not wish["xmr_address"]:
-            xmr_wallet = os.path.basename(config['monero']['wallet_file'])
-            wish["xmr_address"] = get_unused_address(config,"xmr",wish["title"])
-        if not wish["btc_address"]:
-            wish["btc_address"] = get_unused_address(config,"btc")
-        if not wish["bch_address"]:
-            wish["bch_address"] = get_unused_address(config,"bch")
-        #insert the addresses into the database
-        wish_id = wish["xmr_address"][0:12]
-        pre_receipts_add(wish["xmr_address"],"xmr",wish_id)
-        pre_receipts_add(wish["bch_address"],"bch",wish_id)
-        pre_receipts_add(wish["btc_address"],"btc",wish_id)
 
+    #create 'your_wishlist.json'
+    print_msg("Lets create your wishlist :)")
 
     #terminate all daemons
 
     #if they where launched stop them
     #"blindly try to stop any running bch/btc daemon"
+    create_new_wishlist(config)
 
-    stop_bit_daemon(electrum_bin)
-    stop_bit_daemon(electron_bin)
-
-
-    monero_rpc_close_wallet(rpc_url)
-    monero_daemon.terminate()
-    monero_daemon.communicate()
-    with open('./db/your_wishlist.json', 'w+') as f:
-        json.dump(wishlist, f, indent=6) 
-    create_new_wishlist()
-    config["bch"]["bin"] = electron_bin
-    config["btc"]["bin"] = electrum_bin
-    config["wishlist"]["www_root"] == www_root
     with open('./db/wishlist.ini', 'w') as configfile:
         config.write(configfile)
 
@@ -1044,6 +651,13 @@ def main(config):
     con.commit()
     con.close()
     db_make_modified()
+    #stop_bit_daemon(electrum_bin)
+    #stop_bit_daemon(electron_bin)
+
+
+    #monero_rpc_close_wallet(rpc_url)
+    #monero_daemon.terminate()
+    #monero_daemon.communicate()
     input("Press Enter to clear the console (last chance to write your seeds down!")
     os.system("clear")
     print_msg("Finished. Run edit_wishlist.py to add/edit wishes. Goodluck!")
@@ -1058,38 +672,6 @@ def main(config):
     os.system('nohup python3 start_daemons.py &')
     #th = threading.Thread(target=start_main, args=(config,))
     #th.start()
-
-def pre_receipts_add(address,ticker,wish_id):
-    db_data = {
-    "email": "",
-    #the amount selected by the form is meaningless
-    #we only care about what gets deposited at the end
-    #"amount": null_if_not_exists(vals,b"amount"),
-    "amount": 0,
-    "fname": "",
-    "donation_address": address,
-    "zipcode": "",
-    "address": "",
-    "date_time": datetime.now(),
-    "refund_address": "",
-    "crypto_ticker": ticker,
-    "wish_id": wish_id,
-    "comment": "",
-    "comment_name": "",
-    "amount_expected": 0,
-    "consent":"",
-    "quantity":0,
-    "type": wish_id
-    }
-    db_receipts_add(db_data)
-
-def db_receipts_add(data):
-    con = sqlite3.connect('./db/receipts.db')
-    cur = con.cursor()
-    sql = ''' INSERT INTO donations (email,amount,fname,donation_address,zipcode,address,date_time,refund_address,crypto_ticker,wish_id,comment,comment_name,amount_expected,consent,quantity,type)
-              VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) '''
-    cur.execute(sql, (data["email"],data["amount"],data["fname"],data["donation_address"],data["zipcode"],data["address"],data["date_time"],data["refund_address"],data["crypto_ticker"],data["wish_id"],data["comment"],data["comment_name"],data["amount_expected"],data["consent"],data["quantity"],data["type"]))
-    con.commit()
 
 def db_make_modified():
     #remove modified.db if exists
@@ -1115,51 +697,6 @@ def stop_bit_daemon(daemon_dir):
     stop_daemon = subprocess.Popen(run_args)
     stop_daemon.communicate()
 
-def wish_prompt():
-    wish={}
-    wish["title"] = input('Wish Title:')
-    wish["goal"] = float(input('USD Goal:'))
-    wish["desc"] = input('Wish Description:')
-
-    wish_add(wish)
-    add = input('Add another wish y/n:')
-    if 'y' in add.lower():
-        wish_prompt()
-    else:
-        print_msg("Wishlist created, lets add donation addresses to them..")
-    
-
-
-def wish_add(wish):
-    if os.path.isfile("./db/your_wishlist.json"):
-        with open('./db/your_wishlist.json') as f:
-            wishlist = json.load(f)
-    else:
-        wishlist = {}
-        wishlist["wishlist"] = []
-
-    wish = {
-    "goal_usd":wish["goal"],
-    "hours": "",
-    "title": wish["title"],
-    "description":wish["desc"],
-    "bch_address":"",
-    "btc_address":"",
-    "xmr_address":"",
-    "type": "gift"
-    }
-    add_to_rfeed(wish)
-    wish = wish.copy()
-    wishlist["wishlist"].append(wish)
-    with open('./db/your_wishlist.json','w+') as f:
-        json.dump(wishlist, f,indent=6)
-
-def print_msg(text):
-    msg = f"{Fore.GREEN}> {Fore.WHITE}{text}"
-    print(msg)
-
-def print_err(text):
-    msg = f"{Fore.RED}> {text}"
 
 if __name__ == "__main__":
     #os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -1178,10 +715,3 @@ if __name__ == "__main__":
     config.read('./db/wishlist.ini')
     main(config)
 
-
-'''
-
-n('The addresses in this wallet are not bitcoin addresses.
-e.g. tb1qn..q6 (length: 42)')
-
-'''

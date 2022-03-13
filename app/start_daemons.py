@@ -14,20 +14,10 @@ import sqlite3
 import psutil
 from colorama import Fore, Back, Style
 cryptocompare.cryptocompare._set_api_key_parameter("")
-
+from helper_create import print_msg, print_err, bit_online
 
 wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
 www_root = ""
-def monero_rpc_online(rpc_url):
-    print("hello?")
-    rpc_connection = AuthServiceProxy(service_url=rpc_url)
-    try:
-        info = rpc_connection.get_version()
-        print("return true")
-        return True
-    except Exception as e:
-        print(e)
-        return False
 
 def monero_rpc_close_wallet(rpc_url):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
@@ -47,13 +37,6 @@ def monero_rpc_open_wallet(rpc_url,wallet_file):
     except Exception as e:
         print(e)
         sys.exit(1)
-
-def print_msg(text):
-    msg = f"{Fore.GREEN}> {Fore.WHITE}{text}"
-    print(msg)
-
-def print_err(text):
-    msg = f"{Fore.RED}> {text}"
 
 def find_working_node(node_list):
     max_retries = 30
@@ -187,28 +170,30 @@ def main(config):
         list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
 
     www_root = config["wishlist"]["www_root"]
-
-    if monero_rpc_online(rpc_url) == True:
-        monero_rpc_close_wallet(rpc_url)
-        #monero_rpc_open_wallet(rpc_url,wallet_file)
     remote_node = find_working_node(list_remote_nodes)
+    if monero_rpc_online(rpc_url) != True:
+        #monero_rpc_close_wallet(rpc_url)
+        #monero_rpc_open_wallet(rpc_url,wallet_file)
+        if remote_node:
+            start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file)
+        else:
+            print("No monero remote node")
 
-    if remote_node:
-        start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file)
 
     electrum_path = config["btc"]["bin"]
     btc_wallet_path = config["btc"]["wallet_file"]
     b_rpcuser = config["btc"]["rpcuser"]
     b_rpcpass = config["btc"]["rpcpassword"]
     b_rpcport = config["btc"]["rpcport"]
-    start_bit_daemon(electrum_path,btc_wallet_path,b_rpcuser,b_rpcpass,b_rpcport)
+    if not bit_online(b_rpcuser,b_rpcpass,b_rpcport):
+        start_bit_daemon(electrum_path,btc_wallet_path,b_rpcuser,b_rpcpass,b_rpcport)
     electron_path = config["bch"]["bin"]
     bch_wallet_path = config["bch"]["wallet_file"]
     rpcuser = config["bch"]["rpcuser"]
     rpcpass = config["bch"]["rpcpassword"]
     rpcport = config["bch"]["rpcport"]
-    start_bit_daemon(electron_path,bch_wallet_path,rpcuser,rpcpass,rpcport)
-    print("after bch daemon")
+    if not bit_online(rpcuser,rpcpass,rpcport):
+        start_bit_daemon(electron_path,bch_wallet_path,rpcuser,rpcpass,rpcport)
 
     http_port = config["callback"]["port"]
     http_server = "http://" + str(local_ip) + ":" + str(http_port)
@@ -218,8 +203,8 @@ def main(config):
     for wish in wish_list["wishlist"]:
         if wish["btc_address"]:
             address = wish["btc_address"]
-            #rpc_notify(b_rpcuser,b_rpcpass,b_rpcport,address,http_server)
-            thread_notify(electrum_path,address,http_server)
+            rpc_notify(b_rpcuser,b_rpcpass,b_rpcport,address,http_server)
+            #thread_notify(electrum_path,address,http_server)
         if wish["bch_address"]:
             address = wish["bch_address"]
             rpc_notify(rpcuser,rpcpass,rpcport,address,http_server)

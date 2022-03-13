@@ -1,7 +1,6 @@
 import configparser
 import json
 #address_create_notify == get btc or bch address
-from make_wishlist import create_new_wishlist, address_create_notify, get_xmr_subaddress, put_qr_code, get_unused_address, monero_rpc_online, bit_online, print_err, pre_receipts_add
 import pprint
 import os 
 import sys
@@ -9,8 +8,9 @@ from filelock import FileLock
 from datetime import datetime
 from rss_feed import add_to_rfeed
 import time
+from helper_create import wish_prompt
 config = ""
-
+from static_html_loop import main as static_main
 def main():
     global config
     print('''Wishlist editor.
@@ -18,11 +18,11 @@ def main():
         Lets begin!''')
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
-    if not os.path.isfile("./db/your_wishlist.json"):
+    if not os.path.isfile("./static/data/wishlist-data.json"):
         print("Error: please run make_wishlist.py first.")
         sys.exit(1)
 
-    with open("./db/your_wishlist.json", "r") as f:
+    with open("./static/data/wishlist-data.json", "r") as f:
         wishlist = json.load(f)
     if not wishlist["wishlist"]:
         print("Empty wishlist detected. Please add a wish")
@@ -43,6 +43,9 @@ def main():
         wish_edit(wishlist,"Delete",config["wishlist"]["www_root"])
     if answer == 3:
         wish_edit(wishlist,"Edit",config["wishlist"]["www_root"])
+
+    #blindly trigger a static html refresh
+    static_main(config)
 
 #find the matching wish and set the variables
 def wish_edit(wishlist,edit_delete,www_root):
@@ -70,6 +73,7 @@ def wish_edit(wishlist,edit_delete,www_root):
             print("3) Description")
             print("4) Add monthly fee (e.g. -$100 / month")
             print("5) Status (WIP / RELEASED)")
+            print("6) Totals")
             answer = ""
             goal = ""
             description = ""
@@ -94,6 +98,8 @@ def wish_edit(wishlist,edit_delete,www_root):
                 add_to_cron(wish_id)
             if answer == 5:
                 wishlist["wishlist"][index]["status"] = input("New Status >> ")
+            if answer == 6:
+                print("Hello")
             again = 0
             finish = ""
             while finish.lower() not in ["y","yes","no","n"]:
@@ -123,7 +129,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                 wishlist = delete_wish(wishlist,index)
                 break
     pprint.pprint(wishlist)
-    with open("./db/your_wishlist.json","w") as f:
+    with open("./static/data/wishlist-data.json","w") as f:
         json.dump(wishlist,f, indent=6)
 
 def add_to_cron(wish_id):
@@ -135,192 +141,19 @@ def delete_wish(wishlist,index):
     global config
     deleted = wishlist["wishlist"][index]
     www_root = config["wishlist"]["www_root"]
-    data_json = os.path.join(www_root,"data","wishlist-data.json")
-    with open(data_json,"r") as f:
-        now_wishlist = json.load(f)
+    now_wishlist = wishlist
     for i in range(len(now_wishlist["wishlist"])):
         if now_wishlist["wishlist"][i]["xmr_address"] == deleted["xmr_address"]:
             archive = now_wishlist["wishlist"][i]
             now_wishlist["wishlist"].pop(i)
             break
     now_wishlist["archive"].append(archive)
+    data_json = './static/data/wishlist-data.json'
     lock = FileLock(f"{data_json}.lock")
     with lock:
         with open(data_json, "w+") as f:
             json.dump(now_wishlist, f, indent=2) 
-    wishlist["wishlist"].pop(index)
-    with open('./db/your_wishlist.json','w+') as f:
-        json.dump(wishlist, f, indent=6)
-    return wishlist
+    return now_wishlist
     #lets find the wish in our data.json file in www_root 
-
-#add 1 wish without deleting the current data.
-#create qrs for the new wish
-def wish_add(wish,config):
-    local_ip = "localhost"
-    try:
-        if os.path.isfile("./db/your_wishlist.json"):
-            print("why")
-            with open('./db/your_wishlist.json', "r") as f:
-                wishlist = json.load(f)
-        else:
-            wishlist = {}
-            wishlist["wishlist"] = []
-        new_wish = {
-        "goal_usd": wish["goal"],
-        "hours": "",
-        "title": wish["title"],
-        "description":wish["desc"],
-        "bch_address":"",
-        "btc_address":"",
-        "xmr_address":"",
-        "type": "gift"
-        }
-        add_to_rfeed(new_wish)
-        bin_dir = config["bch"]["bin"]
-        port = config["callback"]["port"]
-        wallet_path = config["bch"]["wallet_file"]
-        bchuser = config["bch"]["rpcuser"]
-        bchpass = config["bch"]["rpcpassword"]
-        bchport = config["bch"]["rpcport"]
-        btcuser = config["btc"]["rpcuser"]
-        btcpass = config["btc"]["rpcpassword"]
-        btcport = config["btc"]["rpcport"]
-        is_bit_online(bchuser,bchpass,bchport)
-        new_wish["bch_address"] = get_unused_address(config,"bch")
-        put_qr_code(new_wish["bch_address"], "bch")
-        bin_dir = config["btc"]["bin"]
-        wallet_path = config["btc"]["wallet_file"]
-        is_bit_online(btcuser,btcpass,btcport)
-        new_wish["btc_address"] = get_unused_address(config,"btc")
-        put_qr_code(new_wish["btc_address"], "btc")
-        rpc_port = config["monero"]["daemon_port"]
-        if rpc_port == "":
-            rpc_port = 18082
-        rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
-        wallet_path = os.path.basename(config['monero']['wallet_file'])
-        retries = 0
-        while True:
-            if monero_rpc_online(rpc_url):
-                break
-            else:
-                print_err("Waiting for Monero daemon to come online")
-                if retries == 7:
-                    print_err("Monero not online after 40 seconds")
-                    sys.exit(1)
-                time.sleep(10)
-                retries += 1
-        new_wish["xmr_address"] = get_unused_address(config,"xmr")
-        
-        #insert the addresses into the database
-        wish_id = new_wish["xmr_address"][0:12]
-        pre_receipts_add(new_wish["xmr_address"],"xmr",wish_id)
-        pre_receipts_add(new_wish["bch_address"],"bch",wish_id)
-        pre_receipts_add(new_wish["btc_address"],"btc",wish_id)
-
-        put_qr_code(new_wish["xmr_address"], "xmr")
-        new_wish = new_wish.copy()
-        wishlist["wishlist"].append(new_wish)
-        with open('./db/your_wishlist.json','w+') as f:
-            json.dump(wishlist, f,indent=6)
-
-        orig_goal = wish["goal"]
-        percent = int(config["wishlist"]["percent_buffer"]) / 100
-        percent = float(percent) * int(orig_goal)
-        goal = int(orig_goal) + int(percent)
-
-        new_wish = { 
-                    "goal_usd":int(wish["goal"]), #these will be in usd
-                    "usd_total":0, #usd - if you cash out for stability
-                    "contributors":0,
-                    "status": "", #e.g. WIP / RELEASED
-                    "description": wish["desc"],
-                    "percent": 0,
-                    "hours": 0, # $/h
-                    "type": "gift",
-                    "created_date": str(datetime.now()),
-                    "modified_date": str(datetime.now()),
-                    "author_name": "",
-                    "author_email": "",
-                    "id": new_wish["xmr_address"][0:12],
-                    "qr_img_url_xmr": f"static/images/{new_wish['xmr_address'][0:12]}.png",
-                    "qr_img_url_btc": f"static/images/{new_wish['btc_address'][0:12]}.png",
-                    "qr_img_url_bch": f"static/images/{new_wish['bch_address'][0:12]}.png",
-                    "title": wish["title"],
-                    "btc_address": new_wish["btc_address"],
-                    "bch_address": ("bchtest:" + new_wish["bch_address"]),
-                    "xmr_address": new_wish["xmr_address"],
-                    "btc_total": 0,
-                    "xmr_total": 0,
-                    "bch_total": 0,
-                    "hour_goal": 0,
-                    "xmr_history": [],
-                    "bch_history": [],
-                    "btc_history": [],
-                    "btc_confirmed": 0,
-                    "btc_unconfirmed": 0,
-                    "bch_confirmed": 0,
-                    "bch_unconfirmed": 0
-        } 
-        www_root = config["wishlist"]["www_root"]
-        data_json = os.path.join(www_root,"data","wishlist-data.json")
-        with open(data_json,"r") as f:
-            now_wishlist = json.load(f)
-        now_wishlist["wishlist"].append(new_wish)
-        lock = FileLock(f"{data_json}.lock")
-        with lock:
-            with open(data_json, "w+") as f:
-                json.dump(now_wishlist, f, indent=2) 
-        pass
-    except Exception as e:
-        raise e
-
-def is_bit_online(rpcuser,rpcpass,rpcport):
-    retries=0
-    while True:
-        if bit_online(rpcuser,rpcpass,rpcport):
-            break
-        else:
-            print_err("Waiting for Monero daemon to come online")
-            if retries == 7:
-                print_err("Monero not online after 40 seconds")
-                sys.exit(1)
-            time.sleep(10)
-            retries += 1
-    #broken out of the loop / nodes is online
-    return
-
-def wish_prompt(config):
-    wish={}
-    reality = 0
-    while True:
-        try:
-            wish["title"]
-            pass
-        except Exception as e:
-            wish["title"] = str(input('Wish Title:'))
-        try:
-            wish["desc"]
-            pass
-        except Exception as e:
-            wish["desc"] = input('Wish Description:')
-        
-        wish["goal"] = input('USD Goal:')
-        try:
-            int(wish["goal"])
-            print("we should break now")
-            reality = 1
-            break
-        except Exception as e:
-            print(e)
-
-        if reality == 1:
-            break
-    wish_add(wish,config)
-
-    add = input('Add another wish y/n:')
-    if 'y' in add.lower():
-        wish={}
-        wish_prompt(config)
 
 main()

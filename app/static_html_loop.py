@@ -152,6 +152,8 @@ def comments_html(comments):
 
 def wish_html(one,two,three,four,end,total,wish):
     funded = ""
+    total = '%.2f' % total
+    wish["goal_usd"] = '%.2f' % wish["goal_usd"] 
     if float(total) >= wish["goal_usd"]:
         funded = "FUNDED "
     wish_html = f"""  
