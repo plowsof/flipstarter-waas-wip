@@ -58,14 +58,12 @@ def wish_edit(wishlist,edit_delete,www_root):
     index = ""
     end = len(wishlist["wishlist"])
     end += 1
-    print(f"end: {end}")
     while index not in range(1,end):
         index = int(input(f"Pick a wish to Edit / Remove (1-{offset}) >> "))
 
     index -= 1
     if edit_delete == "Edit":
         while True:
-            print("EDIT")
             #title
             print(f"Edit Wish: {wishlist['wishlist'][index]['title']}")
             print("1) Title")
@@ -79,7 +77,7 @@ def wish_edit(wishlist,edit_delete,www_root):
             description = ""
             cost = ""
             title = ""
-            while answer not in [1,2,3,4,5]:
+            while answer not in [1,2,3,4,5,6]:
                 answer = int(input(">> "))
             if answer == 1:
                 wishlist["wishlist"][index]["title"] = input("New title >> ")
@@ -93,13 +91,33 @@ def wish_edit(wishlist,edit_delete,www_root):
                 while not cost.isnumeric():
                     cost = input("Cost of the recurring amount in USD e.g. 100 >> ")
                 wishlist["wishlist"][index]["type"] = "recurring:" + str(cost)
-                pprint.pprint(wishlist["wishlist"][index])
+                #pprint.pprint(wishlist["wishlist"][index])
                 wish_id = wishlist["wishlist"][index]["xmr_address"][0:12]
                 add_to_cron(wish_id)
             if answer == 5:
                 wishlist["wishlist"][index]["status"] = input("New Status >> ")
             if answer == 6:
-                print("Hello")
+                total_xmr = wishlist["wishlist"][index]["xmr_total"]
+                total_bch = wishlist["wishlist"][index]["bch_total"]
+                total_btc = wishlist["wishlist"][index]["btc_total"]
+                total_usd = wishlist["wishlist"][index]["usd_total"]
+                choice = {"1": "xmr", "2": "bch", "3": "btc", "4": "usd"}
+                print("Coin [total]")
+                print(f"1) XMR [{total_xmr}]")
+                print(f"2) BCH [{total_bch}]")
+                print(f"3) BTC [{total_btc}]")
+                print(f"4) USD [{total_usd}]")
+                while answer not in [1,2,3,4]:
+                    answer = int(input(">> "))
+                coin = choice[str(answer)]
+                while True:
+                    try:
+                        userInput = input(f"Enter the new total for {coin}\n>>")
+                        val = int(userInput)
+                        break
+                    except ValueError:
+                        print("That's not an int!")
+                wishlist["wishlist"][index][f"{coin}_total"] = val
             again = 0
             finish = ""
             while finish.lower() not in ["y","yes","no","n"]:
@@ -116,6 +134,10 @@ def wish_edit(wishlist,edit_delete,www_root):
                         now_wishlist["wishlist"][i]["description"] = wishlist["wishlist"][index]["description"]
                         now_wishlist["wishlist"][i]["type"] = wishlist["wishlist"][index]["type"]
                         now_wishlist["wishlist"][i]["status"] = wishlist["wishlist"][index]["status"]
+                        now_wishlist["wishlist"][i]["xmr_total"] = wishlist["wishlist"][index]["xmr_total"]
+                        now_wishlist["wishlist"][i]["xmr_total"] = wishlist["wishlist"][index]["bch_total"]
+                        now_wishlist["wishlist"][i]["btc_total"] = wishlist["wishlist"][index]["btc_total"]
+                        now_wishlist["wishlist"][i]["usd_total"] = wishlist["wishlist"][index]["usd_total"]
                         break
                 lock = FileLock(f"{data_json}.lock")
                 with lock:
