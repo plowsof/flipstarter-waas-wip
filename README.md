@@ -51,22 +51,22 @@ apt install snapd
 snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
 
-I had an error 'to many redirects' because my dns providers ssl setting was off, i needed to change it to 'Full'
+I had an error 'to many redirects' because my dns providers ssl setting was off, i needed to change it to 'Full'    
 
-Successfully received certificate.
-Certificate is saved at: /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem
-Key is saved at:         /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem
+Successfully received certificate.    
+Certificate is saved at: /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem    
+Key is saved at:         /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem    
 
-cd to the ssl folder next to your docker-compose.yml file (maybe a needless step to create this folder)
-cp /etc/letsencrypt/live/www.getwishlisted.xyz/* .
+cd to the ssl folder next to your docker-compose.yml file (maybe a needless step to create this folder)    
+cp /etc/letsencrypt/live/www.getwishlisted.xyz/* .    
 
-docker stop fresh
-docker-compose up
-docker exec -it fresh /bin/bash
-python3 make_wishlist.py
+docker stop fresh     
+docker-compose up    
+docker exec -it fresh /bin/bash    
+python3 make_wishlist.py    
 
-when finished press ctrl+p then ctrl+q to detatch from the docker container
+when finished press ctrl+p then ctrl+q to detatch from the docker container    
 ```
 ### Support
-The initial funding for this project was obtained through Bitcoin-cash' crowdfunding system - FlipStarter.
-I will not be asking for any donations for this particular projects further development until someone using this WaaS receives their first (mainnet) donation / and i have fulfilled my FlipStarter promises. I think thats fair right? :) 
+The initial funding for this project was obtained through Bitcoin-cash' crowdfunding system - FlipStarter.    
+I will not be asking for any donations for this particular projects further development until someone using this WaaS receives their first (mainnet)     donation / and i have fulfilled my FlipStarter promises. I think thats fair right? :)    
