@@ -11,8 +11,8 @@ Currently, this will just create a mirror of the page @ rucknium.me/flask, howev
 - [ ] sanity checks
 
 also todo ~ make a tutorial based on these notes
-```
-hello, lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. I need nginx/dockercompose/docker and the docker-compose.yml file  
+
+hello, lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. I need nginx/docker-compose/docker and the docker-compose.yml file. For testing locally, i dont need nginx or ssl certs, i can just go to http://172.20.111.2:8000/donate
 
 Local testing on a Mac? You'll need Docker Desktop https://docs.docker.com/desktop/mac/install/    
 
@@ -29,6 +29,7 @@ sudo docker-compose up -d
 cd /etc/nginx/sites-available
 nano getwishlisted.xyz
 
+Take note of the 'https' - if you're not using ssl certs, set it to http else you can't see the page afaik
 server {
     listen 80;
     listen [::]:80;
@@ -36,7 +37,7 @@ server {
     index index.html index.htm index.nginx-debian.html;
     server_name moneroresearch.info www.moneroresearch.info;
         location /donate {
-          proxy_pass http://172.20.111.2:8000;
+          proxy_pass https://172.20.111.2:8000;
         }
 }
 
