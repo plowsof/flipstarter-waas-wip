@@ -14,15 +14,17 @@ also todo ~ make a tutorial based on these notes
 ```
 hello, lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. I need nginx/dockercompose/docker and the docker-compose.yml file  
 
-dockercompose 
-https://docs.docker.com/compose/install/
-docker
-https://docs.docker.com/engine/install/debian/
+Local testing on a Mac? You'll need Docker Desktop https://docs.docker.com/desktop/mac/install/    
+
+Linux/Ubuntu? I prefer to use snapd to install docker 
+```
+sudo apt-get install snapd
+sudo snap install docker
+```
 
 curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/main/docker-compose.yml -o docker-compose.yml
 
-docker-compose up -d
-
+sudo docker-compose up -d
 
 cd /etc/nginx/sites-available
 nano getwishlisted.xyz
