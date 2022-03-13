@@ -278,7 +278,7 @@ function updateWishlist(data)
     }
     //the wish is on the page
     //is it fully 'FUNDED' or revert title = title
-    if (total >= wish.goal_usd){
+    if (Number(total) >= Number(wish.goal_usd)){
       console.log(`fully funded ${wish.title}`)
       $(".prog_" + wish.id).text("FUNDED ")
       $(`.main_buttons_${wish.id}`).hide()

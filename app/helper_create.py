@@ -345,6 +345,7 @@ def get_xmr_subaddress(rpc_url,wallet_file,title):
 def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
     local_ip = "localhost"
     url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
+    print("btc_curl_address")
     print(url)
     payload = {
         "method": "createnewaddress",
@@ -436,7 +437,7 @@ def get_unused_address(config,ticker,title=None):
             #create address - check if unused - then create a notify
             address = address_create_notify(bin_dir,wallet_path,port,"",1,0,rpcuser,rpcpass,rpcport)
         if not address:
-            continue
+            break
         if "not" in address:
             continue
         if "Error" in address:
