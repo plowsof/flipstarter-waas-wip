@@ -504,12 +504,9 @@ def print_err(text):
     msg = f"{Fore.RED}> {text}"
 
 def monero_rpc_online(rpc_url):
-    print("hello?")
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
     try:
         info = rpc_connection.get_version()
-        print("return true")
         return True
     except Exception as e:
-        print(e)
         return False

@@ -14,7 +14,7 @@ import sqlite3
 import psutil
 from colorama import Fore, Back, Style
 cryptocompare.cryptocompare._set_api_key_parameter("")
-from helper_create import print_msg, print_err, bit_online
+from helper_create import print_msg, print_err, bit_online, monero_rpc_online
 
 wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
 www_root = ""
