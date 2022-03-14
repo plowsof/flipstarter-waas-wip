@@ -5,7 +5,7 @@ Currently, this will just create a mirror of the page @ rucknium.me/flask, howev
 ### TODO
 - [ ] sanity checks
 
-###Testing Locally 
+### Testing Locally 
 The only obstacle we're going to face in testing this locally, is getting Docker Engine and Docker Compose. I'm using Ubuntu so the process was simplified greatly by using snapd as follows: 
 ```
 sudo apt-get install snapd
@@ -30,7 +30,7 @@ python3 make_wishlist.py
 ```
 It's going to start up the wallets, and at each step, ask us if we want to paste in our view keys, or create them from scratch. You must take note of the seed phrases shown (when choosing to create wallets) otherwise you will not have access to any donations received.
 
-###Production / On a VPS
+### Production / On a VPS
 Lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. The only difference from running it locally is that i need to point nginx to my wishlist container and to set up the SSL serts (so my site is accessible using HTTPS).    
 
 First things first, i need to install nginx on my Debian vps:
@@ -95,6 +95,16 @@ sudo docker exec -it fresh /bin/bash
 ```
 
 when finished press ctrl+p then ctrl+q to detatch from the docker container    
+
+### Editing wishes
+```edit_wishlist.py``` will allow you to:
+- add / delete wishes
+- edit values / titles / descriptions
+To access it, just terminal into the container as before and run:   
+```
+python3 edit_wishlist.py
+```
+Then follow the instructions      
 
 ### Support
 The initial funding for this project was obtained through Bitcoin-cash' crowdfunding system - FlipStarter.    
