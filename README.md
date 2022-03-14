@@ -32,6 +32,8 @@ Note - you must press enter when this appears: (when creating a bitcoin-cash wal
 ```
 Password (hit return if you do not wish to encrypt your wallet):
 ```
+After the ```make_wishlist``` script is finished, the wallets will be loaded and the web page refreshed with your list. This process will take about minute or less.    
+
 ### Production / On a VPS
 Lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. The only difference from running it locally is that i need to point nginx to my wishlist container and to set up the SSL serts (so my site is accessible using HTTPS).    
 
