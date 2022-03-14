@@ -100,6 +100,8 @@ when finished press ctrl+p then ctrl+q to detatch from the docker container
 ```edit_wishlist.py``` will allow you to:    
 - add / delete wishes
 - edit values / titles / descriptions
+- add a custom status e.g. WIP / RELEASED 
+- add a recurring montlhy payment e.g. -$100 USD each month
 To access it, just terminal into the container as before and run:   
 ```
 python3 edit_wishlist.py
