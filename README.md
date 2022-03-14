@@ -3,14 +3,7 @@ Docker repo/instructions here https://hub.docker.com/r/plowsof/waas4rucknium-tes
 Currently, this will just create a mirror of the page @ rucknium.me/flask, however, i will eventually be making a generic version, and use the rucknium page as an example of installing a template (just copy and pasting a folder) 
 
 ### TODO
-- [x] Fix Negative bitcoin donations :) 
-- [x] non-js version incorrect and donations should trigger an update 
-- fix bugs in
-    - [x] install wizard
-    - [ ] edit wishlist 
 - [ ] sanity checks
-
-also todo ~ make a tutorial based on these notes
 
 hello, lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. I need nginx/docker-compose/docker and the docker-compose.yml file. For testing locally, i dont need nginx or ssl certs, i can just go to http://172.20.111.2:8000/donate after running ```sudo docker-compose up``` in the same directory as the ```docker-compose.yml``` file above.
 
