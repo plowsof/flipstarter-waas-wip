@@ -26,6 +26,10 @@ python3 make_wishlist.py
 ```
 It's going to start up the wallets, and at each step, ask us if we want to paste in our view keys, or create them from scratch. You must take note of the seed phrases shown (when choosing to create wallets) otherwise you will not have access to any donations received.
 
+Note - you must press enter when this appears: (when creating a bitcoin-cash wallet - the wallets can not / do not need to be encrypted, its just a view-only wallet also)   
+```
+Password (hit return if you do not wish to encrypt your wallet):
+```
 ### Production / On a VPS
 Lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. The only difference from running it locally is that i need to point nginx to my wishlist container and to set up the SSL serts (so my site is accessible using HTTPS).    
 
