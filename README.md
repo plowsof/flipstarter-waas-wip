@@ -112,12 +112,16 @@ python3 edit_wishlist.py
 ```
 Then follow the instructions      
 
-### Create your own wallets
+### Wallets / Seeing Donation
 WaaS is based on these 3 wallets:
 - Monero GUI
 - Electron-cash
 - Electrum
-
+Some donations may not appear in your wallet because of something called a gap limit. In Electron-cash / Electrum to go view -> console. And paste this line:
+```
+for i in range(0, 100): print(wallet.create_new_address(False))
+```
+You should be able to see any missing donations then. Repeat it if needed.
 ### TODO
 This is still in beta so i must do some sanity checks 
 - [ ] sanity checks
