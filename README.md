@@ -2,9 +2,6 @@ Docker repo/instructions here https://hub.docker.com/r/plowsof/waas4rucknium-tes
 
 Currently, this will just create a mirror of the page @ rucknium.me/flask, however, i will eventually be making a generic version, and use the rucknium page as an example of installing a template (just copy and pasting a folder) 
 
-### TODO
-- [ ] sanity checks
-
 ### Testing Locally 
 The only obstacle we're going to face in testing this locally, is getting Docker Engine and Docker Compose. I'm using Ubuntu so the process was simplified greatly by using snapd as follows: 
 ```
@@ -105,7 +102,9 @@ To access it, just terminal into the container as before and run:
 python3 edit_wishlist.py
 ```
 Then follow the instructions      
-
+### TODO
+This is still in beta so i must do some sanity checks 
+- [ ] sanity checks
 ### Support
 The initial funding for this project was obtained through Bitcoin-cash' crowdfunding system - FlipStarter.    
 I will not be asking for any donations for this particular projects further development until someone using this WaaS receives their first (mainnet)     donation / and i have fulfilled my FlipStarter promises. I think thats fair right? :)    
