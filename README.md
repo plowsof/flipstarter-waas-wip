@@ -112,7 +112,7 @@ python3 edit_wishlist.py
 ```
 Then follow the instructions      
 
-### Wallets / Seeing Donation
+### Wallets / Seeing Donations
 WaaS is based on these 3 wallets:
 - Monero GUI
 - Electron-cash
