@@ -94,10 +94,10 @@ And get on the terminal inside it using:
 sudo docker exec -it fresh /bin/bash
 ```
 
-when finished press ctrl+p then ctrl+q to detatch from the docker container    
+when finished press ctrl+p then ctrl+q to detatch from the docker container     
 
 ### Editing wishes
-```edit_wishlist.py``` will allow you to:
+```edit_wishlist.py``` will allow you to:    
 - add / delete wishes
 - edit values / titles / descriptions
 To access it, just terminal into the container as before and run:   
