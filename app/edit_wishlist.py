@@ -160,7 +160,7 @@ def wish_edit(wishlist,edit_delete,www_root):
             if "y" in answer.lower():
                 wishlist = delete_wish(wishlist,index)
                 break
-    pprint.pprint(wishlist)
+    #pprint.pprint(wishlist)
     with open("./static/data/wishlist-data.json","w") as f:
         json.dump(wishlist,f, indent=6)
 
