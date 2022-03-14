@@ -16,18 +16,21 @@ hello, lets pretend my name is George, i have a domain called getwishlisted.xyz 
 
 Local testing on a Mac? You'll need Docker Desktop https://docs.docker.com/desktop/mac/install/    
 
-Linux/Ubuntu? I prefer to use snapd to install docker 
+Linux/Ubuntu? I prefer to use snapd to install docker and docker-compose
 ```
 sudo apt-get install snapd
 sudo snap install docker
 ```
-
+```
 curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/main/docker-compose.yml -o docker-compose.yml
-
+```
+```
 sudo docker-compose up -d
-
+```
+```
 cd /etc/nginx/sites-available
 nano getwishlisted.xyz
+```
 
 Take note of the 'https' - if you're not using ssl certs, set it to http else you can't see the page afaik
 ```
