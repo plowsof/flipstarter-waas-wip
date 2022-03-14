@@ -111,6 +111,13 @@ To access it, just terminal into the container as before and run:
 python3 edit_wishlist.py
 ```
 Then follow the instructions      
+
+### Create your own wallets
+WaaS is based on these 3 wallets:
+- Monero GUI
+- Electron-cash
+- Electrum
+
 ### TODO
 This is still in beta so i must do some sanity checks 
 - [ ] sanity checks
