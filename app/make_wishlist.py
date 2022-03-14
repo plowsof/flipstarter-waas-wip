@@ -20,7 +20,7 @@ import shutil
 import threading
 import sqlite3 
 import requests
-from helper_create import init_wishlist, wish_add, wish_prompt, pre_receipts_add, get_unused_address, print_msg, print_err, monero_rpc_online
+from helper_create import init_wishlist, wish_add, wish_prompt, pre_receipts_add, print_msg, print_err, monero_rpc_online
 #bitcoin - have to ./make_libsecp256k1.sh 
 
 viewkey = ""

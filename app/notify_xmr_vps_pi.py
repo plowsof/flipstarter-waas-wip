@@ -69,6 +69,7 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
         if saved_wishlist["wishlist"][i][f"{ticker}_address"] == find_address:
             found = 1
             if ticker != "xmr":
+                bit_balance = float(bit_con) + float(bit_unc)
                 old_balance = float(saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"]) + float(saved_wishlist["wishlist"][i][f"{ticker}_confirmed"])
                 if old_balance >= bit_balance:
                     return
