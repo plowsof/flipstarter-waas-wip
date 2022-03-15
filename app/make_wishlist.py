@@ -343,14 +343,15 @@ def create_monero_wallet(config):
         print_msg("Creating the view-only Monero wallet..")
         #wallet_rpc_server.cpp:4509 Error creating wallet: failed to parse view key secret key
         for line in iter(monero_daemon.stdout.readline,''):
-            print(line.rstrip())
+            #print(line.rstrip())
             #debug output
             #print(str(line.rstrip()))
             if b"Resource temporarily unavailable" in line.rstrip():
                 print_err("Please stop this docker container using 'docker stop <name>")
             if b"Error" in line.rstrip() or b"Failed" in line.rstrip():
-                #print_err(line.rstrip())
-                print_msg(f"If the error is about 'calling gettransaction' delete this node [{rpc_remote}] from your compose file")
+                print_err(line.rstrip())
+                if b"gettransactions" in line.rstrip():
+                    break
                 print_err("View-key / Main address incorrect , try again")
                 key_data = prompt_monero_keys()
                 view_key = key_data["view_key"]
