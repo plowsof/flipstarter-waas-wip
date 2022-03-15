@@ -84,12 +84,11 @@ Successfully received certificate.
 Certificate is saved at: /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem    
 Key is saved at:         /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem    
 ```
-Go to the same folder as your ```docker-compose.yml``` file. We need an 'ssl' folder next to it to paste our certs in.
-download the docker compose file by doing:
+At this point we need to ```cd``` to our ```/home``` folder and download the docker-compose file:
 ```
-https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/mainnet/docker-compose.yml
+curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/mainnet/docker-compose.yml -o docker-compose.yml
 ```
-
+We need an 'ssl' folder next to it to paste our certs in.
 ```
 mkdir ssl
 cd ssl
@@ -101,6 +100,11 @@ docker-compose.yml
 ssl/
     - fullchain.pem
     - privkey.pem
+```
+Perfect. Now lets install docker using snap:
+```
+snap install docker
+<todo>get docker-compose
 ```
 I can now start the wishlist the same way as i did locally: (in the same dir as ```docker-compose.yml``` not in the ssl folder
 ```
