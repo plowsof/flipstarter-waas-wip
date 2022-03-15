@@ -113,6 +113,8 @@ And get on the terminal inside it using:
 ```
 sudo docker exec -it fresh /bin/bash
 ```
+**I do not have internet access inside my docker container, searching for solution**     
+
 from here (you will already be in /home/app) you can run ```make_wishlist.py``` using:
 ```
 python3 make_wishlist.py
