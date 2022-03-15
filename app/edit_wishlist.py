@@ -118,7 +118,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                     while True:
                         try:
                             userInput = input(f"Enter the new total for {coin}\n>>")
-                            val = int(userInput)
+                            val = float(userInput)
                             break
                         except ValueError:
                             print("That's not an int!")
