@@ -76,7 +76,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
         "--wallet-file", wallet_file,
         "--rpc-bind-port", rpc_port,
         "--disable-rpc-login",
-        "--tx-notify", f"/usr/local/bin/python3 {os.path.join(os.path.abspath(os.path.join(os.getcwd(),'notify_xmr_vps_pi.py')))} %s",
+        "--tx-notify", f"/usr/local/bin/python3 /home/app/notify_xmr_vps_pi.py %s",
         "--daemon-address", remote_node,
         "--stagenet", "--password", ""
     ]
@@ -168,7 +168,12 @@ def main(config):
     for i in range(int(fallback_remote_nodes)):
         num = (i+1)
         list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
-
+    #we have to force close the monero rpc because it was launched
+    #without tx-notify in make_wishlist
+    for proc in psutil.process_iter():
+        # check whether the process name matches
+        if "monero-wallet-rpc" in proc.name():
+            proc.kill()
     www_root = config["wishlist"]["www_root"]
     remote_node = find_working_node(list_remote_nodes)
     if monero_rpc_online(rpc_url) != True:

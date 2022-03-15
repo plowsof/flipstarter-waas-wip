@@ -25,9 +25,9 @@ RUN gpg --import <(curl ${JONALDKEY2} ) \
 WORKDIR /wallets
 
 RUN wget -O run_electrum.asc ${SIG_ELECTRUM} \ 
-&&	wget -O electron-cash.asc ${SIG_ELECTRON} \
-&&	wget -O run_electrum ${URL_ELECTRUM} \
-&&	wget -O electron-cash ${URL_ELECTRON}
+&&  wget -O electron-cash.asc ${SIG_ELECTRON} \
+&&  wget -O run_electrum ${URL_ELECTRUM} \
+&&  wget -O electron-cash ${URL_ELECTRON}
 
 #if any of these checks fail, the image will not be built
 RUN gpg --status-fd=1 --verify electron-cash.asc 2>/dev/null | grep "GOODSIG 4FD06489EFF1DDE1 Jonald Fyookball <jonf@electroncash.org>" || exit 1
@@ -59,18 +59,13 @@ EXPOSE 8000
 
 WORKDIR /home/app/bin
 RUN chmod +x run_electrum \ 
-	&& chmod +x electron-cash \
-	&& apt-get update \ 
-	&& apt-get install -y --no-install-recommends fuse cron \
-	&& touch waas-crontab \
-	&& cp waas-crontab /etc/cron.d/waas-crontab \
-	&& chmod 0644 /etc/cron.d/waas-crontab \ 
-	&& crontab /etc/cron.d/waas-crontab \
-	&& (crontab -u $(whoami) -l; echo "#WaaS recurring fees" ) | crontab -u $(whoami) - \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& apt-get clean \
-	&& apt-get autoclean \
-	&& apt-get autoremove 
+    && chmod +x electron-cash \
+    && apt-get update \ 
+    && apt-get install -y --no-install-recommends fuse \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean \
+    && apt-get autoclean \
+    && apt-get autoremove 
 
 COPY --from=dependencies /root/.local /root/.local
 # Make sure scripts in .local are usable:
@@ -83,3 +78,4 @@ CMD ["python3", "./main.py"]
 #get ip
 #sudo docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' fresh
 #sudo docker volume rm $(sudo docker volume ls -q)
+#certbot certonly --standalone -d <domaim> --staple-ocsp -m <email> --agree-tos

@@ -11,6 +11,8 @@ import time
 from helper_create import wish_prompt
 config = ""
 from static_html_loop import main as static_main
+import sqlite3
+
 def main():
     global config
     print('''Wishlist editor.
@@ -59,7 +61,7 @@ def wish_edit(wishlist,edit_delete,www_root):
     end = len(wishlist["wishlist"])
     end += 1
     while index not in range(1,end):
-        index = int(input(f"Pick a wish to Edit / Remove (1-{offset}) >> "))
+        index = int(input(f"Pick a wish to Edit (1-{offset}) >> "))
 
     index -= 1
     if edit_delete == "Edit":
@@ -93,7 +95,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                 wishlist["wishlist"][index]["type"] = "recurring:" + str(cost)
                 #pprint.pprint(wishlist["wishlist"][index])
                 wish_id = wishlist["wishlist"][index]["xmr_address"][0:12]
-                add_to_cron(wish_id)
+                insert_recurring(wish_id)
             if answer == 5:
                 wishlist["wishlist"][index]["status"] = input("New Status >> ")
             if answer == 6:
@@ -164,9 +166,21 @@ def wish_edit(wishlist,edit_delete,www_root):
     with open("./static/data/wishlist-data.json","w") as f:
         json.dump(wishlist,f, indent=6)
 
-def add_to_cron(wish_id):
-    os.system(f"(crontab -u $(whoami) -l; echo '0 0 1 * * (cd /home/app && /usr/local/bin/python3 wishlist_recurring.py {wish_id})' ) | crontab -u $(whoami) -")
-    print("Added recurring payment to happen on the 1st day of each month")
+def insert_recurring(wish_id):
+    con = sqlite3.connect('./db/recurring_fees.db')
+    cur = con.cursor()
+    create_fees_table = """ CREATE TABLE IF NOT EXISTS fees (
+                                wish_id text PRIMARY KEY
+                            ); """
+
+    cur.execute(create_fees_table)
+    cur.execute('SELECT * FROM fees WHERE wish_id = ?',[wish_id])
+    rows = cur.fetchall()
+    #insert if not in db already
+    if not len(rows):
+        cur.execute('INSERT INTO fees VALUES(?)',[wish_id])
+        con.commit()
+    con.close()
 
 #tidy this up
 def delete_wish(wishlist,index):
@@ -185,6 +199,12 @@ def delete_wish(wishlist,index):
     with lock:
         with open(data_json, "w+") as f:
             json.dump(now_wishlist, f, indent=2) 
+    con = sqlite3.connect('./db/recurring_fees.db')
+    cur = con.cursor()
+    wish_id = deleted["id"]
+    cur.execute('DELETE FROM fees WHERE wish_id=?',[wish_id])
+    con.commit()
+    con.close()
     return now_wishlist
     #lets find the wish in our data.json file in www_root 
 

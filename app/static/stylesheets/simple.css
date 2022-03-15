@@ -258,3 +258,18 @@ span.c_tip{
 img.rss_logo{
     display:inline;
 }
+
+
+span#progress{
+  color:black;
+  border-radius:5px;
+  margin-right:5px;
+  background: #0AC18E ;
+  font-family: monospace ;
+}
+
+span#status{
+  border-radius:5px;
+  background: blue;
+  font-family: monospace;
+}

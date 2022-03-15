@@ -129,7 +129,7 @@ def create_new_wishlist(config):
 
 def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None):
     global wallet_dir
-    if wallet_file == None:
+    if not wallet_file:
         rpc_args = [ 
             f".{rpc_bin_file}", 
             "--wallet-dir", wallet_dir,
@@ -482,7 +482,7 @@ def create_bit_wallet(config,bchbtc):
     else:
         #ask for view keys
         # set the bch_data['keystore']['xpub']
-        answer = input ("Paste your xpub or zpub key, then press enter\n>>")
+        answer = input ("Paste your xpub or zpub key, then press enter (Wallet -> Information)\n>>")
         bch_data = { "keystore": { "xpub": answer
         }}
     #--------------------------------------
@@ -624,7 +624,7 @@ def main(config):
     start_bit_daemon(electron_bin,bch_wallet_path,bch_rpcuser,bch_rpcpass,bch_rpcport)
 
     #create 'your_wishlist.json'
-    print_msg("Lets create your wishlist :)")
+    print_msg("Lets create your wishlist :) (ignore the warning above)")
 
     #terminate all daemons
 

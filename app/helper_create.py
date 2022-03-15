@@ -15,6 +15,8 @@ import time
 from datetime import datetime
 from filelock import FileLock
 import subprocess
+import sys 
+
 def init_wishlist():
     #load wishlist from json file
     config = configparser.ConfigParser()

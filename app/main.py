@@ -29,6 +29,9 @@ from start_daemons import main as main_start_daemons
 
 import uvicorn
 import threading
+
+from schedule_test import schedule_main
+
 # To read your secret credentials
 #config = configparser.ConfigParser()
 #config.read("config.ini")
@@ -351,6 +354,15 @@ if __name__ == "__main__":
     wish_config["RSS"]["title"] = os.environ['waas_RSS_TITLE']
     wish_config["RSS"]["description"] = os.environ['waas_RSS_DESC']
     wish_config["RSS"]["link"] = os.environ['waas_RSS_LINK']
+    wish_config["monero"]["remote_node_1"] = os.environ['waas_remote_node_1'].replace('"','')
+    wish_config["monero"]["remote_node_2"] = os.environ['waas_remote_node_2'].replace('"','')
+    wish_config["monero"]["remote_node_3"] = os.environ['waas_remote_node_3'].replace('"','')
+    wish_config["monero"]["remote_node_4"] = os.environ['waas_remote_node_4'].replace('"','')
+    wish_config["monero"]["remote_node_5"] = os.environ['waas_remote_node_5'].replace('"','')
+    #start recurring fee loop
+    th = threading.Thread(target=schedule_main)
+    th.start()
+
     with open('./db/wishlist.ini', 'w') as configfile:
         wish_config.write(configfile)
     #if wishlist file exists - assume we can start_daemons

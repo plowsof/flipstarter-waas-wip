@@ -4,7 +4,7 @@ import os
 import json
 import pprint
 from math import ceil
-from main import db_get_prices
+import sqlite3
 
 prices = {}
 prices["monero"] = 0
@@ -155,7 +155,7 @@ def wish_html(one,two,three,four,end,total,wish):
     total = '%.2f' % float(total)
     wish["goal_usd"] = '%.2f' % float(wish["goal_usd"]) 
     if float(total) >= float(wish["goal_usd"]):
-        funded = "FUNDED "
+        funded = "FUNDED"
     wish_html = f"""  
                   <style>
                     .progress_{wish["id"]} {{
@@ -181,7 +181,7 @@ def wish_html(one,two,three,four,end,total,wish):
 
                   </style>
                   <div class="wish" id="{wish["id"]}">
-                    <span class="wish_title" id="{wish["id"]}"><h3>{wish["title"]} </span><span class="prog_{wish["id"]}"></span><span class="status_{wish["id"]}">{funded}{wish["status"]}</span></h3></br>
+                    <span class="wish_title" id="{wish["id"]}"><h3>{wish["title"]} </span><span class="prog_{wish["id"]}" id="progress">{funded}</span><span class="status_{wish["id"]}" id="status">{wish["status"]}</span></h3></br>
                     <div class="progress_{wish["id"]}"></div></br>
                     <span class="fundgoal_{wish["id"]}">Raised: $<span class="raised_{wish["id"]}">{total}</span> of $<span class="goal_{wish["id"]}">{wish["goal_usd"]}</span></span><span class="contributors" id="{wish["id"]}"> Contributors: {wish["contributors"]}</span>
                     <p class="description">{wish["description"]}</p>
@@ -191,8 +191,8 @@ def wish_html(one,two,three,four,end,total,wish):
         img_bch = f'<img id="crypto_ticker" src="/donate/static/images/bch.png" alt="bch" height="20px" width="20px">'
         img_btc = f'<img id="crypto_ticker" src="/donate/static/images/btc.png" alt="btc" height="20px" width="20px">'
         wish_html+= f"""
-                          <label for="reveal-donate" class="btn">Donate</label>
-                          <input type="checkbox" class="checkbox_{wish["id"]}" id="reveal-donate" role="button">
+                          <label for="reveal-donate_{wish["id"]}" class="btn">Donate</label>
+                          <input type="checkbox" class="checkbox_{wish["id"]}" id="reveal-donate_{wish["id"]}" role="button">
                           <div class="crypto_donate_{wish["id"]}" id="crypto_donate_{wish["id"]}">
                             <p>To leave a comment, javascript must be enabled. Donations should appear within 5 minutes</p>
                             <p>
@@ -261,6 +261,29 @@ def get_total(wish):
 
     returnme["total_usd"] = round(total_usd,2)
     return returnme
+
+def db_get_prices():
+    con = sqlite3.connect('./db/crypto_prices.db')
+    cur = con.cursor()
+    create_price_table = """ CREATE TABLE IF NOT EXISTS crypto_prices (
+                                data default 0,
+                                xmr integer,
+                                btc integer,
+                                bch integer
+                            ); """
+    cur.execute(create_price_table)
+    cur.execute('SELECT * FROM crypto_prices WHERE data = ?',[0])
+    rows = cur.fetchall()
+    con.close()
+    try:
+        return_me = {
+        "bitcoin-cash": rows[0][3],
+        "monero": rows[0][1],
+        "bitcoin": rows[0][2]
+        }
+        return return_me
+    except:
+        return False
 
 if __name__ == "__main__":
     config = configparser.ConfigParser()

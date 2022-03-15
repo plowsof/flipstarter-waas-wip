@@ -280,7 +280,7 @@ function updateWishlist(data)
     //is it fully 'FUNDED' or revert title = title
     if (Number(total) >= Number(wish.goal_usd)){
       console.log(`fully funded ${wish.title}`)
-      $(".prog_" + wish.id).text("FUNDED ")
+      $(".prog_" + wish.id).text("FUNDED")
       $(`.main_buttons_${wish.id}`).hide()
       //hide buttons
     }else{
@@ -323,7 +323,7 @@ function init_wish(one,two,three,four,end,total,wish)
     }
   </style>
   <div class="wish" id="${wish.id}">
-    <span class="wish_title" id="${wish.id}"><h3>${wish.title} </span><span class="prog_${wish.id}"></span><span class="status_${wish.id}">${wish.status}</span></h3></br>
+    <span class="wish_title" id="${wish.id}"><h3>${wish.title} </span><span class="prog_${wish.id}" id="progress"></span><span class="status_${wish.id}" id="status">${wish.status}</span></h3></br>
     <div class="progress_${wish["id"]}"></div></br>
     <span class="fundgoal_${wish.id}">Raised: $<span class="raised_${wish.id}">${total}</span> of $<span class="goal_${wish.id}">${wish.goal_usd}</span></span><span class="contributors" id="${wish.id}">Contributors: ${wish.contributors}</span>
     <p class="description">${wish.description}</p>
