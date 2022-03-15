@@ -109,7 +109,8 @@ Add /snap/bin to your PATH (so your machine knows where to seek for the snap'd b
 ```
 sudo export PATH="$PATH:/snap/bin"
 ```
-I can now start the wishlist the same way as i did locally: (in the same dir as ```docker-compose.yml``` not in the ssl folder
+I can now start the wishlist the same way as i did locally: (in the same dir as ```docker-compose.yml``` not in the ssl folder    
+Dont forget to go back to the same dir as your docker-compose file using ```cd..``` then:
 ```
 sudo docker-compose up -d
 ```
