@@ -104,7 +104,10 @@ ssl/
 Perfect. Now lets install docker using snap:
 ```
 snap install docker
-<todo>get docker-compose
+```
+Add /snap/bin to your PATH (so your machine knows where to seek for the snap'd binaries)
+```
+sudo export PATH="$PATH:/snap/bin"
 ```
 I can now start the wishlist the same way as i did locally: (in the same dir as ```docker-compose.yml``` not in the ssl folder
 ```
