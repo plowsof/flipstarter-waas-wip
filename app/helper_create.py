@@ -377,9 +377,15 @@ def address_create_notify(bin_dir,wallet_path,port,addr,create,notify,rpcuser,rp
     if notify == 1:
         if addr != "":
             address = addr
-        if "Error" not in address:
-            th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
-            th.start()
+        if address:
+            if "Error" not in address
+                th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
+                th.start()
+                return(address)
+            else:
+                return False
+        else:
+            return False
     return(address)
 
 def rpc_notify(rpcuser,rpcpass,rpcport,address,callback):

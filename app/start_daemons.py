@@ -50,7 +50,7 @@ def find_working_node(node_list):
             rpc_connection = AuthServiceProxy(service_url=rpc_url)
             info = rpc_connection.get_info()
             if info["status"] != "OK":
-                print_msg("Connected")
+                print_msg("Retrying another node")
                 continue
             else:
                 node_online = 1
