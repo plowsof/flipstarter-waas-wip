@@ -271,8 +271,8 @@ async def handle_crypto_form(request: Request):
             "address": address,
             "amount_expected": expected
             }
-            pprint.pprint(vals)
-            pprint.pprint(db_data)
+            #pprint.pprint(vals)
+            #pprint.pprint(db_data)
             test = json.dumps(info)  
             return JSONResponse(content=test)
 
