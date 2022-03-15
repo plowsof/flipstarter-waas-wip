@@ -207,7 +207,7 @@ def wish_html(one,two,three,four,end,total,wish):
                                 <span class="bch_address">bitcoincash:{wish["bch_address"]}</span>
                             </p>
                             <p>
-                                <span class="njs_ticker">{img_btc} Bitcoin <a href="{wish["qr_img_url_bch"]}">[QRcode]</a></span></br>
+                                <span class="njs_ticker">{img_btc} Bitcoin <a href="{wish["qr_img_url_btc"]}">[QRcode]</a></span></br>
                                 <span class="btc_address">bitcoin:{wish["btc_address"]}</span>
                             </p>
                           </div>
