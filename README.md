@@ -3,38 +3,8 @@ Currently, this will just create a mirror of the page @ rucknium.me/flask, howev
 
 Also ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```make_wishlist.py``` e.g. wrongly select Restore from keys.   
 
-### Testing Locally 
-The only obstacle we're going to face in testing this locally, is getting Docker Engine and Docker Compose. I'm using Ubuntu so the process was simplified greatly by using snapd as follows: 
-```
-sudo apt-get install snapd
-sudo snap install docker
-```
-Once this is done, we just need to download the ```docker-compose.yml``` file. Easily done with this line:
-```
-curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/main/docker-compose.yml -o docker-compose.yml
-```
-Now, in the same directory, we just need to run ```docker-compose```, which will start the webserver @ http://172.20.111.2:8000/donate
-```
-sudo docker-compose up -d
-```
-The last step is to create our wishlist. To do this we must get onto the command line in the Docker container using:
-```
-sudo docker exec -it fresh /bin/bash
-```
-The word 'fresh' is just the name i've set in the docker compose file. You will now have command line access and be inside the ```home/app``` directory.
-To run the wallet install wizard type this inside the docker container:
-```
-python3 make_wishlist.py
-```
-It's going to start up the wallets, and at each step, ask us if we want to paste in our view keys, or create them from scratch. You must take note of the seed phrases shown (when choosing to create wallets) otherwise you will not have access to any donations received.
-
-Note - you must press enter when this appears: (when creating a bitcoin-cash wallet - the wallets can not / do not need to be encrypted, its just a view-only wallet also)   
-```
-Password (hit return if you do not wish to encrypt your wallet):
-```
-After the ```make_wishlist``` script is finished, the wallets will be loaded and the web page refreshed with your list. This process will take about minute or less.    
-
 ### Production / On a VPS
+
 Lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. The only difference from running it locally is that i need to point nginx to my wishlist container and to set up the SSL serts (so my site is accessible using HTTPS).    
 
 First things first, i need to install nginx on my Debian vps:
@@ -77,20 +47,42 @@ Because this is a fresh server i am going to do a full install (where certbot mo
 ````
 sudo certbot
 ````
+I ran ```sudo certbot``` a 2nd time for the ```www.``` url.    
 After running through the setup / selecting nginx / agreeing to t&c's i see this output:
 ```
 Successfully received certificate.    
 Certificate is saved at: /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem    
 Key is saved at:         /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem    
 ```
-Go to the same folder as your ```docker-compose.yml``` file. We need an 'ssl' folder next to it to paste our certs in.
+At this point we need to ```cd``` to our ```/home``` folder and download the docker-compose file:
+```
+curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/mainnet/docker-compose.yml -o docker-compose.yml
+```
+We need an 'ssl' folder next to it to paste our certs in.
 ```
 mkdir ssl
 cd ssl
 cp /etc/letsencrypt/live/www.getwishlisted.xyz/* . 
 ```
-I can now start the wishlist the same way as i did locally: (in the same dir as ```docker-compose.yml``` not in the ssl folder).    
-Don't forget to take a look inside the docker-compose file and change the environment variables like rss url etc.
+Which will look like:
+```
+docker-compose.yml
+ssl/
+    - fullchain.pem
+    - privkey.pem
+```
+Perfect. Now lets install docker and docker-compose with these handy install scripts:
+```
+ curl -fsSL https://test.docker.com -o test-docker.sh
+ sudo sh test-docker.sh
+```
+now to install docker-compose:
+```
+ sudo curl -L --fail https://github.com/docker/compose/releases/download/1.29.2/run.sh -o /usr/local/bin/docker-compose
+ sudo chmod +x /usr/local/bin/docker-compose
+```
+I can now start the wishlist the same way as i did locally: (in the same dir as ```docker-compose.yml``` not in the ssl folder    
+Dont forget to go back to the same dir as your docker-compose file using ```cd..``` then:
 ```
 sudo docker-compose up -d
 ```
@@ -98,7 +90,11 @@ And get on the terminal inside it using:
 ```
 sudo docker exec -it fresh /bin/bash
 ```
-
+from here (you will already be in /home/app) you can run ```make_wishlist.py``` using:
+```
+python3 make_wishlist.py
+```
+You can choose to paste your viewkeys or have wallets created for you (Write the seed words down though! else your money is gone forever)    
 when finished press ctrl+p then ctrl+q to detatch from the docker container     
 
 ### Editing wishes
