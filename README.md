@@ -89,7 +89,8 @@ mkdir ssl
 cd ssl
 cp /etc/letsencrypt/live/www.getwishlisted.xyz/* . 
 ```
-I can now start the wishlist the same way as i did locally: (in the same dir as ```docker-compose.yml``` not in the ssl folder)
+I can now start the wishlist the same way as i did locally: (in the same dir as ```docker-compose.yml``` not in the ssl folder).    
+Don't forget to take a look inside the docker-compose file and change the environment variables like rss url etc.
 ```
 sudo docker-compose up -d
 ```
