@@ -77,6 +77,7 @@ Because this is a fresh server i am going to do a full install (where certbot mo
 ````
 sudo certbot
 ````
+I ran ```sudo certbot``` a 2nd time for the ```www.``` url.    
 After running through the setup / selecting nginx / agreeing to t&c's i see this output:
 ```
 Successfully received certificate.    
