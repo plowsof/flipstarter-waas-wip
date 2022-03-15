@@ -349,7 +349,7 @@ def create_monero_wallet(config):
             if b"Resource temporarily unavailable" in line.rstrip():
                 print_err("Please stop this docker container using 'docker stop <name>")
             if b"Error" in line.rstrip() or b"Failed" in line.rstrip():
-                print_err(line.rstrip())
+                #print_err(line.rstrip())
                 print_msg(f"If the error is about 'calling gettransaction' delete this node [{rpc_remote}] from your compose file")
                 print_err("View-key / Main address incorrect , try again")
                 key_data = prompt_monero_keys()
