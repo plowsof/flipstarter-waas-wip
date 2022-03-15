@@ -290,6 +290,8 @@ def null_if_not_exists(vals,index):
         return ""
 
 def clicks_today(client_ip):
+    if client_ip == "127.0.0.1":
+        return True
     con = sqlite3.connect('./db/clicks.db')
     cur = con.cursor()
     create_clicks_table = """ CREATE TABLE IF NOT EXISTS clicks (
