@@ -4,14 +4,13 @@ Currently, this will just create a mirror of the page @ rucknium.me/flask, howev
 Also ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```make_wishlist.py``` e.g. wrongly select Restore from keys.   
 
 ### Testing Locally 
-The only obstacle we're going to face in testing this locally, is getting Docker Engine and Docker Compose. I'm using Ubuntu so the process was simplified greatly by using snapd as follows: 
+The only obstacle we're going to face in testing this locally, is getting Docker Engine and Docker Compose. I'm using Ubuntu: 
 ```
-sudo apt-get install snapd
-sudo snap install docker
+apt install docker.io docker-compose
 ```
 Once this is done, we just need to download the ```docker-compose.yml``` file. Easily done with this line:
 ```
-curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/mainnet/docker-compose.yml
+curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/mainnet/docker-compose.yml -o docker-compose.yml
 ```
 Now, in the same directory, we just need to run ```docker-compose```, which will start the webserver @ http://172.20.111.2:8000/donate
 ```
@@ -101,13 +100,9 @@ ssl/
     - fullchain.pem
     - privkey.pem
 ```
-Perfect. Now lets install docker using snap:
+Perfect. Now lets install docker:
 ```
-snap install docker
-```
-Add /snap/bin to your PATH (so your machine knows where to seek for the snap'd binaries)
-```
-sudo export PATH="$PATH:/snap/bin"
+sudo apt install docker.io docker-compose
 ```
 I can now start the wishlist the same way as i did locally: (in the same dir as ```docker-compose.yml``` not in the ssl folder    
 Dont forget to go back to the same dir as your docker-compose file using ```cd..``` then:
