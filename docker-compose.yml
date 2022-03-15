@@ -11,7 +11,6 @@ services:
       - waas-electron:/home/.electron-cash
       - ./ssl:/home/app/ssl
       - /proc:/writable_proc
-      - waas-cron:/etc/cron.d/
     networks:
       static-network:
         ipv4_address: 172.20.111.2
@@ -40,7 +39,6 @@ volumes:
   waas-static:
   waas-electrum:
   waas-electron:
-  waas-cron:
 networks:
   static-network:
     ipam:
