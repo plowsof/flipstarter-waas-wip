@@ -6,7 +6,12 @@ Also ```ctrl+z``` and starting the script again is your friend if something goes
 ### Testing Locally 
 The only obstacle we're going to face in testing this locally, is getting Docker Engine and Docker Compose. I'm using Ubuntu: 
 ```
-apt install docker.io docker-compose
+ curl -fsSL https://test.docker.com -o test-docker.sh
+ sudo sh test-docker.sh
+```
+now we need to get docker-compose
+```
+todo
 ```
 Once this is done, we just need to download the ```docker-compose.yml``` file. Easily done with this line:
 ```
