@@ -68,6 +68,7 @@ def main(config):
     htmlComments = comments_html(wishlist["comments"]["comments"])
     count = len(wishlist["comments"]["comments"])
     pages = ceil( count / comments_per_page)
+    intro = config["wishlist"]["intro"]
     #print(f"the pages = {pages} count = {count}")
     with open(funding_template, 'r') as f:
         for line in f:
@@ -88,6 +89,8 @@ def main(config):
                     #add an rss feed icon
                 else:
                     line=line.replace("{@_RSS_@}","")
+            elif "{@_INTRO_@}" in line:
+                line = line.replace("{@_INTRO_@}",intro)
 
             replacement += line
     lock = funding_template + ".lock"
@@ -197,15 +200,15 @@ def wish_html(one,two,three,four,end,total,wish):
                             <p>To leave a comment, javascript must be enabled. Donations should appear within 5 minutes</p>
                             <p>
                                 <span class="njs_ticker">{img_xmr} Monero <a href="{wish["qr_img_url_xmr"]}">[QRcode]</a></span></br>
-                                <span class="xmr_address">{wish["xmr_address"]}</span>
+                                <span class="xmr_address">monero:{wish["xmr_address"]}</span>
                             </p>
                             <p>
                                 <span class="njs_ticker">{img_bch} Bitcoin Cash <a href="{wish["qr_img_url_bch"]}">[QRcode]</a></span></br>
-                                <span class="bch_address">{wish["bch_address"]}</span>
+                                <span class="bch_address">bitcoincash:{wish["bch_address"]}</span>
                             </p>
                             <p>
                                 <span class="njs_ticker">{img_btc} Bitcoin <a href="{wish["qr_img_url_bch"]}">[QRcode]</a></span></br>
-                                <span class="btc_address">{wish["btc_address"]}</span>
+                                <span class="btc_address">bitcoin:{wish["btc_address"]}</span>
                             </p>
                           </div>
                     """

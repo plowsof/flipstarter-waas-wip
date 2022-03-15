@@ -30,7 +30,7 @@ from start_daemons import main as main_start_daemons
 import uvicorn
 import threading
 
-from schedule_test import schedule_main
+from schedule_fee import schedule_main
 
 # To read your secret credentials
 #config = configparser.ConfigParser()
@@ -359,6 +359,7 @@ if __name__ == "__main__":
     wish_config["monero"]["remote_node_3"] = os.environ['waas_remote_node_3'].replace('"','')
     wish_config["monero"]["remote_node_4"] = os.environ['waas_remote_node_4'].replace('"','')
     wish_config["monero"]["remote_node_5"] = os.environ['waas_remote_node_5'].replace('"','')
+    wish_config["wishlist"]["intro"] = os.environ['waas_INTRO'].replace('"','')
     #start recurring fee loop
     th = threading.Thread(target=schedule_main)
     th.start()

@@ -134,7 +134,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
             f".{rpc_bin_file}", 
             "--wallet-dir", wallet_dir,
             "--rpc-bind-port", rpc_port,
-            "--disable-rpc-login", "--stagenet",
+            "--disable-rpc-login",
             "--daemon-address", remote_node
         ]
     else:
@@ -142,7 +142,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
             f".{rpc_bin_file}", 
             "--wallet-file", wallet_file,
             "--rpc-bind-port", rpc_port,
-            "--disable-rpc-login", "--stagenet",
+            "--disable-rpc-login",
             "--daemon-address", remote_node,
             "--password", ""
         ]
@@ -296,10 +296,10 @@ def create_monero_wallet(config):
         rpc_connection.close_wallet()
         print_msg("Secure deletion of wallet / key file (3 passes of random data)...")
         keys = wallet_path + ".keys"
-        address_file = wallet_path + ".address.txt"
+        #address_file = wallet_path + ".address.txt"
         secure_delete(keys, passes=3)
         secure_delete(wallet_path, passes=3)
-        os.remove(address_file)
+        #os.remove(address_file)
         print_msg("Deleted.")
         monero_daemon.terminate()
         monero_daemon.communicate()
@@ -335,7 +335,7 @@ def create_monero_wallet(config):
         rpc_args = [ 
         f".{monero_wallet_rpc}",
         "--rpc-bind-port", rpc_port,
-        "--disable-rpc-login", "--stagenet",
+        "--disable-rpc-login",
         "--daemon-address", remote_node,
         "--generate-from-json", json_path
         ]
@@ -343,11 +343,14 @@ def create_monero_wallet(config):
         print_msg("Creating the view-only Monero wallet..")
         #wallet_rpc_server.cpp:4509 Error creating wallet: failed to parse view key secret key
         for line in iter(monero_daemon.stdout.readline,''):
+            print(line.rstrip())
             #debug output
             #print(str(line.rstrip()))
             if b"Resource temporarily unavailable" in line.rstrip():
                 print_err("Please stop this docker container using 'docker stop <name>")
             if b"Error" in line.rstrip() or b"Failed" in line.rstrip():
+                print_err(line.rstrip())
+                print_msg(f"If the error is about 'calling gettransaction' delete this node [{rpc_remote}] from your compose file")
                 print_err("View-key / Main address incorrect , try again")
                 key_data = prompt_monero_keys()
                 view_key = key_data["view_key"]
@@ -455,13 +458,13 @@ def create_bit_wallet(config,bchbtc):
             c_colour = Fore.RED
             c_name = "Bitcoin"
             run_args = [
-            electron_bin, "create", "-w", wallet_path, "--offline", "--testnet"
+            electron_bin, "create", "-w", wallet_path, "--offline"
             ]
         else:
             c_colour = Fore.GREEN
             c_name = "Bitcoin Cash"
             run_args = [
-            electron_bin, "create", "-w", wallet_path, "--testnet"
+            electron_bin, "create", "-w", wallet_path
             ]
         bch_bin = subprocess.Popen(run_args,stdout=subprocess.PIPE)
         #wait until finished
@@ -489,7 +492,7 @@ def create_bit_wallet(config,bchbtc):
     #  create view-only
     #--------------------------------------
     run_args = [
-    electron_bin, "restore", "-w", wallet_path, "--offline", "--testnet", bch_data['keystore']['xpub']
+    electron_bin, "restore", "-w", wallet_path, "--offline", bch_data['keystore']['xpub']
     ]
     with open(os.devnull, 'w') as fp:
         bch_bin = subprocess.Popen(run_args, stdout=fp,stdin=subprocess.PIPE )
@@ -584,7 +587,6 @@ def main(config):
             print_err("Error Monero remote unreachable")
             return
             
-
     if not config["bch"]["wallet_file"]:
         #maybe we dont have to close the daemon in create wallet
         config = create_bit_wallet(config,"bch")
@@ -599,7 +601,7 @@ def main(config):
         if not os.path.isfile(config["btc"]["wallet_file"]):
             print_msg("BTC wallet missing! see wishlist.ini @ Docker volume waas-db")
             sys.exit(1)
-
+    print_msg("Starting the daemons so we can get addresses for your wishes!...")
     rpc_port = config["monero"]["daemon_port"]
     rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
 
@@ -690,9 +692,9 @@ def db_make_modified():
 
 def stop_bit_daemon(daemon_dir):
     if "electron" in daemon_dir:
-        run_args = [daemon_dir, "daemon", "stop", "--testnet"]
+        run_args = [daemon_dir, "daemon", "stop"]
     else:
-        run_args = [daemon_dir, "stop", "--testnet"]
+        run_args = [daemon_dir, "stop"]
     stop_daemon = subprocess.Popen(run_args)
     stop_daemon.communicate()
 

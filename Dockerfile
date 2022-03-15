@@ -75,7 +75,5 @@ WORKDIR /home/app
 #main.py starts the /donate webpage/server
 CMD ["python3", "./main.py"]
 #users must then shell into the container and run the 'make_wishlist.py'
-#get ip
-#sudo docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' fresh
 #sudo docker volume rm $(sudo docker volume ls -q)
 #certbot certonly --standalone -d <domaim> --staple-ocsp -m <email> --agree-tos

@@ -78,7 +78,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
         "--disable-rpc-login",
         "--tx-notify", f"/usr/local/bin/python3 /home/app/notify_xmr_vps_pi.py %s",
         "--daemon-address", remote_node,
-        "--stagenet", "--password", ""
+        "--password", ""
     ]
     for x in rpc_args:
         print(x)
@@ -131,20 +131,20 @@ def getJson():
         return json.load(f)
 
 def start_bit_daemon(bin_file,wallet_file,rpcuser,rpcpass,rpcport):
-    rpc_user = [bin_file, "setconfig", "rpcuser", rpcuser, "--testnet"]
-    rpc_pass = [bin_file, "setconfig", "rpcpassword", rpcpass, "--testnet"]
-    rpc_port = [bin_file, "setconfig", "rpcport", rpcport, "--testnet"]
+    rpc_user = [bin_file, "setconfig", "rpcuser", rpcuser]
+    rpc_pass = [bin_file, "setconfig", "rpcpassword", rpcpass]
+    rpc_port = [bin_file, "setconfig", "rpcport", rpcport]
     if "electrum" in bin_file:
-        stop_daemon = [bin_file, "stop", "--testnet"]
-        load_wallet = [bin_file, "load_wallet", "-w", wallet_file, "--testnet"]
-        start_daemon = [bin_file, "daemon", "-d", "--testnet"]
+        stop_daemon = [bin_file, "stop"]
+        load_wallet = [bin_file, "load_wallet", "-w", wallet_file]
+        start_daemon = [bin_file, "daemon", "-d"]
         rpc_user.append("--offline")
         rpc_pass.append("--offline")
         rpc_port.append("--offline")
     else:
-        stop_daemon = [bin_file, "daemon", "stop", "--testnet"]
-        load_wallet = [bin_file, "daemon", "load_wallet", "-w", wallet_file, "--testnet"]
-        start_daemon = [bin_file, "daemon", "start", "--testnet"]
+        stop_daemon = [bin_file, "daemon", "stop"]
+        load_wallet = [bin_file, "daemon", "load_wallet", "-w", wallet_file]
+        start_daemon = [bin_file, "daemon", "start"]
     run_cmd(stop_daemon)
     run_cmd(rpc_user)
     run_cmd(rpc_pass)
@@ -225,7 +225,7 @@ def main(config):
     os.system(f'/usr/local/bin/python3 notify_bch_btc.py {http_port}')
 
 def thread_notify(bin_dir,address,port):
-    thestring = f"./{bin_dir} notify {address} {port} --testnet"
+    thestring = f"./{bin_dir} notify {address} {port}"
     print(thestring)
     stream = os.popen(thestring)
     output = stream.read()

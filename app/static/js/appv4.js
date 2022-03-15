@@ -22,7 +22,7 @@ function drawCryptoDonate(id){
     <div class="donate_crypto_${wish["id"]}">
   <form name="donate" id="${wish["id"]}" action="/donate/crypto_donate" method="POST">
   <input type="range" min="1" max="${max}" value="1" class="slider" id="myRange">
-  <p>Amount: <input type="text" id="demo" name="amount" value="1"></p>
+  <p>$Amount: <input type="text" id="demo" name="amount" value="1"></p>
   <label for="coins_select">Crypto:</label>
   <select class="coins" name="coins" id="coin_select"> 
     <option id="xmr_${wish["id"]}" value="xmr" rfund="Monero"><img src="/donate/static/images/xmr.png">Monero</option>
@@ -40,9 +40,9 @@ function drawCryptoDonate(id){
       <textarea id="comment_area" name="comment" rows="4" cols="50" placeholder="Type a message here..." maxlength="140"></textarea>
     <button class="crypto_button" type="submit" id="${wish["id"]}">Get payment address</button>
   </div>
-  <div class="anon_address_bch" id="bch_${wish["id"]}">${wish.bch_address}</div>
-  <div class="anon_address_btc" id="btc_${wish["id"]}">${wish.btc_address}</div>
-  <div class="anon_address_xmr" id="xmr_${wish["id"]}">${wish.xmr_address}</div>
+  <div class="anon_address_bch" id="bch_${wish["id"]}">bitcoincash:${wish.bch_address}</div>
+  <div class="anon_address_btc" id="btc_${wish["id"]}">bitcoin:${wish.btc_address}</div>
+  <div class="anon_address_xmr" id="xmr_${wish["id"]}">monero:${wish.xmr_address}</div>
   
 </form>
 </div>

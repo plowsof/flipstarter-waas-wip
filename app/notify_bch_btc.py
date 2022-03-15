@@ -52,15 +52,15 @@ class S(BaseHTTPRequestHandler):
             address = address.split(":")[1]
         #electrum - Bech32 type starting with bc1
         if address[0:1] == "q":
-            print("This is a bchtest address")
+            print("This is a bch address")
             daemon_path = bch_path
             ticker = "bch"
         else:
-            print("This is a bitcoin testnet address")
+            print("This is a bitcoin address")
             daemon_path = btc_path
             ticker = "btc"
 
-        stream = os.popen(f"{daemon_path} getaddressbalance {address} --testnet")
+        stream = os.popen(f"{daemon_path} getaddressbalance {address}")
         json_output = stream.read().replace("\n","")
         output = json.loads(json_output)
         address_con = output["confirmed"]
