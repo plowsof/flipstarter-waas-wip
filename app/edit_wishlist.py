@@ -113,15 +113,15 @@ def wish_edit(wishlist,edit_delete,www_root):
                 print(f"5) 'Cash out' - Zero totals and set USD to [{goal}].")
                 while answer not in [1,2,3,4,5]:
                     answer = int(input(">> "))
-                coin = choice[str(answer)]
-                while True:
-                    try:
-                        userInput = input(f"Enter the new total for {coin}\n>>")
-                        val = int(userInput)
-                        break
-                    except ValueError:
-                        print("That's not an int!")
-                if val != 5:
+                if answer != 5:
+                    coin = choice[str(answer)]
+                    while True:
+                        try:
+                            userInput = input(f"Enter the new total for {coin}\n>>")
+                            val = int(userInput)
+                            break
+                        except ValueError:
+                            print("That's not an int!")
                     wishlist["wishlist"][index][f"{coin}_total"] = val
                 else:
                     #zero values
