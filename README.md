@@ -113,7 +113,11 @@ And get on the terminal inside it using:
 ```
 sudo docker exec -it fresh /bin/bash
 ```
-
+from here (you will already be in /home/app) you can run ```make_wishlist.py``` using:
+```
+python3 make_wishlist.py
+```
+You can choose to paste your viewkeys or have wallets created for you (Write the seed words down though! else your money is gone forever)    
 when finished press ctrl+p then ctrl+q to detatch from the docker container     
 
 ### Editing wishes
