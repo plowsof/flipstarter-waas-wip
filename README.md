@@ -113,7 +113,7 @@ Then follow the instructions
 WaaS is based on these 3 wallets:
 - Monero GUI
 - Electron-cash
-- Electrum
+- Electrum    
 Some donations may not appear in your wallet because of something called a gap limit. In Electron-cash / Electrum to go view -> console. And paste this line:
 ```
 for i in range(0, 100): print(wallet.create_new_address(False))
