@@ -429,7 +429,7 @@ def prompt_monero_keys():
     while view_key == "":
         view_key = input("Enter the Monero Secret view key >>")
     while main_address == "":
-        main_address = input ("Enter the Primary adress >>")
+        main_address = input ("Enter the Primary address >>")
     data = {
     "view_key": view_key,
     "main_address": main_address
