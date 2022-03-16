@@ -5,7 +5,7 @@ Also ```ctrl+z``` and starting the script again is your friend if something goes
 
 ### Production / On a VPS
 
-Lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. The only difference from running it locally is that i need to point nginx to my wishlist container and to set up the SSL serts (so my site is accessible using HTTPS).    
+Lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it.
 
 First things first, i need to install nginx on my Debian vps:
 ```
@@ -25,7 +25,7 @@ server {
     index index.html index.htm index.nginx-debian.html;
     server_name getwishlisted.xyz www.getwishlisted.xyz;
         location /donate {
-          proxy_pass https://172.20.111.2:8000;
+          proxy_pass http://172.20.111.2:8000;
         }
 }
 ```
