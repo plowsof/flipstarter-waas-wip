@@ -21,8 +21,8 @@ function drawCryptoDonate(id){
     let donate_crypto = `
     <div class="donate_crypto_${wish["id"]}">
   <form name="donate" id="${wish["id"]}" action="/donate/crypto_donate" method="POST">
-  <input type="range" min="1" max="${max}" value="1" class="slider" id="myRange">
-  <p>$Amount: <span id="demo">1</p>
+  <input type="range" step="0.01" min="0" max="${max}" value="0" class="slider" id="myRange">
+  <p>$Amount: <span id="demo">0</p>
   <label for="coins_select">Crypto:</label>
   <select class="coins" name="coins" id="coin_select"> 
     <option id="xmr_${wish["id"]}" value="xmr" rfund="Monero"><img src="/donate/static/images/xmr.png">Monero</option>
