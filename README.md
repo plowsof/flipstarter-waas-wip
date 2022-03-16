@@ -41,12 +41,10 @@ Lets get certs. Again, i find snap to be most helpful in this process. I use it 
 apt install snapd
 snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
+``` 
 ```
-I had an error 'to many redirects' because my dns providers ssl setting was off, i needed to change it to 'Full'   
-Because this is a fresh server i am going to do a full install (where certbot modified the file we created earlier)    
-````
 sudo certbot
-````
+```
 I ran ```sudo certbot``` a 2nd time for the ```www.``` url.    
 After running through the setup / selecting nginx / agreeing to t&c's i see this output:
 ```
@@ -57,19 +55,6 @@ Key is saved at:         /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem
 At this point we need to ```cd``` to our ```/home``` folder and download the docker-compose file:
 ```
 curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/mainnet/docker-compose.yml -o docker-compose.yml
-```
-We need an 'ssl' folder next to it to paste our certs in.
-```
-mkdir ssl
-cd ssl
-cp /etc/letsencrypt/live/www.getwishlisted.xyz/* . 
-```
-Which will look like:
-```
-docker-compose.yml
-ssl/
-    - fullchain.pem
-    - privkey.pem
 ```
 Perfect. Now lets install docker and docker-compose with these handy install scripts:
 ```
