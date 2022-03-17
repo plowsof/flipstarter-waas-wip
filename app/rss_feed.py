@@ -4,7 +4,7 @@ import configparser
 import os
 
 def create_fresh_feed(config):
-    rss_link = config["RSS"]["link"] + "/donate"
+    rss_link = config["RSS"]["link"]
     rss_description = config["RSS"]["description"]
     rss_title = config["RSS"]["title"]
     rss_self = rss_link + "/donate/static/rss/rss.xml"
