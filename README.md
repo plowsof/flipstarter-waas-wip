@@ -105,12 +105,14 @@ for i in range(0, 100): print(wallet.create_new_address(False))
 ```
 You should be able to see any missing donations then. Repeat it if needed.   
 ### Updating the backend
-The container must be stopped, image removed, and then the docker-compose file ran again to get the new version:
+The container must be stopped, image removed, and then the docker-compose file ran again to get the new version:    
 ```
 docker stop fresh
 docker image rm fresh
 docker-compose up -d
 ```
+If you run into issues, it must not be running in ```docker ps``` list, and you can use ```--force``` after the remove commands.    
+```docker images``` will give you an image id to use if all else fails ```docker image rm <imageid> --force```
 ### Updating the front end using a template from [waas-templates](https://github.com/plowsof/waas-templates)
 Follow the instructions in the github readme of waas-templates. The only issue you will have here is if your browser / domain provider is storing things in the cache. ```ctrl+f5``` will purge your local browser. See your domain providers instructions on how to purge its cache if you can't see updates.
 ### TODO
