@@ -1,22 +1,22 @@
 .btc_address, div .anon_address_btc{
   color: #f2a900 ;
   font-family: monospace ;
-  cursor: pointer ;
   word-wrap:break-word;
+  user-select: all
 }
 
 .xmr_address, div .anon_address_xmr{
   color: #ff6600 ;
   font-family: monospace ;
-  cursor: pointer ;
   word-wrap:break-word;
+  user-select: all
 }
 
 .bch_address, div .anon_address_bch{
   color: #0AC18E ;
   font-family: monospace ;
-  cursor: pointer ;
   word-wrap:break-word;
+  user-select: all
 }
 
 .xmr_address:hover, div .anon_address_xmr:hover{
@@ -270,4 +270,26 @@ span#status{
   border-radius:5px;
   background: blue;
   font-family: monospace;
+}
+
+
+.contributors{
+  font-size:smaller;
+}
+
+span#raised{
+  font-size:smaller;
+}
+
+div#progress_bar{
+  border:1px solid green;
+}
+
+#wish_title{
+  text-align:center;
+  padding: 10px;
+}
+
+.description{
+  padding: 17px 0px;
 }

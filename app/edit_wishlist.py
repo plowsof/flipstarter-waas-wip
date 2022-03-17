@@ -10,6 +10,7 @@ from rss_feed import add_to_rfeed
 import time
 from helper_create import wish_prompt
 config = ""
+sys.path.insert(1, './static/')
 from static_html_loop import main as static_main
 import sqlite3
 
@@ -112,7 +113,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                 print(f"4) USD [{total_usd}]")
                 print(f"5) 'Cash out' - Zero totals and set USD to [{goal}].")
                 while answer not in [1,2,3,4,5]:
-                    answer = int(input(">> "))
+                    answer = float(input(">> "))
                 if answer != 5:
                     coin = choice[str(answer)]
                     while True:

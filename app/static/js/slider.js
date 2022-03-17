@@ -29,7 +29,8 @@ function anonUri(){
   $("#donate_qrcode").html("")
   //draw qr code
   address = $(".anon_address_" + coin).text()
-  payment_uri = uri + address + "?" + str_amount + "=" + total_coins.toFixed(12)
+  //the addresses are displayed with their uris "ticker:" already.
+  payment_uri = address + "?" + str_amount + "=" + total_coins.toFixed(12)
   var typeNumber = 0;
   var errorCorrectionLevel = 'L';
   var qr = qrcode(typeNumber, errorCorrectionLevel);
@@ -86,7 +87,7 @@ function setHooks(id,string){
 
     slider.oninput = function() {
 
-    output.value=this.value; 
+    output.innerHTML=this.value; 
     }
 
     displayAnon();

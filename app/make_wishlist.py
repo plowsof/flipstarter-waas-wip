@@ -699,8 +699,37 @@ def stop_bit_daemon(daemon_dir):
     stop_daemon = subprocess.Popen(run_args)
     stop_daemon.communicate()
 
+def print_geni():
+    geni = """
+                          .-=-.
+                         /  ! )\\ )^^^^^^^^^^^^^^^^^^^^^^^^^^^)
+                      __ \\__/__/ ) Your wish.. is my desire! )
+                     / _<( ^.^ ) //^^^^^^^^^^^^^^^^^^^^^^^^^^'
+                    / /   \\ c /O^
+                    \\ \\_.-./=\\.-._     _
+                     `-._  `~`    `-,./_<
+                         `\\' \\'\\`'----'
+                       *   \\  . \\          *
+                            `-~~~\\   .
+                       .      `-._`-._   *
+                             *    `~~~-,      *
+                   ()                   * )
+                  <^^>             *     (   .
+                 .-""-.                    )
+      .---.    ."-....-"-._     _...---''`/. '
+     ( (`\\ \\ .'            ``-''    _.-"'`
+      \\ \\ \\ : :.                 .-'
+       `\\`.\\: `:.             _.'
+       (  .'`.`            _.'
+        ``    `-..______.-'
+                  ):.  (
+                ."-....-".
+          jgs .':.        `.
+              \"-..______..-\""""
+    print(geni)
 
 if __name__ == "__main__":
+    print_geni()
     #os.chdir(os.path.dirname(os.path.abspath(__file__)))
     '''
     for proc in psutil.process_iter():

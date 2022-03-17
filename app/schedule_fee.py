@@ -4,6 +4,8 @@ import sqlite3
 from datetime import date
 from wishlist_recurring import main as recurring_main
 import configparser
+import sys
+sys.path.insert(1, './static/')
 from static_html_loop import main as static_main
 #deleteccron?
 #create table if not exists.

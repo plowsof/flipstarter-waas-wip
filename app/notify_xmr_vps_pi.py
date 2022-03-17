@@ -10,6 +10,7 @@ from filelock import FileLock
 import cryptocompare
 import sqlite3
 import configparser
+sys.path.insert(1, './static')
 from static_html_loop import main as static_main
 
 

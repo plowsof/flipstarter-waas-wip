@@ -286,7 +286,7 @@ def delete_clicks_db():
 
 def refresh_html_loop_1():
     while True:
-        os.system(f'python3 static_html_loop.py')
+        os.system(f'python3 static/static_html_loop.py')
         time.sleep(5*60)
 
 def refresh_html_loop(remote_node,local_node,config):
