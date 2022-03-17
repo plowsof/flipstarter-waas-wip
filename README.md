@@ -112,7 +112,7 @@ docker image rm fresh
 docker-compose up -d
 ```
 ### Updating the front end using a template from [waas-templates](https://github.com/plowsof/waas-templates)
-Follow the instructions in the github readme of waas-templates. The only issue you will have here is if your browser / doman provider is storing things in the cache. ```ctrl+f5``` will purge your local browser. See your domain providers instructions on how to purge its cache if you can't see updates.
+Follow the instructions in the github readme of waas-templates. The only issue you will have here is if your browser / domain provider is storing things in the cache. ```ctrl+f5``` will purge your local browser. See your domain providers instructions on how to purge its cache if you can't see updates.
 ### TODO
 This is still in beta so i must do some sanity checks 
 - [ ] sanity checks
