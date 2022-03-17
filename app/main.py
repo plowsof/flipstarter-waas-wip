@@ -353,9 +353,9 @@ if __name__ == "__main__":
     wish_config = configparser.ConfigParser()
     wish_config.read("./db/wishlist.ini")
     wish_config["RSS"]["enable"] = os.environ['waas_RSS_ON']
-    wish_config["RSS"]["title"] = os.environ['waas_RSS_TITLE']
-    wish_config["RSS"]["description"] = os.environ['waas_RSS_DESC']
-    wish_config["RSS"]["link"] = os.environ['waas_RSS_LINK']
+    wish_config["RSS"]["title"] = os.environ['waas_RSS_TITLE'].replace('"','')
+    wish_config["RSS"]["description"] = os.environ['waas_RSS_DESC'].replace('"','')
+    wish_config["RSS"]["link"] = os.environ['waas_RSS_LINK'].replace('"','')
     wish_config["monero"]["remote_node_1"] = os.environ['waas_remote_node_1'].replace('"','')
     wish_config["monero"]["remote_node_2"] = os.environ['waas_remote_node_2'].replace('"','')
     wish_config["monero"]["remote_node_3"] = os.environ['waas_remote_node_3'].replace('"','')
