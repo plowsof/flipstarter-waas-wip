@@ -283,8 +283,6 @@ def create_monero_wallet(config):
         mnemonic = rpc_connection.query_key({"key_type": "mnemonic"})["key"]
         #spend_key = rpc_connection.query_key({"key_type": "spend_key"})["key"]
         main_address = rpc_connection.get_address()["address"]
-        config["monero"]["viewkey"] = view_key
-        config["monero"]["mainaddress"] = main_address
         seed = numbered_seed(mnemonic)
         print_msg(f"************* [{Style.BRIGHT}{Fore.RED}Monero {Style.RESET_ALL}Wallet] *************")
         print_msg(f"Your wallet seed is:") 
@@ -362,7 +360,8 @@ def create_monero_wallet(config):
                 break
         if wallet_created == 1:
             break
-    
+    config["monero"]["viewkey"] = view_key
+    config["monero"]["mainaddress"] = main_address
     print_msg("Success.")
     #remove the broken wallet file(??) (in testing i had to remove the wallet file for some reason)
     monero_daemon.terminate()
