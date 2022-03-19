@@ -12,8 +12,9 @@ import sqlite3
 import configparser
 sys.path.insert(1, './static')
 from static_html_loop import main as static_main
-
-
+import main as web_main
+import asyncio
+import uuid
 #os.chdir(os.path.dirname(sys.argv[0]))
 
 cryptocompare.cryptocompare._set_api_key_parameter("-")
@@ -81,7 +82,7 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
             logit("we found the address in the list")
             saved_wishlist["wishlist"][i]["modified_date"] = now
             saved_wishlist["metadata"]["modified"] = now
-            db_set_time_wish(int(time.time()))
+            #db_set_time_wish(int(time.time()))
             #contributor += 1 
             saved_wishlist["wishlist"][i]["contributors"] += 1
             #total += amount
@@ -196,7 +197,7 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
                     logit("we found the wish id -> title")
                     db_wish_id = saved_wishlist["wishlist"][i]["title"]
                     saved_wishlist["metadata"]["modified"] = now
-                    db_set_time_wish(int(time.time()))
+                    #db_set_time_wish(int(time.time()))
                     saved_wishlist["wishlist"][i]["modified_date"] = now
                     saved_wishlist["wishlist"][i]["contributors"] += 1
                     saved_wishlist["wishlist"][i][f"{ticker}_total"] += float(in_amount)
@@ -222,7 +223,7 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
         #percent is not being set atm ~?
         #saved_wishlist["wishlist"] = sorted(saved_wishlist["wishlist"], key=lambda k: k['percent'],reverse=True)
         saved_wishlist["metadata"]["modified"] = now
-        db_set_time_wish(int(time.time()))
+        #db_set_time_wish(int(time.time()))
     if found == 1:
         #this is just a global history
         print(f"the comment = {db_comment}")
@@ -237,13 +238,34 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
         }
         saved_wishlist["comments"]["comments"].append(comment)
         saved_wishlist["comments"]["modified"] = int(time.time())
-        db_set_time_comment(int(time.time()))
+        #db_set_time_comment(int(time.time()))
         
     else:
         print("this address is unknown.. but still its probably crypto ++")
 
     dump_json(saved_wishlist)
     static_main(config)
+    uid = uuid.uuid4().hex
+    asyncio.run(ws_work_around(uid))
+
+async def ws_work_around(uid):
+    #set / export environ variable
+    con = sqlite3.connect('./db/ws_update.db')
+    cur = con.cursor()
+    create_modified_table = """ CREATE TABLE IF NOT EXISTS uid (
+                                data text PRIMARY KEY
+                            ); """
+    cur.execute(create_modified_table)
+    sql = '''delete from uid'''
+    cur.execute(sql)
+    sql = '''INSERT INTO uid (data) VALUES(?)'''
+    cur.execute(sql, (uid,))
+    con.commit()
+    con.close()
+    requests.get(f'http://127.0.0.1:8000/push/{uid}')
+
+
+
 def db_set_time_comment(time_stamp):
     con = sqlite3.connect('./db/modified.db')
     cur = con.cursor()
@@ -376,6 +398,8 @@ def formatAmount(amount):
     return s
 
 if __name__ == '__main__':
+    #uid = uuid.uuid4().hex
+    #asyncio.run(ws_work_around(uid))
     tx_id = sys.argv[1]
     #tx_id = "457c710fdae5dd8adbd9925044eb95b3617e3b66bf56ab16d0fb6a8b12f89509"
     main(tx_id)

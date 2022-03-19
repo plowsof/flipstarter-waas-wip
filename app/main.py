@@ -16,7 +16,7 @@ from urllib.parse import urlparse, parse_qs
 from html import escape
 import json
 from datetime import datetime
-from make_wishlist import monero_rpc_online
+import make_wishlist
 from helper_create import bit_online, get_unused_address
 import sqlite3
 import time
@@ -25,13 +25,18 @@ from starlette.responses import PlainTextResponse, RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
 from filelock import FileLock
 import math
-from start_daemons import main as main_start_daemons
+import start_daemons
 
 import uvicorn
 import threading
 
-from schedule_fee import schedule_main
+import schedule_fee
 
+from typing import List
+from starlette.responses import HTMLResponse
+from starlette.websockets import WebSocket, WebSocketDisconnect
+import subprocess
+import uuid 
 # To read your secret credentials
 #config = configparser.ConfigParser()
 #config.read("config.ini")
@@ -55,42 +60,90 @@ allow_methods=["*"], # Allows all methods
 allow_headers=["*"], # Allows all headers
 )
 
+class Notifier:
+    def __init__(self):
+        self.connections: List[WebSocket] = []
+        self.generator = self.get_notification_generator()
+
+    async def get_notification_generator(self):
+        while True:
+            message = yield
+            await self._notify(message)
+
+    async def push(self, msg: str):
+        await self.generator.asend(msg)
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.connections.append(websocket)
+
+    def remove(self, websocket: WebSocket):
+        self.connections.remove(websocket)
+
+    async def _notify(self, message: str):
+        living_connections = []
+        while len(self.connections) > 0:
+            # Looping like this is necessary in case a disconnection is handled
+            # during await websocket.send_text(message)
+            websocket = self.connections.pop()
+            await websocket.send_text(message)
+            living_connections.append(websocket)
+        self.connections = living_connections
+
+notifier = Notifier()
+
+@app.websocket("/donate/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await notifier.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"Message text was: {data}")
+    except WebSocketDisconnect:
+        notifier.remove(websocket)
+
+@app.get("/push/{message}")
+async def push_to_connected_websockets(message: str):
+    #uid = uuid.uuid4().hex
+    #os.system(f"ws_uid={uid} && export ws_uid")
+    con = sqlite3.connect('./db/ws_update.db')
+    cur = con.cursor()
+    create_modified_table = """ CREATE TABLE IF NOT EXISTS uid (
+                                data string PRIMARY KEY default 0
+                            ); """
+    cur.execute(create_modified_table)
+    cur.execute('SELECT * FROM uid')
+    try:
+        rows = cur.fetchall()
+        uid = rows[0][0]
+        pass
+    except:
+        return
+    if message == uid:
+        await notifier.push("trigger")
+        #stop this uid from working
+        sql = '''delete from uid'''
+        cur.execute(sql)
+        sql = '''INSERT INTO uid (data) VALUES(?)'''
+        cur.execute(sql, (uid,))
+    else:
+        await notifier.push("trigger")
+        os.system(f'python3 static/static_html_loop.py')
+    con.commit()
+    con.close()
+
+@app.on_event("startup")
+async def startup():
+    # Prime the push notification generator
+    await notifier.generator.asend(None)
+
 @app.get("/donate/", response_class=HTMLResponse)
 async def read_root():
     return FileResponse('./static/index.html')
 
-@app.get("/donate/api/timestamp")
-async def return_price(status_code=200):
-    return db_get_timestamp()
-
 @app.get("/donate/api/price")
 async def return_price(status_code=200):
     return db_get_prices()
-
-def db_get_timestamp():
-    con = sqlite3.connect('./db/modified.db')
-    cur = con.cursor()
-    create_modified_table = """ CREATE TABLE IF NOT EXISTS modified (
-                                data integer default 0,
-                                comment integer default 1,
-                                wishlist integer default 1
-                            ); """
-    cur.execute(create_modified_table)
-    cur.execute('SELECT * FROM modified where data = 0')
-    rows = cur.fetchall()
-    con.commit()
-    con.close()
-    pprint.pprint(rows)
-    try:
-        return_me = {
-        "comments": rows[0][1],
-        "wishlist": rows[0][2]
-        }
-        return return_me
-        pass
-    except:
-        return False
-
 
 def db_get_prices():
     con = sqlite3.connect('./db/crypto_prices.db')
@@ -187,7 +240,7 @@ async def handle_crypto_form(request: Request):
             else:
                 xmrport = wish_config["monero"]["daemon_port"]
                 rpc_url = "http://localhost:" + str(xmrport) + "/json_rpc"
-                if not monero_rpc_online(rpc_url):
+                if not make_wishlist.monero_rpc_online(rpc_url):
                     return
             address = get_unused_address(wish_config,ticker)
             if not address:
@@ -363,14 +416,14 @@ if __name__ == "__main__":
     wish_config["monero"]["remote_node_5"] = os.environ['waas_remote_node_5'].replace('"','')
     wish_config["wishlist"]["intro"] = os.environ['waas_INTRO'].replace('"','')
     #start recurring fee loop
-    th = threading.Thread(target=schedule_main)
+    th = threading.Thread(target=schedule_fee.schedule_main)
     th.start()
 
     with open('./db/wishlist.ini', 'w') as configfile:
         wish_config.write(configfile)
     #if wishlist file exists - assume we can start_daemons
     if os.path.isfile("./static/data/wishlist-data.json"):        
-        th = threading.Thread(target=main_start_daemons, args=(wish_config,))
+        th = threading.Thread(target=start_daemons.main, args=(wish_config,))
         th.start()
     else:
         print("Run make_wishlist.py")
@@ -380,6 +433,6 @@ if __name__ == "__main__":
         #fullchain.pem  privkey.pem
         #sudo screen -L -Logfile--ssl-keyfile rurucknium.me.crt sudo screen -L -Logfile uvicorn-output.txt uvicorn main:app --reload --ssl-keyfile rucknium.me.key --ssl-certfile rucknium.me.crt
     else:
-        print("Defaulting to http: place privkey.pem and fullchain.pem in ./ssl folder and restart for https")
+        #print("Defaulting to http: place privkey.pem and fullchain.pem in ./ssl folder and restart for https")
         uvicorn.run("main:app", port=8000, host="0.0.0.0", reload=True)
 

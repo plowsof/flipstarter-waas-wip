@@ -90,21 +90,6 @@ async function getPrice(){
   });
 }
 
-function getTimestamps(){
-  let url_get = `/donate/api/timestamp` 
-  try {
-        return $.ajax({
-          dataType: "json",
-          type: 'GET',
-          url: url_get,
-        });
-        
-  }catch (error){
-      console.log(error)
-      return null;
-  }
-}
-
 function getTotal(wish){
     let tickers = {
         "monero": "xmr_total",
@@ -162,25 +147,6 @@ function getTotal(wish){
      return percentages    
 }
 
-function get_history(inputs){
-    if (inputs.length){
-        //we have history
-        let i = 0
-        let history = ""
-        while(i < inputs.length){
-            history += ("+" + inputs.at(i).amount.toFixed(5) + "<br>")
-            if (i == 4){
-                i = inputs.length
-            }else{
-                i++
-            }
-        }
-        return history
-    }else{
-        return "No history😥"
-    }
-}
-
 async function download_wishlist(){
   let ran_int = Math.floor(Math.random() * 100000)
   let url_get = "/donate/static/data/wishlist-data.json?uid=" + ran_int;
@@ -192,21 +158,8 @@ async function download_wishlist(){
 
 async function async_getWishlist() 
 {
-  let timestamps = await getTimestamps()
-  console.log(timestamps)
-  let wishlist_time = timestamps.wishlist
-  let wishlist_comments = timestamps.comments
-  let do_download = 0
-  let do_comments = 0
-  if (wishlist_time != modified){
-    modified = wishlist_time
-    do_download = 1
-  }
-  if (wishlist_comments != comments_modified){
-    comments_modified = wishlist_comments
-    do_download = 1
-    do_comment = 1
-  }
+  do_download = 1
+  do_comment = 1
   if(do_download == 1){
     global_wishlist = await download_wishlist() // set global_wishlist
     if ( global_wishlist.wishlist.length != num_wishes ){
@@ -273,6 +226,7 @@ function updateWishlist(data)
     wish = wishlist["wishlist"][i] 
     id = wishlist["wishlist"][i]["id"]
     len = $("div#"+id).length
+    console.log(`num of divs with id ${id} = ${len}`)
     if ( len == 0 ){
       $(".wishlist").append( init_wish(one,two,three,four,end,total,wish) )
     }
@@ -427,7 +381,7 @@ function main(){
   modified = 0
   doit()
 
-  setInterval(doit,(1000*60))
+  //setInterval(doit,(1000*60))
 }
 $(main)
 

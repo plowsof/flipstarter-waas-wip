@@ -59,8 +59,11 @@ class S(BaseHTTPRequestHandler):
             print("This is a bitcoin address")
             daemon_path = btc_path
             ticker = "btc"
-
-        stream = os.popen(f"{daemon_path} getaddressbalance {address}")
+        #should be an rpc call todo
+        exec_cmd = f"{daemon_path} getaddressbalance {address}"
+        if os.environ["waas_mainnet"] == "0":
+            exec_cmd += " --testnet"
+        stream = os.popen(exec_cmd)
         json_output = stream.read().replace("\n","")
         output = json.loads(json_output)
         address_con = output["confirmed"]

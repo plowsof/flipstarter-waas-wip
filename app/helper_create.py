@@ -361,6 +361,8 @@ def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
     if recover == 1:
         #assume wallet not loaded. attempt to load
         load_wallet = ["bin/run_electrum", "load_wallet", "-w", wallet]
+        if os.environ["waas_mainnet"] == "0":
+            load_wallet.append("--testnet")
         btc_daemon = subprocess.Popen(load_wallet)
         btc_daemon.communicate()
     return False

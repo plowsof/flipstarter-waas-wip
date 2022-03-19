@@ -15,6 +15,9 @@ import psutil
 from colorama import Fore, Back, Style
 cryptocompare.cryptocompare._set_api_key_parameter("")
 from helper_create import print_msg, print_err, bit_online, monero_rpc_online
+import uuid
+import notify_xmr_vps_pi
+import asyncio
 
 wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
 www_root = ""
@@ -82,6 +85,9 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
     ]
     for x in rpc_args:
         print(x)
+    if os.environ["waas_mainnet"] == "0":
+        print("stagenet mode")
+        rpc_args.append("--stagenet")
     monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
     kill_daemon = 0
     print("Starting Monero rpc...")
@@ -145,6 +151,13 @@ def start_bit_daemon(bin_file,wallet_file,rpcuser,rpcpass,rpcport):
         stop_daemon = [bin_file, "daemon", "stop"]
         load_wallet = [bin_file, "daemon", "load_wallet", "-w", wallet_file]
         start_daemon = [bin_file, "daemon", "start"]
+    if os.environ["waas_mainnet"] == "0":
+        stop_daemon.append("--testnet")
+        rpc_user.append("--testnet")
+        rpc_pass.append("--testnet")
+        rpc_port.append("--testnet")
+        start_daemon.append("--testnet")
+        load_wallet.append("--testnet")
     run_cmd(stop_daemon)
     run_cmd(rpc_user)
     run_cmd(rpc_pass)
@@ -207,11 +220,9 @@ def main(config):
         if wish["btc_address"]:
             address = wish["btc_address"]
             rpc_notify(b_rpcuser,b_rpcpass,b_rpcport,address,http_server)
-            #thread_notify(electrum_path,address,http_server)
         if wish["bch_address"]:
             address = wish["bch_address"]
             rpc_notify(rpcuser,rpcpass,rpcport,address,http_server)
-            #thread_notify(electron_path,address,http_server)
 
     th = threading.Thread(target=refresh_html_loop, args=(remote_node,rpc_url,config,))
     th.start()
@@ -224,12 +235,6 @@ def main(config):
     #start the bitcoin listener
     os.system(f'/usr/local/bin/python3 notify_bch_btc.py {http_port}')
 
-def thread_notify(bin_dir,address,port):
-    thestring = f"./{bin_dir} notify {address} {port}"
-    print(thestring)
-    stream = os.popen(thestring)
-    output = stream.read()
-    print(output)
 
 def rpc_notify(rpcuser,rpcpass,rpcport,address,callback):
     local_ip = "localhost"
@@ -275,6 +280,9 @@ def save_prices():
         cur.execute(sql, (p_xmr,p_bch,p_btc))
         con.commit()
         con.close()
+        #refresh price on front end
+        uid = uuid.uuid4().hex
+        asyncio.run(notify_xmr_vps_pi.ws_work_around(uid))
         time.sleep(60*5)
 
 def delete_clicks_db():

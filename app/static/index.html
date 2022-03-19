@@ -121,5 +121,20 @@ Powered by
   <script src="/donate/static/js/form-validation.js"></script>
   <script src="/donate/static/js/slider.js"></script>
 <script type="text/javascript" src="/donate/static/js/qrcode.js"></script>
+<script>
+    var loc = window.location, new_uri;
+  if (loc.protocol === "https:") {
+      new_uri = "wss:";
+  } else {
+      new_uri = "ws:";
+  }
+  new_uri += "//" + loc.host;
+  new_uri += loc.pathname + "ws";
+    var ws = new WebSocket(new_uri);
+    ws.onmessage = function(event) {
+        console.log("Push notification received")
+        doit()
+    }
+</script>
 </body>
 </html>
