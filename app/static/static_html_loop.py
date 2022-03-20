@@ -251,9 +251,9 @@ def get_total(wish):
             total_percent += percent
             #print(f"this_coin = {this_coin} \n wish goal = {wish['goal_usd']}\n percent = {percent}")
             returnme["values"][x] = percent
-            total_usd += (this_coin)
+            total_usd += float(this_coin)
         else:
-            total_usd += wish["usd_total"]
+            total_usd += int(wish["usd_total"])
             usd_percent = (int(wish["usd_total"]) / int(wish["goal_usd"])) * 100
             returnme["values"]["usd"] = usd_percent 
             total_percent += usd_percent
