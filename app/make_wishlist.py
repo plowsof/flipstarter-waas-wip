@@ -374,18 +374,7 @@ def create_monero_wallet(config):
     monero_daemon.terminate()
     monero_daemon.communicate()
     os.remove(wallet_path)
-    list_remote_nodes = []
-    fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
-    for i in range(int(fallback_remote_nodes)):
-        num = (i+1)
-        list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
-
-    remote_node = "http://" + str(start_daemons.find_working_node(list_remote_nodes))
-    if remote_node:
-        monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_path,remote_node)
-    else:
-        print("Error monero remote unreachable")
-        return
+    monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_path,remote_node)
 
     #assuming we can still use the same port..
     print_msg("Verifying view-wallet has the same address as the hot version")
