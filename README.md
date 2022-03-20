@@ -129,6 +129,48 @@ docker-compose up -d
 If you run into issues, it must not be running in ```docker ps``` list, and you can use ```--force``` after the remove commands.    
 ```docker images``` will give you an image id to use if all else fails ```docker image rm <imageid> --force```. do not delete the docker compose image!   
 Ignore the error message when trying ```docker-compose up -d``` the wishlist data is safe.
+
+Here is what my nginx.conf file (getwishlisted.xyz) looks like:
+```
+server {
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+    server_name getwishlisted.xyz www.getwishlisted.xyz custom;
+        location /donate {
+            proxy_pass http://172.20.111.2:8000;
+        }
+        location /donate/ws {
+            proxy_pass http://172.20.111.2:8000;
+            proxy_http_version 1.1;
+            proxy_ssl_certificate /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem;
+            proxy_ssl_certificate_key /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_set_header Host $host;
+        }
+
+    listen [::]:443 ssl ipv6only=on; # managed by Certbot
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+server {
+    if ($host = www.getwishlisted.xyz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+    if ($host = getwishlisted.xyz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+    listen 80;
+    listen [::]:80;
+    server_name getwishlisted.xyz www.getwishlisted.xyz;
+    return 404; # managed by Certbot
+}
+
+```
+
 ### TODO
 This is still in beta so i must do some sanity checks 
 - [ ] sanity checks
