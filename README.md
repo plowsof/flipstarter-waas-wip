@@ -25,7 +25,7 @@ server {
     index index.html index.htm index.nginx-debian.html;
     server_name getwishlisted.xyz www.getwishlisted.xyz;
         location /donate {
-          proxy_pass https://172.20.111.2:8000;
+          proxy_pass http://172.20.111.2:8000;
         }
 }
 ```
@@ -52,25 +52,19 @@ Successfully received certificate.
 Certificate is saved at: /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem    
 Key is saved at:         /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem    
 ```
-An SSL folder must exist next to our docker-compose.yml file with those 2 certs in. Lets copy them there:
-```
-mkdir ssl
-cp /etc/letsencrypt/live/www.getwishlisted.xyz/* ./ssl
-```
 For the websockets to allow your donation page to update in real time you must now manually edit your websites file.   
 So Goerge now has to open up his 'getwishlisted.xyz' file in sites-enabled with a text editor e.g. nano and paste this under the original /dnonate location block:   
 ```
-        location /donate/ws {
-    proxy_pass https://172.20.111.2:8000;
+location /donate/ws {
+    proxy_pass http://172.20.111.2:8000;
     proxy_http_version 1.1;
     proxy_ssl_certificate /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem;
     proxy_ssl_certificate_key /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "Upgrade";
     proxy_set_header Host $host;
-    }
+}
 ```
-
 At this point we need to ```cd``` to our ```/home``` folder and download the docker-compose file:
 ```
 curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/mainnet/docker-compose.yml -o docker-compose.yml
