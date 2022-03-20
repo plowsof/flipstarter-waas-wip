@@ -262,7 +262,6 @@ def create_monero_wallet(config):
     rpc_remote = remote_node + "/json_rpc"
     remote_rpc_connection = AuthServiceProxy(service_url=rpc_remote)
     data = remote_rpc_connection.get_info()
-    rpc_connection = AuthServiceProxy(service_url=rpc_url)
     #--------------------------------------
     #  create hot wallet 
     #--------------------------------------
@@ -272,6 +271,7 @@ def create_monero_wallet(config):
     if prompt_wallet_create("xmr"):
         auto_create = 1
         monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,None,remote_node)
+        rpc_connection = AuthServiceProxy(service_url=rpc_url)
         #label could be added
         params={
                 "filename": wallet_fname,
@@ -280,7 +280,7 @@ def create_monero_wallet(config):
         print_msg("Creating a Monero wallet..")
         info = rpc_connection.create_wallet(params)
         print_msg("Success")
-        print_msg("Opening wallet file, and obtaining seed...")
+        print_msg(f"Opening wallet file {wallet_fname}, and obtaining seed...")
         info = rpc_connection.open_wallet({"filename": wallet_fname,"password": ""})
         #to get block height data we need to use /json_rpc
         view_key = rpc_connection.query_key({"key_type": "view_key"})["key"]
@@ -543,12 +543,16 @@ def testnet_check(wallet_file):
     if os.environ["waas_mainnet"] == "1":
         if "test" in wallet_file:
             validate_wallet = False
+    else:
+        if "test" not in wallet_file:
+            validate_wallet = False
     return validate_wallet
 
 #set viewkeys for wallets here
 def main(config):
     if os.path.isfile("./static/data/wishlist-data.json"):
         print_err("Wishlist already created. Please use edit_wishlist.py")
+        print_err("type: 'rm static/data/wishlist-data.json' to delete wishlist, and re-run make_wishlist")
         sys.exit(1)
 
     print_msg("Wishlist As A Service wizard v1.0")
@@ -672,7 +676,7 @@ def main(config):
     cur.execute(sql)
     con.commit()
     con.close()
-    db_make_modified()
+    #db_make_modified()
     #stop_bit_daemon(electrum_bin)
     #stop_bit_daemon(electron_bin)
 
@@ -694,22 +698,6 @@ def main(config):
     os.system('nohup python3 start_daemons.py &')
     #th = threading.Thread(target=start_main, args=(config,))
     #th.start()
-
-def db_make_modified():
-    #remove modified.db if exists
-    con = sqlite3.connect('./db/modified.db')
-    cur = con.cursor()
-    create_modified_table = """ CREATE TABLE IF NOT EXISTS modified (
-                                data integer default 0,
-                                comment integer default 1,
-                                wishlist integer default 1
-                            ); """
-    cur.execute(create_modified_table)
-    sql = ''' INSERT INTO modified(data,comment,wishlist)
-    VALUES (?,?,?)'''
-    cur.execute(sql, (0,2,2))
-    con.commit()
-    con.close()
 
 def stop_bit_daemon(daemon_dir):
     if "electron" in daemon_dir:
