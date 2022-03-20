@@ -48,7 +48,7 @@ def find_working_node(node_list):
     num_retries = 0
     node_online = 0
     print_msg("Connecting to Monero remote node.")
-    node_list = random.shuffle(node_list)
+    random.shuffle(node_list)
     for remote_node in node_list:
         try:
             rpc_url = "http://" + str(remote_node) + "/json_rpc"
