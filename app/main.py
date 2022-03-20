@@ -434,5 +434,6 @@ if __name__ == "__main__":
         #sudo screen -L -Logfile--ssl-keyfile rurucknium.me.crt sudo screen -L -Logfile uvicorn-output.txt uvicorn main:app --reload --ssl-keyfile rucknium.me.key --ssl-certfile rucknium.me.crt
     else:
         #print("Defaulting to http: place privkey.pem and fullchain.pem in ./ssl folder and restart for https")
+        #print("You will not have websocket / live update support")
         uvicorn.run("main:app", port=8000, host="0.0.0.0", reload=True)
 

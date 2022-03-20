@@ -262,7 +262,7 @@ async def ws_work_around(uid):
     cur.execute(sql, (uid,))
     con.commit()
     con.close()
-    requests.get(f'http://127.0.0.1:8000/push/{uid}')
+    requests.get(f'http://localhost:8000/push/{uid}')
 
 
 
@@ -403,3 +403,4 @@ if __name__ == '__main__':
     tx_id = sys.argv[1]
     #tx_id = "457c710fdae5dd8adbd9925044eb95b3617e3b66bf56ab16d0fb6a8b12f89509"
     main(tx_id)
+
