@@ -18,6 +18,7 @@ from helper_create import print_msg, print_err, bit_online, monero_rpc_online
 import uuid
 import notify_xmr_vps_pi
 import asyncio
+import random 
 
 wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
 www_root = ""
@@ -47,12 +48,12 @@ def find_working_node(node_list):
     num_retries = 0
     node_online = 0
     print_msg("Connecting to Monero remote node.")
+    node_list = random.shuffle(node_list)
     for remote_node in node_list:
         try:
             rpc_url = "http://" + str(remote_node) + "/json_rpc"
             #this will retry the url for 30 seconds (built in to monerorpc library)
             rpc_connection = AuthServiceProxy(service_url=rpc_url)
-            print(f"If the script is unresponsive after this, you probably have a stagenet node for a mainnet wallet or vice versa..")
             info = rpc_connection.get_info()
             print(info["nettype"])
             if os.environ["waas_mainnet"] == "1":
