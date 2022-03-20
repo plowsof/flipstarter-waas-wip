@@ -7,6 +7,7 @@ Also ```ctrl+z``` and starting the script again is your friend if something goes
 
 Lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it.
 
+
 First things first, i need to install nginx on my Debian vps:
 ```
 sudo apt-get install nginx
@@ -73,6 +74,7 @@ Perfect. Now lets install docker and docker-compose with these handy install scr
 ```
  curl -fsSL https://test.docker.com -o test-docker.sh
  sudo sh test-docker.sh
+
 ```
 now to install docker-compose:
 ```
