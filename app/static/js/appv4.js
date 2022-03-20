@@ -253,7 +253,7 @@ function updateWishlist(data)
     $(".raised_" + wish.id).text(total)
     $(".goal_" + wish.id).text(wish.goal_usd)
     //set num contributors
-    $(".contributors#" + wish.id).text("Contributors: " + wish.contributors)
+    $("span#" + wish.id + ".contributors").text("Contributors: " + wish.contributors)
 
   }
 }

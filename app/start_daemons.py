@@ -42,6 +42,7 @@ def monero_rpc_open_wallet(rpc_url,wallet_file):
         sys.exit(1)
 
 def find_working_node(node_list):
+    #if we're in stagenet mode, then throw error if node is mainnet
     max_retries = 30
     num_retries = 0
     node_online = 0
@@ -51,7 +52,17 @@ def find_working_node(node_list):
             rpc_url = "http://" + str(remote_node) + "/json_rpc"
             #this will retry the url for 30 seconds (built in to monerorpc library)
             rpc_connection = AuthServiceProxy(service_url=rpc_url)
+            print(f"Connected to {rpc_url}")
             info = rpc_connection.get_info()
+            print(info["nettype"])
+            if os.environ["waas_mainnet"] == "1":
+                if info["nettype"] != "mainnet":
+                    print_err("You are connecting to a stagenet node. Please add a monero mainnet node to docker-compose.yml [restart required].")
+                    sys.exit(1)
+            else:
+                if info["nettype"] != "stagenet":
+                    print_err("You are connecting to a mainnet node. Please add a Monero stagenet node to docker-compose.yml [restart required].")
+                    sys.exit(1)
             if info["status"] != "OK":
                 print_msg("Retrying another node")
                 continue
@@ -176,6 +187,9 @@ def main(config):
     rpc_port = config["monero"]["daemon_port"]
     rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
     wallet_file = config["monero"]["wallet_file"]
+    if os.environ["waas_mainnet"] == "1":
+        if "test" in wallet_file:
+            print_err("You're using a Monero stagenet wallet in mainnet mode. Run make_wishlist.py to create a mainnet wallet")
     fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
     list_remote_nodes = []
     for i in range(int(fallback_remote_nodes)):
@@ -200,12 +214,17 @@ def main(config):
 
     electrum_path = config["btc"]["bin"]
     btc_wallet_path = config["btc"]["wallet_file"]
+    bch_wallet_path = config["bch"]["wallet_file"]
     b_rpcuser = config["btc"]["rpcuser"]
     b_rpcpass = config["btc"]["rpcpassword"]
     b_rpcport = config["btc"]["rpcport"]
+    if os.environ["waas_mainnet"] == "1":
+        if "test" in btc_wallet_path or bch_wallet_path:
+            print_err("You're using a testnet wallet in mainnet mode. Run make_wishlist.py to create mainnet walelts.")
+            sys.exit(1)
     start_bit_daemon(electrum_path,btc_wallet_path,b_rpcuser,b_rpcpass,b_rpcport)
     electron_path = config["bch"]["bin"]
-    bch_wallet_path = config["bch"]["wallet_file"]
+    
     rpcuser = config["bch"]["rpcuser"]
     rpcpass = config["bch"]["rpcpassword"]
     rpcport = config["bch"]["rpcport"]

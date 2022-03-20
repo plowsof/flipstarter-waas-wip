@@ -511,6 +511,7 @@ def print_msg(text):
 
 def print_err(text):
     msg = f"{Fore.RED}> {text}"
+    print(msg)
 
 def monero_rpc_online(rpc_url):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)

@@ -7,9 +7,6 @@ services:
       - waas-db:/home/app/db
       - waas-wallets:/home/app/wallets
       - waas-static:/home/app/static
-      - waas-electrum:/home/.electrum
-      - waas-electron:/home/.electron-cash
-      - ./ssl:/home/app/ssl
       - /proc:/writable_proc
     networks:
       static-network:
@@ -38,8 +35,6 @@ volumes:
   waas-db:
   waas-wallets:
   waas-static:
-  waas-electrum:
-  waas-electron:
 networks:
   static-network:
     ipam:

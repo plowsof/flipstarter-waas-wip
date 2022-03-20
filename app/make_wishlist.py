@@ -256,6 +256,8 @@ def create_monero_wallet(config):
     #remote_node = "http://stagenet.melo.tools:38081"
     letters = string.ascii_lowercase
     wallet_fname = "monero_" + ''.join(random.choice(letters) for i in range(10))
+    if os.environ["waas_mainnet"] == "0":
+        wallet_fname = "test_" + wallet_fname
     wallet_path = os.path.join(wallet_dir,wallet_fname)
     rpc_remote = remote_node + "/json_rpc"
     remote_rpc_connection = AuthServiceProxy(service_url=rpc_remote)
@@ -449,10 +451,11 @@ def create_bit_wallet(config,bchbtc):
     rand_string = ''.join(random.choice(letters) for i in range(10)) 
     if bchbtc == "btc":
         wallet_fname = "bitcoin_" + rand_string
-        wallet_path = os.path.join(wallet_dir,wallet_fname)
     else:
         wallet_fname = "cash_" + rand_string
-        wallet_path = os.path.join(wallet_dir,wallet_fname)
+    if os.environ["waas_mainnet"] == "0":
+        wallet_fname = "test_" + wallet_fname
+    wallet_path = os.path.join(wallet_dir,wallet_fname)
     if prompt_wallet_create(bchbtc):
         #create a wallet for us
         #print(wallet_path)
@@ -535,6 +538,13 @@ def create_bit_wallet(config,bchbtc):
 
     return config
 
+def testnet_check(wallet_file):
+    validate_wallet = True
+    if os.environ["waas_mainnet"] == "1":
+        if "test" in wallet_file:
+            validate_wallet = False
+    return validate_wallet
+
 #set viewkeys for wallets here
 def main(config):
     if os.path.isfile("./static/data/wishlist-data.json"):
@@ -578,7 +588,8 @@ def main(config):
         os.mkdir(www_js_dir)
     #Monero setup
     wallet_file = config["monero"]["wallet_file"]
-    if wallet_file == "" or not os.path.isfile(wallet_file):
+    validate_wallet = testnet_check(wallet_file)
+    if wallet_file == "" or not os.path.isfile(wallet_file) or not validate_wallet:
         monero_online = 1
         monero_daemon = create_monero_wallet(config)
     else:
@@ -597,21 +608,20 @@ def main(config):
         else:
             print_err("Error Monero remote unreachable")
             return
-            
-    if not config["bch"]["wallet_file"]:
+
+    bch_wallet = config["bch"]["wallet_file"]
+    validate_wallet = testnet_check(bch_wallet)
+
+    if bch_wallet == "" or not os.path.isfile(bch_wallet) or not validate_wallet:
         #maybe we dont have to close the daemon in create wallet
         config = create_bit_wallet(config,"bch")
-    else:
-        if not os.path.isfile(config["bch"]["wallet_file"]):
-            print_err("BCH wallet missing! see wishlist.ini @ Docker volume waas-db")
-            sys.exit(1)
 
-    if not config["btc"]["wallet_file"]:
+    btc_wallet = config["btc"]["wallet_file"]
+    validate_wallet = testnet_check(btc_wallet)
+
+    if btc_wallet == "" or not os.path.isfile(btc_wallet) or not validate_wallet:
         config = create_bit_wallet(config,"btc")
-    else:
-        if not os.path.isfile(config["btc"]["wallet_file"]):
-            print_msg("BTC wallet missing! see wishlist.ini @ Docker volume waas-db")
-            sys.exit(1)
+
     print_msg("Starting the daemons so we can get addresses for your wishes!...")
     rpc_port = config["monero"]["daemon_port"]
     rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
