@@ -130,7 +130,7 @@ def wish_add(wish,config):
                     "qr_img_url_bch": f"static/images/{new_wish['bch_address'][0:12]}.png",
                     "title": wish["title"],
                     "btc_address": new_wish["btc_address"],
-                    "bch_address": ("bchtest:" + new_wish["bch_address"]),
+                    "bch_address": new_wish["bch_address"],
                     "xmr_address": new_wish["xmr_address"],
                     "btc_total": 0,
                     "xmr_total": 0,
@@ -170,12 +170,9 @@ def bit_online(rpcuser,rpcpass,rpcport):
     }
     try:
         returnme = requests.post(url, json=payload).json()
-        pprint.pprint(returnme)
-        print("it worked")
         return True
     except Exception as e:
         print(e)
-        print("it didnt worked")
         return False
 
 def put_qr_code(address, xmr_btc):
@@ -203,7 +200,7 @@ def put_qr_code(address, xmr_btc):
         border=4,
     )
     else:
-        uri = "bchtest"
+        uri = "bitcoincash"
         
         logo = "bch.png"
         thumnail = (60, 60)
@@ -261,7 +258,6 @@ def wish_prompt(config):
         wish["goal"] = input('USD Goal:')
         try:
             int(wish["goal"])
-            print("we should break now")
             reality = 1
             break
         except Exception as e:
@@ -287,12 +283,9 @@ def bit_online(rpcuser,rpcpass,rpcport):
     }
     try:
         returnme = requests.post(url, json=payload).json()
-        pprint.pprint(returnme)
-        print("it worked")
         return True
     except Exception as e:
         print(e)
-        print("it didnt worked")
         return False
 
 def pre_receipts_add(address,ticker,wish_id):
@@ -348,8 +341,6 @@ def get_xmr_subaddress(rpc_url,wallet_file,title):
 def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
     local_ip = "localhost"
     url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
-    print(f"btc_curl_address: {wallet} {rpcuser} {rpcpass} {rpcport}")
-    print(url)
     payload = {
         "method": "createnewaddress",
         "params": {
@@ -361,7 +352,6 @@ def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
     returnme = requests.post(url, json=payload).json()
     recover = 0
     try:
-        pprint.pprint(returnme)
         if len(returnme['result']) > 30:
             return returnme['result']
         else:
@@ -370,7 +360,9 @@ def btc_curl_address(wallet,rpcuser,rpcpass,rpcport):
         recover = 1
     if recover == 1:
         #assume wallet not loaded. attempt to load
-        load_wallet = ["bin/run_electrum", "load_wallet", "-w", wallet, "--testnet"]
+        load_wallet = ["bin/run_electrum", "load_wallet", "-w", wallet]
+        if os.environ["waas_mainnet"] == "0":
+            load_wallet.append("--testnet")
         btc_daemon = subprocess.Popen(load_wallet)
         btc_daemon.communicate()
     return False
@@ -387,9 +379,15 @@ def address_create_notify(bin_dir,wallet_path,port,addr,create,notify,rpcuser,rp
     if notify == 1:
         if addr != "":
             address = addr
-        if "Error" not in address:
-            th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
-            th.start()
+        if address:
+            if "Error" not in address:
+                th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
+                th.start()
+                return(address)
+            else:
+                return False
+        else:
+            return False
     return(address)
 
 def rpc_notify(rpcuser,rpcpass,rpcport,address,callback):
@@ -427,7 +425,6 @@ def curl_address(rpcuser,rpcpass,rpcport):
 
 def get_unused_address(config,ticker,title=None):
     local_ip = "localhost"
-    print(f"unused address ticker = {ticker}")
     counter = 1
     while True:
         if ticker == "xmr":
@@ -436,7 +433,7 @@ def get_unused_address(config,ticker,title=None):
             wallet_path = os.path.basename(config["monero"]["wallet_file"])
             address = get_xmr_subaddress(rpc_url,wallet_path,title)
             valid_coin = 1
-            #notify qzr3duvhlknh9we5g8x3wvkj5qvh625tzv36ye9kwl http://127.0.1.1--testnet
+            #notify qzr3duvhlknh9we5g8x3wvkj5qvh625tzv36ye9kwl http://127.0.1.1
         else:
             wallet_path = config[ticker]["wallet_file"]
             bin_dir = config[ticker]["bin"]
@@ -514,6 +511,7 @@ def print_msg(text):
 
 def print_err(text):
     msg = f"{Fore.RED}> {text}"
+    print(msg)
 
 def monero_rpc_online(rpc_url):
     rpc_connection = AuthServiceProxy(service_url=rpc_url)

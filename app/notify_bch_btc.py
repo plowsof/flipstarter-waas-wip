@@ -23,12 +23,16 @@ btc_path = ""
 
 btc_wishlist = {}
 
+rpcinfo={}
+rpcinfo["bch"] = {}
+rpcinfo["btc"] = {}
+
 def getJson(fname):
     with open(fname,"r") as f:
         return json.load(f)
 
 class S(BaseHTTPRequestHandler):
-    global bch_path, btc_path, www_root
+    global bch_path, btc_path, www_root, rpcinfo
     def _set_response(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
@@ -52,24 +56,41 @@ class S(BaseHTTPRequestHandler):
             address = address.split(":")[1]
         #electrum - Bech32 type starting with bc1
         if address[0:1] == "q":
-            print("This is a bchtest address")
+            print("This is a bch address")
             daemon_path = bch_path
             ticker = "bch"
         else:
-            print("This is a bitcoin testnet address")
+            print("This is a bitcoin address")
             daemon_path = btc_path
             ticker = "btc"
-
-        stream = os.popen(f"{daemon_path} getaddressbalance {address} --testnet")
-        json_output = stream.read().replace("\n","")
-        output = json.loads(json_output)
-        address_con = output["confirmed"]
-        address_unc = output["unconfirmed"]
+        rpcpass = rpcinfo[ticker]["pass"]
+        rpcport = rpcinfo[ticker]["port"]
+        rpcuser = rpcinfo[ticker]["user"]
+        #should be an rpc call todo
+        output = rpc_balance(rpcuser,rpcpass,rpcport,address)
+        address_con = output["result"]["confirmed"]
+        address_unc = output["result"]["unconfirmed"]
         bit_balance = float(address_con) + float(address_unc)
         data_fname = "./static/data/wishlist-data.json"
         with open(data_fname, "r") as f:
             data_wishlist = json.load(f)
         updateDatabaseJson(address,0,ticker,data_wishlist,bit_balance,address_con,address_unc)
+
+def rpc_balance(rpcuser,rpcpass,rpcport,address):
+    local_ip = "localhost"
+    url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
+    print(url)
+    payload = {
+        "method": "getaddressbalance",
+        "params": {
+        "address": address
+        },
+        "jsonrpc": "2.0",
+        "id": "curltext",
+    }
+    returnme = requests.post(url, json=payload).json()
+    return returnme
+
 
 def run(server_class=HTTPServer, handler_class=S, port=8080, config=[]):
     #load some json stuff
@@ -101,6 +122,16 @@ if __name__ == '__main__':
     from sys import argv
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
+    rpcinfo["bch"] = {
+    "port": config["bch"]["rpcport"],
+    "user": config["bch"]["rpcuser"],
+    "pass": config["bch"]["rpcpassword"]
+    }
+    rpcinfo["btc"] = {
+    "port": config["btc"]["rpcport"],
+    "user": config["btc"]["rpcuser"],
+    "pass": config["btc"]["rpcpassword"]
+    }
     if len(argv) == 2:
         run(port=int(argv[1]),config=config)
     else:

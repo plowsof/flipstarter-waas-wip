@@ -11,3 +11,4 @@ uvicorn
 fastapi
 feedgen
 schedule
+websockets

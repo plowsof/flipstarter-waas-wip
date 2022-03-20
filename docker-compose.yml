@@ -1,17 +1,13 @@
 version: '3.3'
 services:
   waas:
-    image: plowsof/waas4rucknium-testnet:beta-17
+    image: plowsof/waas-rucknium:latest
     container_name: fresh
     volumes:
       - waas-db:/home/app/db
       - waas-wallets:/home/app/wallets
       - waas-static:/home/app/static
-      - waas-electrum:/home/.electrum
-      - waas-electron:/home/.electron-cash
-      - ./ssl:/home/app/ssl
       - /proc:/writable_proc
-      - waas-cron:/etc/cron.d/
     networks:
       static-network:
         ipv4_address: 172.20.111.2
@@ -25,16 +21,20 @@ services:
       - apparmor:unconfined
     environment:
       - waas_RSS_ON=1
+      - waas_INTRO="Welcome to my funding page!"
       - waas_RSS_TITLE="Ruckniums Funding Page"
       - waas_RSS_DESC="Help support my projects and running costs"
       - waas_RSS_LINK="https://rucknium.me" 
+      - waas_remote_node_1="nodex.monerujo.io:18081"
+      - waas_remote_node_2="node.sethforprivacy.com:18089"
+      - waas_remote_node_3="xmr-node-usa-east.cakewallet.com:18081"
+      - waas_remote_node_4="electroncash.dk:18089"
+      - waas_remote_node_5="node.community.rino.io:18081"
+      - waas_mainnet=1
 volumes:
   waas-db:
   waas-wallets:
   waas-static:
-  waas-electrum:
-  waas-electron:
-  waas-cron:
 networks:
   static-network:
     ipam:

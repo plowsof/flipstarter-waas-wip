@@ -3,7 +3,7 @@ import json
 from filelock import FileLock
 import os
 import sqlite3
-from notify_xmr_vps_pi import db_set_time_wish
+#from notify_xmr_vps_pi import db_set_time_wish
 import time
 import sys
 
@@ -27,7 +27,7 @@ def main(wish_id):
                     #edit the modified list?
         with open(wishlist_file, 'w') as f:
             json.dump(wishlist, f, indent=6)  
-        db_set_time_wish(int(time.time()))
+        #db_set_time_wish(int(time.time()))
 
 if __name__ == '__main__':
     wish_id = sys.argv[1]

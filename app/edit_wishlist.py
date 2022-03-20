@@ -10,8 +10,12 @@ from rss_feed import add_to_rfeed
 import time
 from helper_create import wish_prompt
 config = ""
+sys.path.insert(1, './static/')
 from static_html_loop import main as static_main
 import sqlite3
+import uuid
+import notify_xmr_vps_pi
+import asyncio
 
 def main():
     global config
@@ -48,6 +52,10 @@ def main():
 
     #blindly trigger a static html refresh
     static_main(config)
+    #does not work as expected
+    #front end refreshes existing data - not redraws
+    uid = uuid.uuid4().hex
+    asyncio.run(notify_xmr_vps_pi.ws_work_around(uid))
 
 #find the matching wish and set the variables
 def wish_edit(wishlist,edit_delete,www_root):
@@ -113,20 +121,20 @@ def wish_edit(wishlist,edit_delete,www_root):
                 print(f"5) 'Cash out' - Zero totals and set USD to [{goal}].")
                 while answer not in [1,2,3,4,5]:
                     answer = int(input(">> "))
-                coin = choice[str(answer)]
-                while True:
-                    try:
-                        userInput = input(f"Enter the new total for {coin}\n>>")
-                        val = int(userInput)
-                        break
-                    except ValueError:
-                        print("That's not an int!")
-                if val != 5:
+                if answer != 5:
+                    coin = choice[str(answer)]
+                    while True:
+                        try:
+                            userInput = input(f"Enter the new total for {coin}\n>>")
+                            val = float(userInput)
+                            break
+                        except ValueError:
+                            print("That's not an int!")
                     wishlist["wishlist"][index][f"{coin}_total"] = val
                 else:
                     #zero values
                     for x in choice:
-                        coin = choice[x]
+                        coin = choice[str(x)]
                         wishlist["wishlist"][index][f"{coin}_total"] = 0
                     wishlist["wishlist"][index]["usd_total"] = goal
 
@@ -166,6 +174,8 @@ def wish_edit(wishlist,edit_delete,www_root):
     with open("./static/data/wishlist-data.json","w") as f:
         json.dump(wishlist,f, indent=6)
 
+
+
 def insert_recurring(wish_id):
     con = sqlite3.connect('./db/recurring_fees.db')
     cur = con.cursor()
@@ -199,10 +209,14 @@ def delete_wish(wishlist,index):
     with lock:
         with open(data_json, "w+") as f:
             json.dump(now_wishlist, f, indent=2) 
+    #error because wish might not be in fees / or not exist yet
     con = sqlite3.connect('./db/recurring_fees.db')
     cur = con.cursor()
     wish_id = deleted["id"]
-    cur.execute('DELETE FROM fees WHERE wish_id=?',[wish_id])
+    try:
+        cur.execute('DELETE FROM fees WHERE wish_id=?',[wish_id])
+    except:
+        pass
     con.commit()
     con.close()
     return now_wishlist

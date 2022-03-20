@@ -184,9 +184,9 @@ def wish_html(one,two,three,four,end,total,wish):
 
                   </style>
                   <div class="wish" id="{wish["id"]}">
-                    <span class="wish_title" id="{wish["id"]}"><h3>{wish["title"]} </span><span class="prog_{wish["id"]}" id="progress">{funded}</span><span class="status_{wish["id"]}" id="status">{wish["status"]}</span></h3></br>
-                    <div class="progress_{wish["id"]}"></div></br>
-                    <span class="fundgoal_{wish["id"]}">Raised: $<span class="raised_{wish["id"]}">{total}</span> of $<span class="goal_{wish["id"]}">{wish["goal_usd"]}</span></span><span class="contributors" id="{wish["id"]}"> Contributors: {wish["contributors"]}</span>
+                    <span class="wish_title" id="{wish["id"]}"><h3 id="wish_title">{wish["title"]} <span class="prog_{wish["id"]}" id="progress">{funded}</span><span class="status_{wish["id"]}" id="status">{wish["status"]}</span></h3>
+                    <div class="progress_{wish["id"]}" id="progress_bar"></div>
+                    <span class="fundgoal_{wish["id"]}" id="raised">Raised: $<span class="raised_{wish["id"]}">{total}</span> of $<span class="goal_{wish["id"]}">{wish["goal_usd"]}</span></span><span class="contributors" id="{wish["id"]}"> Contributors: {wish["contributors"]}</span>
                     <p class="description">{wish["description"]}</p>
                     """
     if funded == "": #draw a donate button
@@ -210,6 +210,7 @@ def wish_html(one,two,three,four,end,total,wish):
                                 <span class="njs_ticker">{img_btc} Bitcoin <a href="{wish["qr_img_url_btc"]}">[QRcode]</a></span></br>
                                 <span class="btc_address">bitcoin:{wish["btc_address"]}</span>
                             </p>
+                        </span>
                           </div>
                     """
     wish_html += """</div> <hr>"""
@@ -250,9 +251,9 @@ def get_total(wish):
             total_percent += percent
             #print(f"this_coin = {this_coin} \n wish goal = {wish['goal_usd']}\n percent = {percent}")
             returnme["values"][x] = percent
-            total_usd += (this_coin)
+            total_usd += float(this_coin)
         else:
-            total_usd += wish["usd_total"]
+            total_usd += int(wish["usd_total"])
             usd_percent = (int(wish["usd_total"]) / int(wish["goal_usd"])) * 100
             returnme["values"]["usd"] = usd_percent 
             total_percent += usd_percent

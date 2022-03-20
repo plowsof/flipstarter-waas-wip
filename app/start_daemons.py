@@ -15,6 +15,10 @@ import psutil
 from colorama import Fore, Back, Style
 cryptocompare.cryptocompare._set_api_key_parameter("")
 from helper_create import print_msg, print_err, bit_online, monero_rpc_online
+import uuid
+import notify_xmr_vps_pi
+import asyncio
+import random 
 
 wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
 www_root = ""
@@ -39,37 +43,46 @@ def monero_rpc_open_wallet(rpc_url,wallet_file):
         sys.exit(1)
 
 def find_working_node(node_list):
+    #if we're in stagenet mode, then throw error if node is mainnet
     max_retries = 30
     num_retries = 0
     node_online = 0
     print_msg("Connecting to Monero remote node.")
+    random.shuffle(node_list)
     for remote_node in node_list:
         try:
             rpc_url = "http://" + str(remote_node) + "/json_rpc"
             #this will retry the url for 30 seconds (built in to monerorpc library)
             rpc_connection = AuthServiceProxy(service_url=rpc_url)
             info = rpc_connection.get_info()
+            print(info["nettype"])
+            if os.environ["waas_mainnet"] == "1":
+                if info["nettype"] != "mainnet":
+                    print_err("You are connecting to a stagenet node. Please add a monero mainnet node to docker-compose.yml [restart required].")
+                    sys.exit(1)
+            else:
+                if info["nettype"] != "stagenet":
+                    print_err("You are connecting to a mainnet node. Please add a Monero stagenet node to docker-compose.yml [restart required].")
+                    sys.exit(1)
             if info["status"] != "OK":
-                print_msg("Connected")
+                print_msg("Retrying another node")
                 continue
             else:
                 node_online = 1
                 break
         except Exception as e:
+            print(e)
             continue
 
     if node_online == 0:
         print_err("Unable to connect to a Monero remote node.")
         return False
     else:
+        print("found our node")
         return remote_node
 
 def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None):
     global wallet_dir
-    print(f"{wallet_file}")
-    print(f"{rpc_port}")
-    print(f"walletfile = {wallet_file}")
-    print(f"we are using remote node {remote_node}")
 
     rpc_args = [ 
         f"{rpc_bin_file}", 
@@ -78,16 +91,19 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
         "--disable-rpc-login",
         "--tx-notify", f"/usr/local/bin/python3 /home/app/notify_xmr_vps_pi.py %s",
         "--daemon-address", remote_node,
-        "--stagenet", "--password", ""
+        "--password", ""
     ]
     for x in rpc_args:
         print(x)
+    if os.environ["waas_mainnet"] == "0":
+        print("stagenet mode")
+        rpc_args.append("--stagenet")
     monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
     kill_daemon = 0
     print("Starting Monero rpc...")
     for line in iter(monero_daemon.stdout.readline,''):
         print(str(line.rstrip()))
-        if b"Error" in line.rstrip() or b"Failed" in line.rstrip() or b'specify --wallet-file' in line.rstrip():
+        if b"Error" in line.rstrip() or b"Failed" in line.rstrip() or b'specify --wallet-file' in line.rstrip() or b"failed" in line.rstrip():
             kill_daemon = 1
             break
         if b"Starting wallet RPC server" in line.rstrip():
@@ -95,7 +111,6 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None)
             break
         #time.sleep(1)
     if kill_daemon == 1:
-        print(line.rstrip())
         monero_daemon.terminate()
         print_err(line.rstrip())
         sys.exit(1)
@@ -131,20 +146,27 @@ def getJson():
         return json.load(f)
 
 def start_bit_daemon(bin_file,wallet_file,rpcuser,rpcpass,rpcport):
-    rpc_user = [bin_file, "setconfig", "rpcuser", rpcuser, "--testnet"]
-    rpc_pass = [bin_file, "setconfig", "rpcpassword", rpcpass, "--testnet"]
-    rpc_port = [bin_file, "setconfig", "rpcport", rpcport, "--testnet"]
+    rpc_user = [bin_file, "setconfig", "rpcuser", rpcuser]
+    rpc_pass = [bin_file, "setconfig", "rpcpassword", rpcpass]
+    rpc_port = [bin_file, "setconfig", "rpcport", rpcport]
     if "electrum" in bin_file:
-        stop_daemon = [bin_file, "stop", "--testnet"]
-        load_wallet = [bin_file, "load_wallet", "-w", wallet_file, "--testnet"]
-        start_daemon = [bin_file, "daemon", "-d", "--testnet"]
+        stop_daemon = [bin_file, "stop"]
+        load_wallet = [bin_file, "load_wallet", "-w", wallet_file]
+        start_daemon = [bin_file, "daemon", "-d"]
         rpc_user.append("--offline")
         rpc_pass.append("--offline")
         rpc_port.append("--offline")
     else:
-        stop_daemon = [bin_file, "daemon", "stop", "--testnet"]
-        load_wallet = [bin_file, "daemon", "load_wallet", "-w", wallet_file, "--testnet"]
-        start_daemon = [bin_file, "daemon", "start", "--testnet"]
+        stop_daemon = [bin_file, "daemon", "stop"]
+        load_wallet = [bin_file, "daemon", "load_wallet", "-w", wallet_file]
+        start_daemon = [bin_file, "daemon", "start"]
+    if os.environ["waas_mainnet"] == "0":
+        stop_daemon.append("--testnet")
+        rpc_user.append("--testnet")
+        rpc_pass.append("--testnet")
+        rpc_port.append("--testnet")
+        start_daemon.append("--testnet")
+        load_wallet.append("--testnet")
     run_cmd(stop_daemon)
     run_cmd(rpc_user)
     run_cmd(rpc_pass)
@@ -163,6 +185,14 @@ def main(config):
     rpc_port = config["monero"]["daemon_port"]
     rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
     wallet_file = config["monero"]["wallet_file"]
+    if os.environ["waas_mainnet"] == "1":
+        if "test" in wallet_file:
+            print_err("You're using a Monero stagenet wallet in mainnet mode.\nConnect to this container and run make_wishlist.py to create a mainnet wallet")
+            sys.exit(1)
+    else:
+        if "test" not in wallet_file:
+            print_err("Trying to use a Mainnet wallet in Stagenet mode!\nConnect to this container and run make_wishlist.py to create a stagenet wallet")
+            sys.exit(1)
     fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
     list_remote_nodes = []
     for i in range(int(fallback_remote_nodes)):
@@ -187,15 +217,24 @@ def main(config):
 
     electrum_path = config["btc"]["bin"]
     btc_wallet_path = config["btc"]["wallet_file"]
+    bch_wallet_path = config["bch"]["wallet_file"]
     b_rpcuser = config["btc"]["rpcuser"]
     b_rpcpass = config["btc"]["rpcpassword"]
     b_rpcport = config["btc"]["rpcport"]
+    if os.environ["waas_mainnet"] == "1":
+        if "test" in btc_wallet_path or not bch_wallet_path:
+            print_err("You're using a testnet wallet in mainnet mode. Run make_wishlist.py to create mainnet walelts.")
+            sys.exit(1)
     start_bit_daemon(electrum_path,btc_wallet_path,b_rpcuser,b_rpcpass,b_rpcport)
     electron_path = config["bch"]["bin"]
-    bch_wallet_path = config["bch"]["wallet_file"]
+    
     rpcuser = config["bch"]["rpcuser"]
     rpcpass = config["bch"]["rpcpassword"]
     rpcport = config["bch"]["rpcport"]
+    if os.environ["waas_mainnet"] == "1":
+        if "test" in bch_wallet_path or not bch_wallet_path:
+            print_err("You're using a testnet wallet in mainnet mode. Run make_wishlist.py to create mainnet walelts.")
+            sys.exit(1)
     start_bit_daemon(electron_path,bch_wallet_path,rpcuser,rpcpass,rpcport)
 
     http_port = config["callback"]["port"]
@@ -207,11 +246,9 @@ def main(config):
         if wish["btc_address"]:
             address = wish["btc_address"]
             rpc_notify(b_rpcuser,b_rpcpass,b_rpcport,address,http_server)
-            #thread_notify(electrum_path,address,http_server)
         if wish["bch_address"]:
             address = wish["bch_address"]
             rpc_notify(rpcuser,rpcpass,rpcport,address,http_server)
-            #thread_notify(electron_path,address,http_server)
 
     th = threading.Thread(target=refresh_html_loop, args=(remote_node,rpc_url,config,))
     th.start()
@@ -224,12 +261,6 @@ def main(config):
     #start the bitcoin listener
     os.system(f'/usr/local/bin/python3 notify_bch_btc.py {http_port}')
 
-def thread_notify(bin_dir,address,port):
-    thestring = f"./{bin_dir} notify {address} {port} --testnet"
-    print(thestring)
-    stream = os.popen(thestring)
-    output = stream.read()
-    print(output)
 
 def rpc_notify(rpcuser,rpcpass,rpcport,address,callback):
     local_ip = "localhost"
@@ -275,6 +306,9 @@ def save_prices():
         cur.execute(sql, (p_xmr,p_bch,p_btc))
         con.commit()
         con.close()
+        #refresh price on front end
+        uid = uuid.uuid4().hex
+        asyncio.run(notify_xmr_vps_pi.ws_work_around(uid))
         time.sleep(60*5)
 
 def delete_clicks_db():
@@ -286,7 +320,7 @@ def delete_clicks_db():
 
 def refresh_html_loop_1():
     while True:
-        os.system(f'python3 static_html_loop.py')
+        os.system(f'python3 static/static_html_loop.py')
         time.sleep(5*60)
 
 def refresh_html_loop(remote_node,local_node,config):

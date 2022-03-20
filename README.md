@@ -1,11 +1,12 @@
-
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)    
 Currently, this will just create a mirror of the page @ rucknium.me/flask, however, i will eventually be making a generic version, and use the rucknium page as an example of installing a template (just copy and pasting a folder)    
 
 Also ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```make_wishlist.py``` e.g. wrongly select Restore from keys.   
 
 ### Production / On a VPS
 
-Lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it. The only difference from running it locally is that i need to point nginx to my wishlist container and to set up the SSL serts (so my site is accessible using HTTPS).    
+Lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it.
+
 
 First things first, i need to install nginx on my Debian vps:
 ```
@@ -25,7 +26,7 @@ server {
     index index.html index.htm index.nginx-debian.html;
     server_name getwishlisted.xyz www.getwishlisted.xyz;
         location /donate {
-          proxy_pass https://172.20.111.2:8000;
+          proxy_pass http://172.20.111.2:8000;
         }
 }
 ```
@@ -41,12 +42,10 @@ Lets get certs. Again, i find snap to be most helpful in this process. I use it 
 apt install snapd
 snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
+``` 
 ```
-I had an error 'to many redirects' because my dns providers ssl setting was off, i needed to change it to 'Full'   
-Because this is a fresh server i am going to do a full install (where certbot modified the file we created earlier)    
-````
 sudo certbot
-````
+```
 I ran ```sudo certbot``` a 2nd time for the ```www.``` url.    
 After running through the setup / selecting nginx / agreeing to t&c's i see this output:
 ```
@@ -54,27 +53,28 @@ Successfully received certificate.
 Certificate is saved at: /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem    
 Key is saved at:         /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem    
 ```
+For the websockets to allow your donation page to update in real time you must now manually edit your websites file.   
+So Goerge now has to open up his 'getwishlisted.xyz' file in sites-enabled with a text editor e.g. nano and paste this under the original /dnonate location block:   
+```
+location /donate/ws {
+    proxy_pass http://172.20.111.2:8000;
+    proxy_http_version 1.1;
+    proxy_ssl_certificate /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem;
+    proxy_ssl_certificate_key /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_set_header Host $host;
+}
+```
 At this point we need to ```cd``` to our ```/home``` folder and download the docker-compose file:
 ```
 curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/mainnet/docker-compose.yml -o docker-compose.yml
-```
-We need an 'ssl' folder next to it to paste our certs in.
-```
-mkdir ssl
-cd ssl
-cp /etc/letsencrypt/live/www.getwishlisted.xyz/* . 
-```
-Which will look like:
-```
-docker-compose.yml
-ssl/
-    - fullchain.pem
-    - privkey.pem
 ```
 Perfect. Now lets install docker and docker-compose with these handy install scripts:
 ```
  curl -fsSL https://test.docker.com -o test-docker.sh
  sudo sh test-docker.sh
+
 ```
 now to install docker-compose:
 ```
@@ -113,12 +113,66 @@ Then follow the instructions
 WaaS is based on these 3 wallets:
 - Monero GUI
 - Electron-cash
-- Electrum
+- Electrum    
 Some donations may not appear in your wallet because of something called a gap limit. In Electron-cash / Electrum to go view -> console. And paste this line:
 ```
 for i in range(0, 100): print(wallet.create_new_address(False))
 ```
-You should be able to see any missing donations then. Repeat it if needed.
+You should be able to see any missing donations then. Repeat it if needed.   
+### Updating the front end using a template from [waas-templates](https://github.com/plowsof/waas-templates)
+Follow the instructions in the github readme of waas-templates. The only issue you will have here is if your browser / domain provider is storing things in the cache. ```ctrl+f5``` will purge your local browser. See your domain providers instructions on how to purge its cache if you can't see updates.    
+### Updating the backend
+The container must be stopped, image removed, and then the docker-compose file ran again to get the new version: (in the same dir as docker-compose.yml) 
+```
+docker stop fresh && \
+docker rmi plowsof/waas-rucknium:latest --force && \
+docker-compose up -d
+```
+If you run into issues, it must not be running in ```docker ps``` list, and you can use ```--force``` after the remove commands.    
+```docker images``` will give you an image id to use if all else fails ```docker image rm <imageid> --force```. do not delete the docker compose image!   
+Ignore the error message when trying ```docker-compose up -d``` the wishlist data is safe.
+
+Here is what my nginx.conf file (getwishlisted.xyz) looks like:
+```
+server {
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+    server_name getwishlisted.xyz www.getwishlisted.xyz custom;
+        location /donate {
+            proxy_pass http://172.20.111.2:8000;
+        }
+        location /donate/ws {
+            proxy_pass http://172.20.111.2:8000;
+            proxy_http_version 1.1;
+            proxy_ssl_certificate /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem;
+            proxy_ssl_certificate_key /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_set_header Host $host;
+        }
+
+    listen [::]:443 ssl ipv6only=on; # managed by Certbot
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+server {
+    if ($host = www.getwishlisted.xyz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+    if ($host = getwishlisted.xyz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+    listen 80;
+    listen [::]:80;
+    server_name getwishlisted.xyz www.getwishlisted.xyz;
+    return 404; # managed by Certbot
+}
+
+```
+
 ### TODO
 This is still in beta so i must do some sanity checks 
 - [ ] sanity checks

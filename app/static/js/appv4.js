@@ -21,8 +21,8 @@ function drawCryptoDonate(id){
     let donate_crypto = `
     <div class="donate_crypto_${wish["id"]}">
   <form name="donate" id="${wish["id"]}" action="/donate/crypto_donate" method="POST">
-  <input type="range" min="1" max="${max}" value="1" class="slider" id="myRange">
-  <p>Amount: <input type="text" id="demo" name="amount" value="1"></p>
+  <input type="range" step="0.01" min="0" max="${max}" value="0" class="slider" id="myRange">
+  <p>$Amount: <span id="demo">0</p>
   <label for="coins_select">Crypto:</label>
   <select class="coins" name="coins" id="coin_select"> 
     <option id="xmr_${wish["id"]}" value="xmr" rfund="Monero"><img src="/donate/static/images/xmr.png">Monero</option>
@@ -40,9 +40,9 @@ function drawCryptoDonate(id){
       <textarea id="comment_area" name="comment" rows="4" cols="50" placeholder="Type a message here..." maxlength="140"></textarea>
     <button class="crypto_button" type="submit" id="${wish["id"]}">Get payment address</button>
   </div>
-  <div class="anon_address_bch" id="bch_${wish["id"]}">${wish.bch_address}</div>
-  <div class="anon_address_btc" id="btc_${wish["id"]}">${wish.btc_address}</div>
-  <div class="anon_address_xmr" id="xmr_${wish["id"]}">${wish.xmr_address}</div>
+  <div class="anon_address_bch" id="bch_${wish["id"]}">bitcoincash:${wish.bch_address}</div>
+  <div class="anon_address_btc" id="btc_${wish["id"]}">bitcoin:${wish.btc_address}</div>
+  <div class="anon_address_xmr" id="xmr_${wish["id"]}">monero:${wish.xmr_address}</div>
   
 </form>
 </div>
@@ -88,21 +88,6 @@ async function getPrice(){
   Object.keys(array_prices).forEach(function(symbol) {
     array_prices[symbol] = price_info[symbol]
   });
-}
-
-function getTimestamps(){
-  let url_get = `/donate/api/timestamp` 
-  try {
-        return $.ajax({
-          dataType: "json",
-          type: 'GET',
-          url: url_get,
-        });
-        
-  }catch (error){
-      console.log(error)
-      return null;
-  }
 }
 
 function getTotal(wish){
@@ -162,25 +147,6 @@ function getTotal(wish){
      return percentages    
 }
 
-function get_history(inputs){
-    if (inputs.length){
-        //we have history
-        let i = 0
-        let history = ""
-        while(i < inputs.length){
-            history += ("+" + inputs.at(i).amount.toFixed(5) + "<br>")
-            if (i == 4){
-                i = inputs.length
-            }else{
-                i++
-            }
-        }
-        return history
-    }else{
-        return "No history😥"
-    }
-}
-
 async function download_wishlist(){
   let ran_int = Math.floor(Math.random() * 100000)
   let url_get = "/donate/static/data/wishlist-data.json?uid=" + ran_int;
@@ -192,21 +158,8 @@ async function download_wishlist(){
 
 async function async_getWishlist() 
 {
-  let timestamps = await getTimestamps()
-  console.log(timestamps)
-  let wishlist_time = timestamps.wishlist
-  let wishlist_comments = timestamps.comments
-  let do_download = 0
-  let do_comments = 0
-  if (wishlist_time != modified){
-    modified = wishlist_time
-    do_download = 1
-  }
-  if (wishlist_comments != comments_modified){
-    comments_modified = wishlist_comments
-    do_download = 1
-    do_comment = 1
-  }
+  do_download = 1
+  do_comment = 1
   if(do_download == 1){
     global_wishlist = await download_wishlist() // set global_wishlist
     if ( global_wishlist.wishlist.length != num_wishes ){
@@ -273,6 +226,7 @@ function updateWishlist(data)
     wish = wishlist["wishlist"][i] 
     id = wishlist["wishlist"][i]["id"]
     len = $("div#"+id).length
+    console.log(`num of divs with id ${id} = ${len}`)
     if ( len == 0 ){
       $(".wishlist").append( init_wish(one,two,three,four,end,total,wish) )
     }
@@ -299,7 +253,7 @@ function updateWishlist(data)
     $(".raised_" + wish.id).text(total)
     $(".goal_" + wish.id).text(wish.goal_usd)
     //set num contributors
-    $(".contributors#" + wish.id).text("Contributors: " + wish.contributors)
+    $("span#" + wish.id + ".contributors").text("Contributors: " + wish.contributors)
 
   }
 }
@@ -323,9 +277,9 @@ function init_wish(one,two,three,four,end,total,wish)
     }
   </style>
   <div class="wish" id="${wish.id}">
-    <span class="wish_title" id="${wish.id}"><h3>${wish.title} </span><span class="prog_${wish.id}" id="progress"></span><span class="status_${wish.id}" id="status">${wish.status}</span></h3></br>
-    <div class="progress_${wish["id"]}"></div></br>
-    <span class="fundgoal_${wish.id}">Raised: $<span class="raised_${wish.id}">${total}</span> of $<span class="goal_${wish.id}">${wish.goal_usd}</span></span><span class="contributors" id="${wish.id}">Contributors: ${wish.contributors}</span>
+    <span class="wish_title" id="${wish.id}"><h3 id="wish_title">${wish.title} </span><span class="prog_${wish.id}" id="progress"></span><span class="status_${wish.id}" id="status">${wish.status}</span></h3>
+    <div class="progress_${wish["id"]}" id="progress_bar"></div>
+    <span class="fundgoal_${wish.id}" id="raised">Raised: $<span class="raised_${wish.id}">${total}</span> of $<span class="goal_${wish.id}">${wish.goal_usd}</span></span><span class="contributors" id="${wish.id}">Contributors: ${wish.contributors}</span>
     <p class="description">${wish.description}</p>
     <div class="main_buttons_${wish.id}" id="${wish.id}">
       <label class="donate_button" id="button_${wish["id"]}" type="button" onclick="cryptoClick('${wish.id}')">Donate</label>
@@ -427,7 +381,7 @@ function main(){
   modified = 0
   doit()
 
-  setInterval(doit,(1000*60))
+  //setInterval(doit,(1000*60))
 }
 $(main)
 
