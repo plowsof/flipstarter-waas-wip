@@ -17,7 +17,7 @@ I need to go to the sites-available folder create a file the same name as my dom
 cd /etc/nginx/sites-available
 nano getwishlisted.xyz
 ```
-Nano is a text editor, it will create the file and allow me to begin editing it. I'll paste this inside:    
+Nano is a text editor, it will create the file and allow me to begin editing it. I'll paste this inside: (we will be returning to this file later to paste something under the location /donate{} block)
 ```
 server {
     listen 80;
@@ -37,24 +37,25 @@ sudo ln -s /etc/nginx/sites-available/getwishlisted.xyz /etc/nginx/sites-enabled
 sudo /etc/init.d/nginx restart
 ```
 
-Lets get certs. Again, i find snap to be most helpful in this process. I use it to install ```certbot``` which is going to give us the SSL keys. It's basically going to create some files on our webserver to prove that we own it, and the certificate authority confirms this, then issues us our SSL certs.
+Lets get certs. I find snap to be most helpful in this process. I use it to install ```certbot``` which is going to give us the SSL keys. It's basically going to create some files on our webserver to prove that we own it, and the certificate authority confirms this, then issues us our SSL certs.
 ```
 apt install snapd
 snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
 ``` 
+To run through a menu, use ```sudo certbot``` only. (remember that you must run it twice, for the www. url also)    
+Or a quicker one liner: (replace ```getwishlisted.xyz``` / ```www.getwishlisted.xyz``` / ```your@email.com``` with your details - also assumes nginx):
 ```
-sudo certbot
+sudo certbot --agree-tos -n --nginx -d getwishlisted.xyz -d www.getwishlisted.xyz -m your@email.com
 ```
-I ran ```sudo certbot``` a 2nd time for the ```www.``` url.    
-After running through the setup / selecting nginx / agreeing to t&c's i see this output:
+
 ```
 Successfully received certificate.    
 Certificate is saved at: /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem    
 Key is saved at:         /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem    
 ```
 For the websockets to allow your donation page to update in real time you must now manually edit your websites file.   
-So Goerge now has to open up his 'getwishlisted.xyz' file in sites-enabled with a text editor e.g. nano and paste this under the original /dnonate location block:   
+So Goerge now has to open up his 'getwishlisted.xyz' file in sites-enabled with a text editor e.g. nano and paste this under the original /donate location block: (change the proxy_ssl lines accordignly) (refer to the bottom of this guide where i show what the end version of the file looks like)
 ```
 location /donate/ws {
     proxy_pass http://172.20.111.2:8000;
@@ -74,7 +75,6 @@ Perfect. Now lets install docker and docker-compose with these handy install scr
 ```
  curl -fsSL https://test.docker.com -o test-docker.sh
  sudo sh test-docker.sh
-
 ```
 now to install docker-compose:
 ```
