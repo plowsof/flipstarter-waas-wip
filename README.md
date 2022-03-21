@@ -67,6 +67,12 @@ location /donate/ws {
     proxy_set_header Host $host;
 }
 ```
+Now we must close our eyes, click our heels together and hope for the best while restarting our nginx server:
+```
+sudo /etc/init.d/nginx restart
+```
+If there are any errors then again, refer to the bottom of the guide to see how it should look.    
+
 At this point we need to ```cd``` to our ```/home``` folder and download the docker-compose file:
 ```
 curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/mainnet/docker-compose.yml -o docker-compose.yml
