@@ -171,11 +171,10 @@ server {
     return 404; # managed by Certbot
 }
 
+```
 ###Testing on stagenet/testnet
 All 5 of the remote nodes in ```docker-compose.yml``` must be replaced with stagenet ones, and then set ```waas_mainnet=0```.    
 Switching back and forth is a litte tricky as you have to delete the wishlist text file ```rm static/data/wishlist-data.json``` and run ```python3 make_wishlist.py``` again to create your wishlist/mainnet wallets.
-
-```
 
 ### TODO
 This is still in beta so i must do some sanity checks 
