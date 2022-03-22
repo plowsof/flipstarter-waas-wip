@@ -698,11 +698,12 @@ def main(config):
                                 data default 0,
                                 xmr integer,
                                 btc integer,
-                                bch integer
+                                bch integer,
+                                wow integer
                             ); """
     cur.execute(create_price_table)
-    sql = ''' INSERT INTO crypto_prices(data,xmr,btc,bch)
-    VALUES (0,0,0,0)'''
+    sql = ''' INSERT INTO crypto_prices(data,xmr,btc,bch,wow)
+    VALUES (0,0,0,0,0)'''
     cur.execute(sql)
     con.commit()
     con.close()

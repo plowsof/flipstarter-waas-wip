@@ -36,7 +36,8 @@ def init_wishlist():
         "url": "",
         "viewkey": viewkey,
         "main_address": main_address,
-        "status": "OK",
+        "monero_status": "OK",
+        "wownero_status": "OK",
         "protocol": "v3",
     }
     the_wishlist = {}

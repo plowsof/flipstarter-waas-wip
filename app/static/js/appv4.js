@@ -201,7 +201,8 @@ function updateWishlist(data)
       "monero": "#f26822",
       "bitcoin-cash": "#0ac18e",
       "bitcoin": "#f7931a",
-      "usd": "#85bb65"
+      "usd": "#85bb65",
+      "wownero": "pink"
     }
     one = colours[sortme[0]] 
     prc0 = percent_info["values"][sortme[0]]
@@ -221,16 +222,20 @@ function updateWishlist(data)
     four = colours[sortme[3]]
     prc3 = percent_info["values"][sortme[3]]
     prc3 += prc2
-
     four += ` ${prc2}% ${prc3}%`
 
-    end = `${prc3}%`
+    five = colours[sortme[4]]
+    prc4 = percent_info["values"][sortme[4]]
+    prc4 += prc3
+    five += ` ${prc2}% ${prc3}%`
+
+    end = `${prc4}%`
     wish = wishlist["wishlist"][i] 
     id = wishlist["wishlist"][i]["id"]
     len = $("div#"+id).length
     console.log(`num of divs with id ${id} = ${len}`)
     if ( len == 0 ){
-      $(".wishlist").append( init_wish(one,two,three,four,end,total,wish) )
+      $(".wishlist").append( init_wish(one,two,three,four,five,end,total,wish) )
     }
     //the wish is on the page
     //is it fully 'FUNDED' or revert title = title
@@ -249,7 +254,7 @@ function updateWishlist(data)
 
     //change progress bar style
     $('.progress_' + wish.id).css({
-    background: `linear-gradient(to right, ${one}, ${two}, ${three}, ${four}, transparent ${end})`
+    background: `linear-gradient(to right, ${one}, ${two}, ${three}, ${four}, ${five}, transparent ${end})`
     });
     //change raised total
     $(".raised_" + wish.id).text(total)
@@ -260,7 +265,7 @@ function updateWishlist(data)
   }
 }
 
-function init_wish(one,two,three,four,end,total,wish)
+function init_wish(one,two,three,four,five,end,total,wish)
 {
   total = Number(total).toFixed(2);
   wish.goal_usd = wish.goal_usd.toFixed(2);
@@ -275,7 +280,7 @@ function init_wish(one,two,three,four,end,total,wish)
     color:#fff;
     font-size:20px;
     background: linear-gradient(to right,
-       ${one}, ${two}, ${three}, ${four}, transparent ${end});
+       ${one}, ${two}, ${three}, ${four}, ${five}, transparent ${end});
     }
   </style>
   <div class="wish" id="${wish.id}">
@@ -359,7 +364,7 @@ async function pagination(comments){
 
 //on page load - render the wishlist. set a 'time updated variable from the json' then loop compare
 //infinite loop
-var array_prices = {"bitcoin-cash": 0, "monero": 0, "bitcoin": 0};
+var array_prices = {"bitcoin-cash": 0, "monero": 0, "bitcoin": 0, "wownero": 0};
 function main(){
   $("span#p_left").click(function() {
     console.log(comment_page)

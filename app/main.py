@@ -152,7 +152,8 @@ def db_get_prices():
                                 data default 0,
                                 xmr integer,
                                 btc integer,
-                                bch integer
+                                bch integer,
+                                wow integer
                             ); """
     cur.execute(create_price_table)
     cur.execute('SELECT * FROM crypto_prices WHERE data = ?',[0])
@@ -162,7 +163,8 @@ def db_get_prices():
         return_me = {
         "bitcoin-cash": rows[0][3],
         "monero": rows[0][1],
-        "bitcoin": rows[0][2]
+        "bitcoin": rows[0][2],
+        "wownero": rows[0][4]
         }
         return return_me
     except:
@@ -246,7 +248,7 @@ async def handle_crypto_form(request: Request):
                     return
             if ticker == "wow":
                 wowport = wish_config["wow"]["daemon_port"]
-                rpc_url = "http://localhost:" + str(xmrport) + "/json_rpc"
+                rpc_url = "http://localhost:" + str(wowport) + "/json_rpc"
                 if not make_wishlist.monero_rpc_online(rpc_url):
                     return
 

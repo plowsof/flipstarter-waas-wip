@@ -84,17 +84,18 @@ def find_working_node(node_list):
 def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,wow_xmr="monero"):
     global wallet_dir
     rpc_args = [ 
-        f"{rpc_bin_file}", 
+        f"./{rpc_bin_file}", 
         "--wallet-file", wallet_file,
         "--rpc-bind-port", rpc_port,
         "--disable-rpc-login",
         "--daemon-address", remote_node,
         "--password", "", 
-        "--tx-notify", f"/usr/local/bin/python3 /home/app/notify_xmr_vps_pi.py %s"
+        "--tx-notify"
     ]
+    notify_string = f"/usr/local/bin/python3 /home/app/notify_xmr_vps_pi.py %s"
     if wow_xmr != "monero":
-        rpc_args.append("wow")
-     
+        notify_string += " wow"
+    rpc_args.append(notify_string)
     for x in rpc_args:
         print(x)
     if os.environ["waas_mainnet"] == "0":
@@ -105,6 +106,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,
     print("Starting Monero rpc...")
     for line in iter(monero_daemon.stdout.readline,''):
         print(str(line.rstrip()))
+        time.sleep(1)
         if b"Error" in line.rstrip() or b"Failed" in line.rstrip() or b'specify --wallet-file' in line.rstrip() or b"failed" in line.rstrip():
             kill_daemon = 1
             break
@@ -211,14 +213,15 @@ def main(config):
     if remote_node:
         start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file)
     else:
-        print("No monero remote node")
+        print("No Monero remote node")
 
     #WOW setup
     list_remote_nodes = []
     fallback_remote_nodes = config["wow"]["fallback_remote_nodes"]
     wow_rpc_port = config["wow"]["daemon_port"]
-    wow_rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
-    rpc_bin_file = "/bin/wownero-wallet-rpc"
+    wow_rpc_url = "http://" + str(local_ip) + ":" + str(wow_rpc_port) + "/json_rpc"
+    rpc_bin_file = "bin/wownero-wallet-rpc"
+    wallet_file = config["wow"]["wallet_file"]
     list_remote_nodes = []
     for i in range(int(fallback_remote_nodes)):
         num = (i+1)
@@ -227,7 +230,7 @@ def main(config):
     if remote_node:
         start_monero_rpc(rpc_bin_file,wow_rpc_port,wow_rpc_url,wow_remote_node,wallet_file,"wow")
     else:
-        print("No monero remote node")
+        print("No WOWnero remote node")
 
 
     electrum_path = config["btc"]["bin"]
@@ -310,8 +313,9 @@ def save_prices():
         p_xmr = float(getPrice("XMR"))    
         p_btc = float(getPrice("BTC"))
         p_bch = float(getPrice("BCH"))
-        p_wow = float(getPrice("WOW"))
-
+        wow_price_resp = requests.get('https://funding.wownero.com/api/1/convert/wow-usd?amount=1')
+        #{"usd": 6.7}
+        p_wow = wow_price_resp.json()["usd"]
         con = sqlite3.connect('./db/crypto_prices.db')
         cur = con.cursor()
         create_price_table = """ CREATE TABLE IF NOT EXISTS crypto_prices (
@@ -367,8 +371,6 @@ def remote_health_check(wow_xmr,node,config):
         return False
 
 def recover_crash(xmr_wow,config,remote_node):
-    wishlist["metadata"]["status"] = "remote"
-    not_ok = 1
     for proc in psutil.process_iter():
         #kill process
         if f"{wow_xmr}-wallet-rpc" in proc.name():
@@ -382,9 +384,9 @@ def recover_crash(xmr_wow,config,remote_node):
 
     remote_node = find_working_node(list_remote_nodes)
     if xmr_wow == "monero":
-        rpc_bin_file = "/bin/monero-wallet-rpc"
+        rpc_bin_file = "bin/monero-wallet-rpc"
     else:
-        rpc_bin_file = "/bin/wownero-wallet-rpc"
+        rpc_bin_file = "bin/wownero-wallet-rpc"
 
     rpc_port = config[xmr_wow]["daemon_port"]
     wallet_file = config[xmr_wow]["wallet_file"]
@@ -392,7 +394,6 @@ def recover_crash(xmr_wow,config,remote_node):
 
     if remote_node:
         start_monero_rpc(rpc_bin_file,rpc_port,rpc_url_local,remote_node,wallet_file,xmr_wow)
-        wishlist["metadata"]["status"] = "OK"
         return remote_node
 
 def refresh_html_loop(remote_node,local_node,wow_remote_node,wow_local_node,config):
