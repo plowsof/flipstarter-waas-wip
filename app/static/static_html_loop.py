@@ -224,7 +224,6 @@ def set_global_prices():
         prices[ticker] = data[ticker]
 
 def get_total(wish):
-    prices
     ticker_var = {
         "monero": "xmr_total",
         "bitcoin": "btc_total",
@@ -287,9 +286,15 @@ def db_get_prices():
         }
         return return_me
     except:
-        return False
+        return_me = {
+        "bitcoin-cash": 0,
+        "monero": 0,
+        "bitcoin": 0
+        }
+        return return_me
 
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
     main(config)
+

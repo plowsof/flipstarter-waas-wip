@@ -159,8 +159,9 @@ def wish_add(wish,config):
         raise e
 
 def bit_online(rpcuser,rpcpass,rpcport):
+    #print(f"[DEBUG]: {rpcuser} {rpcpass} {rpcport}")
     local_ip = "localhost"
-    print(f"trying bit online with {rpcuser} {rpcport} {rpcpass}")
+    #print(f"trying bit online with {rpcuser} {rpcport} {rpcpass}")
     url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
     payload = {
         "method": "getbalance",
@@ -510,7 +511,7 @@ def print_msg(text):
     print(msg)
 
 def print_err(text):
-    msg = f"{Fore.RED}> {text}"
+    msg = f"{Fore.RED}> {text}{Fore.WHITE}"
     print(msg)
 
 def monero_rpc_online(rpc_url):

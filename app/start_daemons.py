@@ -47,7 +47,7 @@ def find_working_node(node_list):
     max_retries = 30
     num_retries = 0
     node_online = 0
-    print_msg("Connecting to Monero remote node.")
+    print_msg("Finding a Monero remote node.")
     random.shuffle(node_list)
     for remote_node in node_list:
         try:
@@ -173,7 +173,7 @@ def start_bit_daemon(bin_file,wallet_file,rpcuser,rpcpass,rpcport):
     run_cmd(rpc_port)
     run_cmd(start_daemon)
     run_cmd(load_wallet)
-
+    
 def run_cmd(list_args):
     bch_daemon = subprocess.Popen(list_args)
     bch_daemon.communicate()
@@ -225,7 +225,6 @@ def main(config):
         if "test" in btc_wallet_path or not bch_wallet_path:
             print_err("You're using a testnet wallet in mainnet mode. Run make_wishlist.py to create mainnet walelts.")
             sys.exit(1)
-    start_bit_daemon(electrum_path,btc_wallet_path,b_rpcuser,b_rpcpass,b_rpcport)
     electron_path = config["bch"]["bin"]
     
     rpcuser = config["bch"]["rpcuser"]
@@ -235,8 +234,17 @@ def main(config):
         if "test" in bch_wallet_path or not bch_wallet_path:
             print_err("You're using a testnet wallet in mainnet mode. Run make_wishlist.py to create mainnet walelts.")
             sys.exit(1)
-    start_bit_daemon(electron_path,bch_wallet_path,rpcuser,rpcpass,rpcport)
-
+    threads = []
+    t = threading.Thread(target=start_bit_daemon, args=(electrum_path,btc_wallet_path,b_rpcuser,b_rpcpass,b_rpcport,))
+    threads.append(t)
+    t = threading.Thread(target=start_bit_daemon, args=(electron_path,bch_wallet_path,rpcuser,rpcpass,rpcport,))
+    threads.append(t)
+    # Start all threads
+    for x in threads:
+     x.start()
+    # Wait for all of them to finish
+    for x in threads:
+     x.join()
     http_port = config["callback"]["port"]
     http_server = "http://" + str(local_ip) + ":" + str(http_port)
 

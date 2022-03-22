@@ -41,7 +41,7 @@ monero_wallet_rpc = "/bin/monero-wallet-rpc"
 bch_wallet_file = ""
 btc_wallet_file = ""
 
-wallet_dir = os.path.join(os.path.abspath(os.path.join(os.getcwd(),"wallets")))
+wallet_dir = "/home/app/wallets"
 
 
 www_root = ""
@@ -135,7 +135,8 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
             "--wallet-dir", wallet_dir,
             "--rpc-bind-port", rpc_port,
             "--disable-rpc-login",
-            "--daemon-address", remote_node
+            "--offline"
+            #"--daemon-address", remote_node
         ]
     else:
         rpc_args = [ 
@@ -143,8 +144,9 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
             "--wallet-file", wallet_file,
             "--rpc-bind-port", rpc_port,
             "--disable-rpc-login",
-            "--daemon-address", remote_node,
-            "--password", ""
+            "--password", "",
+            #"--daemon-address", remote_node,
+            "--offline"
         ]
     if os.environ["waas_mainnet"] == "0":
         print("stagenet mode")
@@ -156,24 +158,27 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
     for line in iter(monero_daemon.stdout.readline,''):
         #debug output
         #print(str(line.rstrip()))
-        if b"Error" in line.rstrip() or b"Failed" in line.rstrip():
-            msg = line.rstrip()
-            print_err(msg)
-            kill_daemon = 1
-            break
-        if b"Starting wallet RPC server" in line.rstrip():
-            print_msg("Success!")
-            rpc_connection = AuthServiceProxy(service_url=rpc_url)
-            if wallet_file != None:
-                http = ""
-                if "http://" not in remote_node:
-                    http = "http://"
-                rpc_remote = http + remote_node + "/json_rpc"
-                remote_rpc_connection = AuthServiceProxy(service_url=rpc_remote)
-                data = remote_rpc_connection.get_info()
-                info = rpc_connection.refresh({"start_height": (data['height'] - 1)})
-                rpc_connection.store()
-            break
+        if b"mining status" in line.rstrip():
+            pass
+        else:
+            if b"Error" in line.rstrip() or b"Failed" in line.rstrip():
+                msg = line.rstrip()
+                print_err(msg)
+                kill_daemon = 1
+                break
+            if b"Starting wallet RPC server" in line.rstrip():
+                print_msg("Success!")
+                rpc_connection = AuthServiceProxy(service_url=rpc_url)
+                if wallet_file != None:
+                    http = ""
+                    if "http://" not in remote_node:
+                        http = "http://"
+                    rpc_remote = http + remote_node + "/json_rpc"
+                    remote_rpc_connection = AuthServiceProxy(service_url=rpc_remote)
+                    data = remote_rpc_connection.get_info()
+                    info = rpc_connection.refresh({"start_height": (data['height'] - 1)})
+                    rpc_connection.store()
+                break
         #time.sleep(1)
     if kill_daemon == 1:
         monero_daemon.terminate()
@@ -239,19 +244,13 @@ def create_monero_wallet(config):
     if not os.path.isfile(os.path.join(".", "bin", "monero-wallet-rpc")):
         print_err("/bin/monero-wallet-rpc missing, unable to create monero walllet.")
         sys.exit(1)
-    if monero_rpc_online(rpc_url) == True:
-        print_err("Monero rpc detected: quitting it now.")
-        for proc in psutil.process_iter():
-            # check whether the process name matches
-            if "-rpc" in proc.name():
-                proc.kill()
     #start the monero-rpc-wallet daemon
     list_remote_nodes = []
     fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
     for i in range(int(fallback_remote_nodes)):
         num = (i+1)
         list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
-
+    print_msg("We need the current blockheight from a remote node..")
     remote_node = "http://" + str(start_daemons.find_working_node(list_remote_nodes))
     #remote_node = "http://stagenet.melo.tools:38081"
     letters = string.ascii_lowercase
@@ -262,16 +261,16 @@ def create_monero_wallet(config):
     rpc_remote = remote_node + "/json_rpc"
     remote_rpc_connection = AuthServiceProxy(service_url=rpc_remote)
     data = remote_rpc_connection.get_info()
-    #--------------------------------------
-    #  create hot wallet 
-    #--------------------------------------
     auto_create = 0
     mnemonic = ""
     seed = ""
+    monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,None,remote_node)
+    rpc_connection = AuthServiceProxy(service_url=rpc_url)
     if prompt_wallet_create("xmr"):
+        #--------------------------------------
+        #  create hot wallet 
+        #--------------------------------------
         auto_create = 1
-        monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,None,remote_node)
-        rpc_connection = AuthServiceProxy(service_url=rpc_url)
         #label could be added
         params={
                 "filename": wallet_fname,
@@ -303,6 +302,7 @@ def create_monero_wallet(config):
         secure_delete(wallet_path, passes=3)
         #os.remove(address_file)
         print_msg("Deleted.")
+        '''
         monero_daemon.terminate()
         monero_daemon.communicate()
         for proc in psutil.process_iter():
@@ -310,6 +310,7 @@ def create_monero_wallet(config):
             if "monero-wallet-" in proc.name():
                 #print(proc.name())
                 proc.kill()
+        '''
     else:
         #view_key
         #main_address
@@ -334,11 +335,12 @@ def create_monero_wallet(config):
             json.dump(wallet_json_data,f)
 
         #dummy wallet would be here TODO
+        #"--daemon-address", remote_node,
         rpc_args = [ 
         f".{monero_wallet_rpc}",
-        "--rpc-bind-port", rpc_port,
+        "--rpc-bind-port", "11111",
         "--disable-rpc-login",
-        "--daemon-address", remote_node,
+        "--offline",
         "--generate-from-json", json_path
         ]
         if os.environ["waas_mainnet"] == "0":
@@ -351,30 +353,38 @@ def create_monero_wallet(config):
             #print(line.rstrip())
             #debug output
             #print(str(line.rstrip()))
-            if b"Resource temporarily unavailable" in line.rstrip():
-                print_err("Please stop this docker container using 'docker stop <name>")
-            if b"Error" in line.rstrip() or b"Failed" in line.rstrip():
-                print_err(line.rstrip())
-                if b"gettransactions" in line.rstrip():
+            if b"mining status" in line.rstrip():
+                pass
+            else:
+                if b"Resource temporarily unavailable" in line.rstrip():
+                    print_err("Please stop this docker container using 'docker stop <name>")
+                if b"Error" in line.rstrip() or b"Failed" in line.rstrip():
+                    print_err(line.rstrip())
+                    if b"gettransactions" in line.rstrip():
+                        break
+                    print_err("View-key / Main address incorrect , try again")
+                    key_data = prompt_monero_keys()
+                    view_key = key_data["view_key"]
+                    main_address = key_data["main_address"]
                     break
-                print_err("View-key / Main address incorrect , try again")
-                key_data = prompt_monero_keys()
-                view_key = key_data["view_key"]
-                main_address = key_data["main_address"]
-                break
             if os.path.isfile(wallet_path):
                 wallet_created = 1
                 break
         if wallet_created == 1:
+            #quit the 'generate from json' daemon with tmp port 11111
+            monero_daemon.terminate()
+            monero_daemon.communicate()
             break
     config["monero"]["viewkey"] = view_key
     config["monero"]["mainaddress"] = main_address
     print_msg("Success.")
     #remove the broken wallet file(??) (in testing i had to remove the wallet file for some reason)
-    monero_daemon.terminate()
-    monero_daemon.communicate()
-    os.remove(wallet_path)
-    monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_path,remote_node)
+    #monero_daemon.terminate()
+    #monero_daemon.communicate()
+    #os.remove(wallet_path)
+    #we've launched the daemon with --wallet-dir , so the filename , not full path is required
+    rpc_connection.open_wallet({"filename": wallet_fname, "password" :""})
+    #monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_path,remote_node)
 
     #assuming we can still use the same port..
     print_msg("Verifying view-wallet has the same address as the hot version")
@@ -555,20 +565,16 @@ def main(config):
     rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
     electrum_bin = config["btc"]["bin"]
     electron_bin = config["bch"]["bin"]
-    if monero_rpc_online(rpc_url) == True:
-        print("rpc is online")
-        #although its online, if it doesnt have a wallet file open this will error
-        #but its fine
-        start_daemons.monero_rpc_close_wallet(rpc_url)
-        for proc in psutil.process_iter():
-            # check whether the process name matches
-            if "-rpc" in proc.name():
-                proc.kill()
+    #blindly kill monero daemon
+    for proc in psutil.process_iter():
+        # check whether the process name matches
+        if "-rpc" in proc.name():
+            proc.kill()
         #monero_rpc_open_wallet(rpc_url,wallet_file)
     #Error checks needed here on user inputs
-    print("stop bchbtc")
+    th = threading.Thread(target=stop_bit_daemon, args=(electron_bin,))
+    th.start()
     stop_bit_daemon(electrum_bin)
-    stop_bit_daemon(electron_bin)
     www_root = "static"
     www_data_dir = os.path.join(www_root,"data")
     www_qr_dir = os.path.join(www_root,"qrs")
@@ -635,10 +641,18 @@ def main(config):
     bch_wallet_path = config["bch"]["wallet_file"]
     print(f"btc wallet path = {btc_wallet_path}")
     print(f"bch wallet path = {bch_wallet_path}")
-    
-    start_daemons.start_bit_daemon(electrum_bin,btc_wallet_path,btc_rpcuser,btc_rpcpass,btc_rpcport)
-    start_daemons.start_bit_daemon(electron_bin,bch_wallet_path,bch_rpcuser,bch_rpcpass,bch_rpcport)
-
+    #atleast reduce the time by 50%
+    threads = []
+    t = threading.Thread(target=start_daemons.start_bit_daemon, args=(electrum_bin,btc_wallet_path,btc_rpcuser,btc_rpcpass,btc_rpcport,))
+    threads.append(t)
+    t = threading.Thread(target=start_daemons.start_bit_daemon, args=(electron_bin,bch_wallet_path,bch_rpcuser,bch_rpcpass,bch_rpcport,))
+    threads.append(t)
+    # Start all threads
+    for x in threads:
+     x.start()
+    # Wait for all of them to finish
+    for x in threads:
+     x.join()
     #create 'your_wishlist.json'
     print_msg("Lets create your wishlist :) (ignore the warning above)")
 
@@ -665,14 +679,6 @@ def main(config):
     cur.execute(sql)
     con.commit()
     con.close()
-    #db_make_modified()
-    #stop_bit_daemon(electrum_bin)
-    #stop_bit_daemon(electron_bin)
-
-
-    #monero_rpc_close_wallet(rpc_url)
-    #monero_daemon.terminate()
-    #monero_daemon.communicate()
     input("Press Enter to clear the console (last chance to write your seeds down!")
     os.system("clear")
     print_msg("Finished. Run edit_wishlist.py to add/edit wishes. Goodluck!")
@@ -685,8 +691,6 @@ def main(config):
     except:
         pass
     os.system('nohup python3 start_daemons.py &')
-    #th = threading.Thread(target=start_main, args=(config,))
-    #th.start()
 
 def stop_bit_daemon(daemon_dir):
     if "electron" in daemon_dir:
@@ -696,8 +700,8 @@ def stop_bit_daemon(daemon_dir):
     if os.environ["waas_mainnet"] == "0":
         print("testnet mode")
         run_args.append("--testnet")
-    stop_daemon = subprocess.Popen(run_args)
-    stop_daemon.communicate()
+    retcode = subprocess.Popen(run_args)
+    retcode.communicate()
 
 def print_geni():
     geni = """
@@ -730,7 +734,6 @@ def print_geni():
 
 if __name__ == "__main__":
     print_geni()
-    print(os.environ["waas_mainnet"])
     #os.chdir(os.path.dirname(os.path.abspath(__file__)))
     '''
     for proc in psutil.process_iter():
