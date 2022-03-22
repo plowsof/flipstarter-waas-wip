@@ -11,6 +11,12 @@
   word-wrap:break-word;
   user-select: all
 }
+.wow_address, div .anon_address_wow{
+  color: pink ;
+  font-family: monospace ;
+  word-wrap:break-word;
+  user-select: all
+}
 
 .bch_address, div .anon_address_bch{
   color: #0AC18E ;
@@ -20,6 +26,10 @@
 }
 
 .xmr_address:hover, div .anon_address_xmr:hover{
+  background-color: gray;
+}
+
+.wow_address:hover, div .anon_address_wow:hover{
   background-color: gray;
 }
 

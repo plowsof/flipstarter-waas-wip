@@ -190,7 +190,10 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
     while True:
         try:
             info = rpc_connection.get_version()
-            print("Monero RPC server online.")
+            if "wow" in rpc_bin_file:
+                print_msg("WOWnero RPC server online.")
+            else:
+                print_msg("Monero RPC server online.")
             return monero_daemon
         except Exception as e:
             print(e)

@@ -28,6 +28,7 @@ function drawCryptoDonate(id){
     <option id="xmr_${wish["id"]}" value="xmr" rfund="Monero"><img src="/donate/static/images/xmr.png">Monero</option>
     <option id="bch_${wish["id"]}" value="bch" rfund="BitcoinCash"><img src="/donate/static/images/bch.png">BitcoinCash</option>
     <option id="btc_${wish["id"]}" value="btc" rfund="Bitcoin"><img src="/donate/static/images/btc.png">Bitcoin</option>
+    <option id="wow_${wish["id"]}" value="wow" rfund="WOWnero"><img src="/donate/static/images/wow.png">WOWnero</option>
   </select></br>
   <input type="radio" id="anon" name="choice" value="anon" checked="checked">
   <label for="anon">Anonymous</label></br>
@@ -43,6 +44,7 @@ function drawCryptoDonate(id){
   <div class="anon_address_bch" id="bch_${wish["id"]}">bitcoincash:${wish.bch_address}</div>
   <div class="anon_address_btc" id="btc_${wish["id"]}">bitcoin:${wish.btc_address}</div>
   <div class="anon_address_xmr" id="xmr_${wish["id"]}">monero:${wish.xmr_address}</div>
+  <div class="anon_address_wow" id="wow_${wish["id"]}">monero:${wish.wow_address}</div>
   
 </form>
 </div>
@@ -306,8 +308,10 @@ async function pagination(comments){
       symbol = "monero"
     } else if (comments[i].ticker == "bch"){
       symbol = "bitcoin-cash"
-    } else {
+    } else if (comments[i].ticker == "btc"){
       symbol = "bitcoin"
+    } else {
+      symbol = "wownero"
     }
 
     comments[i].usd_value = (comments[i].amount * array_prices[symbol])

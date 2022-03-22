@@ -222,26 +222,34 @@ async def handle_crypto_form(request: Request):
                 valid_coin = 1
             if ticker == "btc":
                 valid_coin = 1
+            if ticker == "wow":
+                valid_coin = 1
 
             if valid_coin == 0:
                 return
-            if ticker != "xmr":
+            if ticker == "bch":
                 bchuser = wish_config["bch"]["rpcuser"]
                 bchpass = wish_config["bch"]["rpcpassword"]
                 bchport = wish_config["bch"]["rpcport"]
+                if not bit_online(bchuser,bchpass,bchport):
+                    return
+            if ticker == "btc":
                 btcuser = wish_config["btc"]["rpcuser"]
                 btcpass = wish_config["btc"]["rpcpassword"]
                 btcport = wish_config["btc"]["rpcport"]
-                print("check is online")
-                if not bit_online(bchuser,bchpass,bchport):
-                    return
                 if not bit_online(btcuser,btcpass,btcport):
                     return
-            else:
+            if ticker == "xmr":
                 xmrport = wish_config["monero"]["daemon_port"]
                 rpc_url = "http://localhost:" + str(xmrport) + "/json_rpc"
                 if not make_wishlist.monero_rpc_online(rpc_url):
                     return
+            if ticker == "wow":
+                wowport = wish_config["wow"]["daemon_port"]
+                rpc_url = "http://localhost:" + str(xmrport) + "/json_rpc"
+                if not make_wishlist.monero_rpc_online(rpc_url):
+                    return
+
             address = get_unused_address(wish_config,ticker)
             if not address:
                 return
@@ -262,6 +270,8 @@ async def handle_crypto_form(request: Request):
                 ticker = "bitcoin-cash"
             elif ticker == "btc":
                 ticker = "bitcoin"
+            elif ticker == "wow":
+                ticker = "wownero"
             else:
                 ticket_valid = 0
 
