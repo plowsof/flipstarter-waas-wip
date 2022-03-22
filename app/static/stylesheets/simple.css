@@ -12,7 +12,8 @@
   user-select: all
 }
 .wow_address, div .anon_address_wow{
-  color: pink ;
+  color: #FF6EC7 ;
+  font-weight: bold;
   font-family: monospace ;
   word-wrap:break-word;
   user-select: all
@@ -30,7 +31,7 @@
 }
 
 .wow_address:hover, div .anon_address_wow:hover{
-  background-color: gray;
+  background-color: yellow;
 }
 
 .btc_address:hover, div .anon_address_btc:hover {

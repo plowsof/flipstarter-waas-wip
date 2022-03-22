@@ -313,8 +313,13 @@ def save_prices():
         p_xmr = float(getPrice("XMR"))    
         p_btc = float(getPrice("BTC"))
         p_bch = float(getPrice("BCH"))
-        wow_price_resp = requests.get('https://funding.wownero.com/api/1/convert/wow-usd?amount=1')
-        #{"usd": 6.7}
+        wow_btc_price = requests.get("https://tradeogre.com/api/v1/markets")
+        for x in wow_btc_price.json():
+            try:
+                wow_btc_price = x["BTC-WOW"]["price"]
+            except:
+                pass
+        p_wow = float(wow_btc_price) * p_btc
         p_wow = wow_price_resp.json()["usd"]
         con = sqlite3.connect('./db/crypto_prices.db')
         cur = con.cursor()
@@ -373,7 +378,7 @@ def remote_health_check(wow_xmr,node,config):
 def recover_crash(xmr_wow,config,remote_node):
     for proc in psutil.process_iter():
         #kill process
-        if f"{wow_xmr}-wallet-rpc" in proc.name():
+        if f"{xmr_wow}-wallet-rpc" in proc.name():
             proc.kill()
 
     list_remote_nodes = []
@@ -390,7 +395,7 @@ def recover_crash(xmr_wow,config,remote_node):
 
     rpc_port = config[xmr_wow]["daemon_port"]
     wallet_file = config[xmr_wow]["wallet_file"]
-    rpc_url_local = "http://" + str(localhost) + "/json_rpc"
+    rpc_url_local = "http://localhost" + "/json_rpc"
 
     if remote_node:
         start_monero_rpc(rpc_bin_file,rpc_port,rpc_url_local,remote_node,wallet_file,xmr_wow)
@@ -411,6 +416,8 @@ def refresh_html_loop(remote_node,local_node,wow_remote_node,wow_local_node,conf
         wow_node_status = wishlist["metadata"]["wownero_status"]
         not_ok = 0
         list_modified = 0
+        recover_xmr = 0
+        recover_wow = 0
 
         #each of these could time out
         try:
@@ -429,8 +436,10 @@ def refresh_html_loop(remote_node,local_node,wow_remote_node,wow_local_node,conf
         if not remote_health_check("monero",remote_node,config) or not local_health_check("monero",rpc_local,rpc_connection,remote_node,config):
             recover_xmr = 1
         
-        wow_remote_node = recover_crash("wow",config,wow_remote_node)
-        remote_node = recover_crash("monero",config,remote_node)
+        if recover_xmr == 1:
+            wow_remote_node = recover_crash("wow",config,wow_remote_node)
+        if recover_wow == 1:
+            remote_node = recover_crash("monero",config,remote_node)
         del rpc_connection
         del rpc_local
         del wow_rpc_local

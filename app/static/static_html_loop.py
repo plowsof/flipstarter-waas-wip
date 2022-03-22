@@ -44,7 +44,7 @@ def main(config):
           "bitcoin-cash": "#0ac18e",
           "bitcoin": "#f7931a",
           "usd": "#85bb65",
-          "wownero": "pink"
+          "wownero": "#FF6EC7"
         }
         sort = list(sortme.keys())
         one = colours[sort[0]]

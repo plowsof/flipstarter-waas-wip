@@ -76,7 +76,7 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
     for i in range(len(saved_wishlist["wishlist"])):
         if saved_wishlist["wishlist"][i][f"{ticker}_address"] == find_address:
             found = 1
-            if ticker != "xmr":
+            if ticker != "xmr" and ticker != "wow":
                 bit_balance = float(bit_con) + float(bit_unc)
                 old_balance = float(saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"]) + float(saved_wishlist["wishlist"][i][f"{ticker}_confirmed"])
                 if old_balance >= bit_balance:
@@ -85,7 +85,6 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
                 in_amount = float(bit_balance) - float(old_balance)
                 saved_wishlist["wishlist"][i][f"{ticker}_confirmed"] = float(bit_con)
                 saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"] = float(bit_unc)
-            logit("we found the address in the list")
             saved_wishlist["wishlist"][i]["modified_date"] = now
             saved_wishlist["metadata"]["modified"] = now
             #db_set_time_wish(int(time.time()))
@@ -107,7 +106,6 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
             #Percent calculated by JS - or some timed script to periodically check         
             break
     if found == 0:
-        logit(f"We didnt find {find_address} this address in our wishlist")
         extra_xmr = float(in_amount)
         address = find_address
         #donation received on invalid wishlist
@@ -138,14 +136,12 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
 
         cur.execute(create_receipts_table)
          
-        logit(f"select * from where address = {address}")
         cur.execute('SELECT * FROM donations WHERE donation_address = ?',[address])
         rows = cur.fetchall()
         pprint.pprint(cur.fetchall())
         #its a new address. continue
         if len(rows) == 0:
             extra_xmr += float(bit_balance)
-            logit("this address doesnt even exist in receipts lol")
             saved_wishlist["metadata"][f"{ticker}_total"] += float(extra_xmr)
             saved_wishlist["metadata"]["contributors"] += 1
         else:
@@ -168,7 +164,6 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
                     print(f"in_amount = {in_amount}")
                     extra_xmr = float(bit_balance)
             extra_xmr += float(db_amount)
-            logit("We exist in reciepts")
             sql = ''' UPDATE donations
                       SET amount = ?,
                           date_time = ?,
@@ -200,14 +195,14 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
                 #logit(saved_wishlist[i])
                 if saved_wishlist["wishlist"][i]["id"] == db_wish_id:
                     found = 1
-                    logit("we found the wish id -> title")
+                    #logit("we found the wish id -> title")
                     db_wish_id = saved_wishlist["wishlist"][i]["title"]
                     saved_wishlist["metadata"]["modified"] = now
                     #db_set_time_wish(int(time.time()))
                     saved_wishlist["wishlist"][i]["modified_date"] = now
                     saved_wishlist["wishlist"][i]["contributors"] += 1
                     saved_wishlist["wishlist"][i][f"{ticker}_total"] += float(in_amount)
-                    if ticker != "xmr":
+                    if ticker != "xmr" and ticker != "wow":
                         saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"] = bit_unc
                         saved_wishlist["wishlist"][i][f"{ticker}_confirmed"] = bit_con
                     history_tx = {

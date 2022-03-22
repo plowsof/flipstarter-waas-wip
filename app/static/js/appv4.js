@@ -97,14 +97,16 @@ function getTotal(wish){
         "monero": "xmr_total",
         "bitcoin": "btc_total",
         "bitcoin-cash": "bch_total",
-        "usd": "usd_total"
+        "usd": "usd_total",
+        "wownero": "wow_total"
     }
     let percentages = {
       "values": {
         "monero": 0,
         "bitcoin-cash": 0,
         "bitcoin": 0,
-        "usd": 0
+        "usd": 0,
+        "wownero": 0
       },
       "total_usd": 0
     }
@@ -202,7 +204,7 @@ function updateWishlist(data)
       "bitcoin-cash": "#0ac18e",
       "bitcoin": "#f7931a",
       "usd": "#85bb65",
-      "wownero": "pink"
+      "wownero": "#FF6EC7"
     }
     one = colours[sortme[0]] 
     prc0 = percent_info["values"][sortme[0]]
