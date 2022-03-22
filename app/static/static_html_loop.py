@@ -283,8 +283,8 @@ def db_get_prices():
         return_me = {
         "bitcoin-cash": rows[0][3],
         "monero": rows[0][1],
+        "wownero": rows[0][4],
         "bitcoin": rows[0][2]
-        "wownero": rows[0][4]
         }
         return return_me
     except:

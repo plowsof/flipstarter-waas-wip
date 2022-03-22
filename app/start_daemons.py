@@ -193,26 +193,37 @@ def main(config):
         if "test" not in wallet_file:
             print_err("Trying to use a Mainnet wallet in Stagenet mode!\nConnect to this container and run make_wishlist.py to create a stagenet wallet")
             sys.exit(1)
+    #we have to force close the monero rpc because it was launched
+    #without tx-notify in make_wishlist
+    for proc in psutil.process_iter():
+        # check whether the process name matches
+        if "-rpc" in proc.name():
+            proc.kill()
     fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
     list_remote_nodes = []
     for i in range(int(fallback_remote_nodes)):
         num = (i+1)
         list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
-    #we have to force close the monero rpc because it was launched
-    #without tx-notify in make_wishlist
-    for proc in psutil.process_iter():
-        # check whether the process name matches
-        if "monero-wallet-rpc" in proc.name():
-            proc.kill()
     www_root = config["wishlist"]["www_root"]
     remote_node = find_working_node(list_remote_nodes)
-    if monero_rpc_online(rpc_url) != True:
-        #monero_rpc_close_wallet(rpc_url)
-        #monero_rpc_open_wallet(rpc_url,wallet_file)
-        if remote_node:
-            start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file)
-        else:
-            print("No monero remote node")
+    if remote_node:
+        start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file)
+    else:
+        print("No monero remote node")
+
+    #WOW setup
+    fallback_remote_nodes = config["wow"]["fallback_remote_nodes"]
+    rpc_port = config["wow"]["daemon_port"]
+    rpc_bin_file = "/bin/wownero-wallet-rpc"
+    list_remote_nodes = []
+    for i in range(int(fallback_remote_nodes)):
+        num = (i+1)
+        list_remote_nodes.append(config["wow"][f"remote_node_{num}"])
+    remote_node = find_working_node(list_remote_nodes)
+    if remote_node:
+        start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file)
+    else:
+        print("No monero remote node")
 
 
     electrum_path = config["btc"]["bin"]
