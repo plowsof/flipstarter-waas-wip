@@ -121,6 +121,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                 print(f"4) USD [{total_usd}]")
                 print(f"5) WOW [{total_wow}]")
                 print(f"6) 'Cash out' - Zero totals and set USD to [{goal}].")
+                answer = 7
                 while answer not in [1,2,3,4,5,6]:
                     answer = int(input(">> "))
                 if answer != 6:

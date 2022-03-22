@@ -44,7 +44,7 @@ function drawCryptoDonate(id){
   <div class="anon_address_bch" id="bch_${wish["id"]}">bitcoincash:${wish.bch_address}</div>
   <div class="anon_address_btc" id="btc_${wish["id"]}">bitcoin:${wish.btc_address}</div>
   <div class="anon_address_xmr" id="xmr_${wish["id"]}">monero:${wish.xmr_address}</div>
-  <div class="anon_address_wow" id="wow_${wish["id"]}">monero:${wish.wow_address}</div>
+  <div class="anon_address_wow" id="wow_${wish["id"]}">wownero:${wish.wow_address}</div>
   
 </form>
 </div>
@@ -227,7 +227,7 @@ function updateWishlist(data)
     five = colours[sortme[4]]
     prc4 = percent_info["values"][sortme[4]]
     prc4 += prc3
-    five += ` ${prc2}% ${prc3}%`
+    five += ` ${prc3}% ${prc4}%`
 
     end = `${prc4}%`
     wish = wishlist["wishlist"][i] 

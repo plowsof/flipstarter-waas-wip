@@ -10,6 +10,7 @@ prices = {}
 prices["monero"] = 0
 prices["bitcoin-cash"] = 0
 prices["bitcoin"] = 0
+prices["wownero"] = 0
 
 comments_per_page = 8
 
@@ -43,7 +44,7 @@ def main(config):
           "bitcoin-cash": "#0ac18e",
           "bitcoin": "#f7931a",
           "usd": "#85bb65",
-          "wow": "pink"
+          "wownero": "pink"
         }
         sort = list(sortme.keys())
         one = colours[sort[0]]

@@ -23,7 +23,7 @@ function anonUri(){
   } else {
     uri = "wownero:"
     str_amount = "tx_amount"
-    symbol = "monero"
+    symbol = "wownero"
   }
   price = getPriceSingle(symbol)
 
@@ -64,6 +64,7 @@ function displayAnon() {
     $(".anon_address_xmr").hide()
     $(".anon_address_bch").hide()
     $(".anon_address_btc").hide()
+    $(".anon_address_wow").hide()
     //alert(id)
     $(".anon_address_" + id).show()
   } else {
@@ -107,6 +108,7 @@ function setHooks(id,string){
           $(".anon_address_xmr").hide();
           $(".anon_address_bch").hide();
           $(".anon_address_btc").hide();
+          $(".anon_address_wow").hide();
           $('.kyc').show()
           $(".spinner").hide();
           $("#button_qr").hide();   
