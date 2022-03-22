@@ -3,7 +3,7 @@ FROM sethsimmons/simple-monero-wallet-rpc as build
 
 #download and verify binaries
 FROM alpine:latest as verified
-RUN apk add gnupg wget curl bash
+RUN apk add gnupg wget curl bash tar
 
 ENV JONALDKEY2=https://raw.githubusercontent.com/fyookball/keys-n-hashes/master/pubkeys/jonaldkey2.txt 
 ENV SOMBERNIGHT=https://raw.githubusercontent.com/spesmilo/electrum/master/pubkeys/sombernight_releasekey.asc 
@@ -15,7 +15,7 @@ ENV URL_ELECTRUM=https://download.electrum.org/${VER_ELECTRUM}/electrum-${VER_EL
 ENV URL_ELECTRON=https://github.com/Electron-Cash/Electron-Cash/releases/download/${VER_ELECTRON}/Electron-Cash-${VER_ELECTRON}-x86_64.AppImage 
 ENV SIG_ELECTRUM=https://download.electrum.org/${VER_ELECTRUM}/electrum-${VER_ELECTRUM}-x86_64.AppImage.asc
 ENV SIG_ELECTRON=https://raw.githubusercontent.com/Electron-Cash/keys-n-hashes/master/sigs-and-sums/${VER_ELECTRON}/win-linux/Electron-Cash-${VER_ELECTRON}-x86_64.AppImage.asc 
-
+ENV URL_WOWNERO=https://git.wownero.com/attachments/b5cc0583-9787-4b9e-94f4-26101025354c
 
 RUN gpg --import <(curl ${JONALDKEY2} ) \
 && gpg --import <(curl ${SOMBERNIGHT} ) \
@@ -27,14 +27,19 @@ WORKDIR /wallets
 RUN wget -O run_electrum.asc ${SIG_ELECTRUM} \ 
 &&  wget -O electron-cash.asc ${SIG_ELECTRON} \
 &&  wget -O run_electrum ${URL_ELECTRUM} \
-&&  wget -O electron-cash ${URL_ELECTRON}
+&&  wget -O electron-cash ${URL_ELECTRON} \ 
+&&  wget -O wownero-x86_64-linux-gnu-v0.10.1.0.tar.bz2 ${URL_WOWNERO}
 
 #if any of these checks fail, the image will not be built
 RUN gpg --status-fd=1 --verify electron-cash.asc 2>/dev/null | grep "GOODSIG 4FD06489EFF1DDE1 Jonald Fyookball <jonf@electroncash.org>" || exit 1
 RUN gpg --status-fd=1 --verify run_electrum.asc 2>/dev/null | grep "GOODSIG 2BD5824B7F9470E6 Thomas Voegtlin (https://electrum.org) <thomasv@electrum.org>" || exit 1
 RUN gpg --status-fd=1 --verify run_electrum.asc 2>/dev/null | grep "GOODSIG CA9EEEC43DF911DC SomberNight/ghost43 (Electrum RELEASE signing key) <somber.night@protonmail.com>" || exit 1
 RUN gpg --status-fd=1 --verify run_electrum.asc 2>/dev/null | grep "GOODSIG 3152347D07DA627C Stephan Oeste (it) <it@oeste.de>" || exit 1
+RUN [ "cf1c822dfef2377f79a48ebf51054441e152b71f06760f81a02613ffa1dc69b2  wownero-x86_64-linux-gnu-v0.10.1.0.tar.bz2" = "$(sha256sum  wownero-x86_64-linux-gnu-v0.10.1.0.tar.bz2)" ]
 
+RUN tar -xvjf wownero-x86_64-linux-gnu-v0.10.1.0.tar.bz2 wownero-x86_64-linux-gnu-v0.10.1.0/wownero-wallet-rpc && \
+cp wownero-x86_64-linux-gnu-v0.10.1.0/wownero-wallet-rpc wownero-wallet-rpc && \
+rm *bz2 && rm -r *v0*
 
 FROM python:3.8-slim as dependencies
 

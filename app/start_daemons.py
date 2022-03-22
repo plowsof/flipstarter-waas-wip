@@ -173,7 +173,7 @@ def start_bit_daemon(bin_file,wallet_file,rpcuser,rpcpass,rpcport):
     run_cmd(rpc_port)
     run_cmd(start_daemon)
     run_cmd(load_wallet)
-    
+
 def run_cmd(list_args):
     bch_daemon = subprocess.Popen(list_args)
     bch_daemon.communicate()

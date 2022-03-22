@@ -37,6 +37,7 @@ wishes =[]
 btc_info = []
 bch_info = []
 monero_wallet_rpc = "/bin/monero-wallet-rpc"
+wownero_wallet_rpc = "/bin/wownero-wallet-rpc"
 
 bch_wallet_file = ""
 btc_wallet_file = ""
@@ -148,6 +149,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
             #"--daemon-address", remote_node,
             "--offline"
         ]
+    print(rpc_args)
     if os.environ["waas_mainnet"] == "0":
         print("stagenet mode")
         rpc_args.append("--stagenet")
@@ -232,31 +234,36 @@ def numbered_seed(seed):
         return_seed.append(row_string)
     return return_seed
 
-def create_monero_wallet(config):
-    global wallet_dir, monero_wallet_rpc, rpc_bin_file
-    print_msg("Creating Monero wallet.")
-    local_ip = "localhost"
-    rpc_port = config["monero"]["daemon_port"]
-    if rpc_port == "":
-        rpc_port = 18082
-    rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
-    #print(rpc_url)
-    if not os.path.isfile(os.path.join(".", "bin", "monero-wallet-rpc")):
-        print_err("/bin/monero-wallet-rpc missing, unable to create monero walllet.")
-        sys.exit(1)
-    #start the monero-rpc-wallet daemon
-    list_remote_nodes = []
-    fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
-    for i in range(int(fallback_remote_nodes)):
-        num = (i+1)
-        list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
-    print_msg("We need the current blockheight from a remote node..")
-    remote_node = "http://" + str(start_daemons.find_working_node(list_remote_nodes))
-    #remote_node = "http://stagenet.melo.tools:38081"
+def create_monero_wallet(config,remote_node,ticker):
+    global wallet_dir, monero_wallet_rpc, rpc_bin_file, wownero_wallet_rpc
     letters = string.ascii_lowercase
-    wallet_fname = "monero_" + ''.join(random.choice(letters) for i in range(10))
+    if ticker == "xmr":
+        coin = "Monero"
+        seed_title = f"************* [{Style.BRIGHT}{Fore.RED}Monero {Style.RESET_ALL}Wallet] *************"
+        print_msg("Creating Monero wallet.")
+        rpc_port = config["monero"]["daemon_port"]
+        if not os.path.isfile(config["monero"]["bin"]):
+            print_err("/bin/monero-wallet-rpc missing, unable to create monero walllet.")
+            sys.exit(1)
+        wallet_fname = "monero_" + ''.join(random.choice(letters) for i in range(10))
+    else:
+        coin = "WOWnero"
+        seed_title = f"************* [{Style.BRIGHT}{Fore.YELLOW}{Back.MAGENTA}WOWnero{Style.RESET_ALL} Wallet] *************"
+        print_msg("Creating WOWnero wallet.")
+        rpc_port = config["wow"]["daemon_port"]
+        if not os.path.isfile(config["wow"]["bin"]):
+            print_err("/bin/wownero-wallet-rpc missing, unable to create WOWnero walllet.")
+            sys.exit(1)
+        monero_wallet_rpc = wownero_wallet_rpc
+        wallet_fname = "wownero_" + ''.join(random.choice(letters) for i in range(10))
+
+    local_ip = "localhost"
+    rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
+
+    print_msg("We need the current blockheight from a remote node..")
     if os.environ["waas_mainnet"] == "0":
         wallet_fname = "test_" + wallet_fname
+
     wallet_path = os.path.join(wallet_dir,wallet_fname)
     rpc_remote = remote_node + "/json_rpc"
     remote_rpc_connection = AuthServiceProxy(service_url=rpc_remote)
@@ -266,7 +273,7 @@ def create_monero_wallet(config):
     seed = ""
     monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,None,remote_node)
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
-    if prompt_wallet_create("xmr"):
+    if prompt_wallet_create(ticker):
         #--------------------------------------
         #  create hot wallet 
         #--------------------------------------
@@ -276,7 +283,7 @@ def create_monero_wallet(config):
                 "filename": wallet_fname,
                 "language": "English"
                 }
-        print_msg("Creating a Monero wallet..")
+        print_msg("Creating wallet..")
         info = rpc_connection.create_wallet(params)
         print_msg("Success")
         print_msg(f"Opening wallet file {wallet_fname}, and obtaining seed...")
@@ -287,7 +294,7 @@ def create_monero_wallet(config):
         #spend_key = rpc_connection.query_key({"key_type": "spend_key"})["key"]
         main_address = rpc_connection.get_address()["address"]
         seed = numbered_seed(mnemonic)
-        print_msg(f"************* [{Style.BRIGHT}{Fore.RED}Monero {Style.RESET_ALL}Wallet] *************")
+        print_msg(seed_title)
         print_msg(f"Your wallet seed is:") 
         for line in seed:
             print(line)
@@ -297,23 +304,10 @@ def create_monero_wallet(config):
         rpc_connection.close_wallet()
         print_msg("Secure deletion of wallet / key file (3 passes of random data)...")
         keys = wallet_path + ".keys"
-        #address_file = wallet_path + ".address.txt"
         secure_delete(keys, passes=3)
         secure_delete(wallet_path, passes=3)
-        #os.remove(address_file)
         print_msg("Deleted.")
-        '''
-        monero_daemon.terminate()
-        monero_daemon.communicate()
-        for proc in psutil.process_iter():
-            # check whether the process name matches
-            if "monero-wallet-" in proc.name():
-                #print(proc.name())
-                proc.kill()
-        '''
     else:
-        #view_key
-        #main_address
         key_data = prompt_monero_keys()
         view_key = key_data["view_key"]
         main_address = key_data["main_address"]
@@ -347,7 +341,7 @@ def create_monero_wallet(config):
             print("stagenet mode")
             rpc_args.append("--stagenet")
         monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
-        print_msg("Creating the view-only Monero wallet..")
+        print_msg(f"Creating the view-only {coin} wallet..")
         #wallet_rpc_server.cpp:4509 Error creating wallet: failed to parse view key secret key
         for line in iter(monero_daemon.stdout.readline,''):
             #print(line.rstrip())
@@ -378,15 +372,10 @@ def create_monero_wallet(config):
     config["monero"]["viewkey"] = view_key
     config["monero"]["mainaddress"] = main_address
     print_msg("Success.")
-    #remove the broken wallet file(??) (in testing i had to remove the wallet file for some reason)
-    #monero_daemon.terminate()
-    #monero_daemon.communicate()
-    #os.remove(wallet_path)
     #we've launched the daemon with --wallet-dir , so the filename , not full path is required
     rpc_connection.open_wallet({"filename": wallet_fname, "password" :""})
     #monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_path,remote_node)
 
-    #assuming we can still use the same port..
     print_msg("Verifying view-wallet has the same address as the hot version")
     new_view_key = rpc_connection.query_key({"key_type": "view_key"})["key"]
     if new_view_key != view_key:
@@ -394,10 +383,10 @@ def create_monero_wallet(config):
         sys.exit(1)
     else:
         print_msg("Verified.")
-    #omiting the wallet-dir makes generate-from-json work (?)
-    #but we need wallet-dir to use it
-    config["monero"]["wallet_file"] = wallet_path
-    #TODO viewkey main_address in config file
+    if coin == "Monero":
+        config["monero"]["wallet_file"] = wallet_path
+    else:
+        config["wow"]["wallet_file"] = wallet_path
     with open('./db/wishlist.ini', 'w') as configfile:
         config.write(configfile)
 
@@ -414,8 +403,10 @@ def prompt_wallet_create(ticker):
         coin = "Bitcoin-Cash"
     elif ticker == "btc":
         coin = "Bitcoin"
-    else:
+    elif ticker == "xmr":
         coin = "Monero"
+    else:
+        coin = "WOWnero"
     answer = ""
     print_msg(f"No {coin} wallet detected. \n 1) Create one \n 2) Restore from keys")
     try:
@@ -560,8 +551,6 @@ def main(config):
     global www_root
     www_root = config["wishlist"]["www_root"]
     rpc_port = config["monero"]["daemon_port"]
-    if rpc_port == "":
-        rpc_port = 18082
     rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
     electrum_bin = config["btc"]["bin"]
     electron_bin = config["bch"]["bin"]
@@ -588,24 +577,59 @@ def main(config):
     #Monero setup
     wallet_file = config["monero"]["wallet_file"]
     validate_wallet = testnet_check(wallet_file)
+    list_remote_nodes = []
+    fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
+    for i in range(int(fallback_remote_nodes)):
+        num = (i+1)
+        list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
+
+    remote_node = "http://" + str(start_daemons.find_working_node(list_remote_nodes))
+    if not remote_node:
+        print_err("Error Monero remote unreachable")
+        sys.exit(1)
+
     if wallet_file == "" or not os.path.isfile(wallet_file) or not validate_wallet:
         monero_online = 1
-        monero_daemon = create_monero_wallet(config)
+        monero_daemon = create_monero_wallet(config,remote_node,"xmr")
     else:
         monero_online = 0
         #a wallet file was supplied
         #we still need to start the rpc up
-        list_remote_nodes = []
-        fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
-        for i in range(int(fallback_remote_nodes)):
-            num = (i+1)
-            list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
 
-        remote_node = "http://" + str(start_daemons.find_working_node(list_remote_nodes))
         if remote_node:
             monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,wallet_file,remote_node)
         else:
             print_err("Error Monero remote unreachable")
+            return
+
+    #WOW Setup
+    rpc_port = config["wow"]["daemon_port"]
+    rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
+    wallet_file = config["wow"]["wallet_file"]
+    validate_wallet = testnet_check(wallet_file)
+    list_remote_nodes = []
+    fallback_remote_nodes = config["wow"]["fallback_remote_nodes"]
+    for i in range(int(fallback_remote_nodes)):
+        num = (i+1)
+        list_remote_nodes.append(config["wow"][f"remote_node_{num}"])
+
+    wow_remote_node = "http://" + str(start_daemons.find_working_node(list_remote_nodes))
+    if not remote_node:
+        print_err("Error Wownero remote unreachable")
+        sys.exit(1)
+
+    if wallet_file == "" or not os.path.isfile(wallet_file) or not validate_wallet:
+        wownero_online = 1
+        wownero_daemon = create_monero_wallet(config,wow_remote_node,"wow")
+    else:
+        wownero_online = 0
+        #a wallet file was supplied
+        #we still need to start the rpc up
+
+        if wow_remote_node:
+            wownero_daemon = start_monero_rpc(wownero_wallet_rpc,rpc_port,rpc_url,wallet_file,remote_node)
+        else:
+            print_err("Error Wownero remote unreachable")
             return
 
     bch_wallet = config["bch"]["wallet_file"]

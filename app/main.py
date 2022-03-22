@@ -414,6 +414,11 @@ if __name__ == "__main__":
     wish_config["monero"]["remote_node_3"] = os.environ['waas_remote_node_3'].replace('"','')
     wish_config["monero"]["remote_node_4"] = os.environ['waas_remote_node_4'].replace('"','')
     wish_config["monero"]["remote_node_5"] = os.environ['waas_remote_node_5'].replace('"','')
+    wish_config["wow"]["remote_node_1"] = os.environ['waas_wow_remote_node_1'].replace('"','')
+    wish_config["wow"]["remote_node_2"] = os.environ['waas_wow_remote_node_2'].replace('"','')
+    wish_config["wow"]["remote_node_3"] = os.environ['waas_wow_remote_node_3'].replace('"','')
+    wish_config["wow"]["remote_node_4"] = os.environ['waas_wow_remote_node_4'].replace('"','')
+    wish_config["wow"]["remote_node_5"] = os.environ['waas_wow_remote_node_5'].replace('"','')
     wish_config["wishlist"]["intro"] = os.environ['waas_INTRO'].replace('"','')
     #start recurring fee loop
     th = threading.Thread(target=schedule_fee.schedule_main)

@@ -44,7 +44,7 @@ def getJson():
         data = json.load(json_file)
         return data
 
-def main(tx_id,multi=0):
+def main(tx_id,multi=0,wow=0):
     global json_fname, node_url
     logit(f"node_url = {node_url}")
     logit(f"json fname = {json_fname}")
@@ -59,9 +59,15 @@ def main(tx_id,multi=0):
         tx_data = tx_id
     if not tx_data:
         return
-    in_amount = formatAmount(tx_data["amount"])
+    if wow != "WOW":
+        in_amount = formatAmount(tx_data["amount"])
+        ticker = "xmr"
+    else:
+        in_amount = formatWOWamount(tx_data["amount"])
+        ticker = "wow"
+
     find_address = tx_data["address"]
-    updateDatabaseJson(find_address,in_amount,"xmr",saved_wishlist)
+    updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist)
 
 def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=0,bit_con=0,bit_unc=0):
     now = int(time.time())
@@ -264,40 +270,6 @@ async def ws_work_around(uid):
     con.close()
     requests.get(f'http://localhost:8000/push/{uid}')
 
-
-
-def db_set_time_comment(time_stamp):
-    con = sqlite3.connect('./db/modified.db')
-    cur = con.cursor()
-    create_modified_table = """ CREATE TABLE IF NOT EXISTS modified (
-                                data integer default 0,
-                                comment integer default 1,
-                                wishlist integer default 1
-                            ); """
-    cur.execute(create_modified_table)
-    sql = ''' UPDATE modified
-              SET comment = ?
-              WHERE data= ?'''   
-    cur.execute(sql, (time_stamp,0))
-    con.commit()
-    con.close()
-
-def db_set_time_wish(time_stamp):
-    con = sqlite3.connect('./db/modified.db')
-    cur = con.cursor()
-    create_modified_table = """ CREATE TABLE IF NOT EXISTS modified (
-                                data integer default 0,
-                                comment integer default 1,
-                                wishlist integer default 1
-                            ); """
-    cur.execute(create_modified_table)
-    sql = ''' UPDATE modified
-              SET wishlist = ?
-              WHERE data= ?'''   
-    cur.execute(sql, (time_stamp,0))
-    con.commit()
-    con.close()
-
 def dump_json(wishlist):
     global json_fname
     lock = json_fname + ".lock"
@@ -306,7 +278,7 @@ def dump_json(wishlist):
         with open(json_fname, 'w+') as f:
             json.dump(wishlist, f, indent=6,default=str)  
 
-# should be check - exists in database first - then dont lockup from rpc
+#checks if exists in DB (checking height was from an old script)
 def checkHeight(tx_id):
     global node_url
     logit(node_url)
@@ -375,6 +347,10 @@ def logit(text):
         f.write("[DEBUG]" + text)
         f.write("\n")
     print(text)
+
+def formatWOWamount(amount):
+    print("wow has different atomic units")
+
 def formatAmount(amount):
     """decode cryptonote amount format to user friendly format.
     Based on C++ code:
@@ -402,5 +378,7 @@ if __name__ == '__main__':
     #asyncio.run(ws_work_around(uid))
     tx_id = sys.argv[1]
     #tx_id = "457c710fdae5dd8adbd9925044eb95b3617e3b66bf56ab16d0fb6a8b12f89509"
-    main(tx_id)
-
+    if len(sys.argv) > 2:
+        main_wow(tx_id,0,"WOW")
+    else:
+        main(tx_id)
