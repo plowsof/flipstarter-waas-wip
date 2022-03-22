@@ -1,4 +1,4 @@
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)    
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/plowsof/flipstarter-waas-wip/graphs/contributors)    
 Currently, this will just create a mirror of the page @ rucknium.me/flask, however, i will eventually be making a generic version, and use the rucknium page as an example of installing a template (just copy and pasting a folder)    
 
 Also ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```make_wishlist.py``` e.g. wrongly select Restore from keys.   
@@ -6,6 +6,7 @@ Also ```ctrl+z``` and starting the script again is your friend if something goes
 ### Production / On a VPS
 
 Lets pretend my name is George, i have a domain called getwishlisted.xyz and i want to run this wishlist on it.
+
 
 First things first, i need to install nginx on my Debian vps:
 ```
@@ -16,7 +17,7 @@ I need to go to the sites-available folder create a file the same name as my dom
 cd /etc/nginx/sites-available
 nano getwishlisted.xyz
 ```
-Nano is a text editor, it will create the file and allow me to begin editing it. I'll paste this inside:    
+Nano is a text editor, it will create the file and allow me to begin editing it. I'll paste this inside: (we will be returning to this file later to paste something under the location /donate{} block)
 ```
 server {
     listen 80;
@@ -36,24 +37,25 @@ sudo ln -s /etc/nginx/sites-available/getwishlisted.xyz /etc/nginx/sites-enabled
 sudo /etc/init.d/nginx restart
 ```
 
-Lets get certs. Again, i find snap to be most helpful in this process. I use it to install ```certbot``` which is going to give us the SSL keys. It's basically going to create some files on our webserver to prove that we own it, and the certificate authority confirms this, then issues us our SSL certs.
+Lets get certs. I find snap to be most helpful in this process. I use it to install ```certbot``` which is going to give us the SSL keys. It's basically going to create some files on our webserver to prove that we own it, and the certificate authority confirms this, then issues us our SSL certs.
 ```
 apt install snapd
 snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
 ``` 
+To run through a menu, use ```sudo certbot``` only. (remember that you must run it twice, for the www. url also)    
+Or a quicker one liner: (replace ```getwishlisted.xyz``` / ```www.getwishlisted.xyz``` / ```your@email.com``` with your details - also assumes nginx):
 ```
-sudo certbot
+sudo certbot --agree-tos -n --nginx -d getwishlisted.xyz -d www.getwishlisted.xyz -m your@email.com
 ```
-I ran ```sudo certbot``` a 2nd time for the ```www.``` url.    
-After running through the setup / selecting nginx / agreeing to t&c's i see this output:
+
 ```
 Successfully received certificate.    
 Certificate is saved at: /etc/letsencrypt/live/www.getwishlisted.xyz/fullchain.pem    
 Key is saved at:         /etc/letsencrypt/live/www.getwishlisted.xyz/privkey.pem    
 ```
 For the websockets to allow your donation page to update in real time you must now manually edit your websites file.   
-So Goerge now has to open up his 'getwishlisted.xyz' file in sites-enabled with a text editor e.g. nano and paste this under the original /dnonate location block:   
+So Goerge now has to open up his 'getwishlisted.xyz' file in sites-enabled with a text editor e.g. nano and paste this under the original /donate location block: (change the proxy_ssl lines accordignly) (refer to the bottom of this guide where i show what the end version of the file looks like)
 ```
 location /donate/ws {
     proxy_pass http://172.20.111.2:8000;
@@ -65,6 +67,12 @@ location /donate/ws {
     proxy_set_header Host $host;
 }
 ```
+Now we must close our eyes, click our heels together and hope for the best while restarting our nginx server:
+```
+sudo /etc/init.d/nginx restart
+```
+If there are any errors then again, refer to the bottom of the guide to see how it should look.    
+
 At this point we need to ```cd``` to our ```/home``` folder and download the docker-compose file:
 ```
 curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/mainnet/docker-compose.yml -o docker-compose.yml
@@ -170,6 +178,9 @@ server {
 }
 
 ```
+### Testing on stagenet/testnet
+All 5 of the remote nodes in ```docker-compose.yml``` must be replaced with stagenet ones, and then set ```waas_mainnet=0```.    
+Switching back and forth is a litte tricky as you have to delete the wishlist text file ```rm static/data/wishlist-data.json``` and run ```python3 make_wishlist.py``` again to create your wishlist/mainnet wallets.
 
 ### TODO
 This is still in beta so i must do some sanity checks 
