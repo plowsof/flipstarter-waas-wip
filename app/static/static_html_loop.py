@@ -272,7 +272,8 @@ def db_get_prices():
                                 data default 0,
                                 xmr integer,
                                 btc integer,
-                                bch integer
+                                bch integer,
+                                wow integer
                             ); """
     cur.execute(create_price_table)
     cur.execute('SELECT * FROM crypto_prices WHERE data = ?',[0])
@@ -283,13 +284,15 @@ def db_get_prices():
         "bitcoin-cash": rows[0][3],
         "monero": rows[0][1],
         "bitcoin": rows[0][2]
+        "wownero": rows[0][4]
         }
         return return_me
     except:
         return_me = {
         "bitcoin-cash": 0,
         "monero": 0,
-        "bitcoin": 0
+        "bitcoin": 0,
+        "wownero": 0
         }
         return return_me
 

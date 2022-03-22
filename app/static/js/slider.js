@@ -16,10 +16,14 @@ function anonUri(){
     uri = "bitcoincash:"
     str_amount = "amount"
     symbol = "bitcoin-cash"
-  } else {
+  } else if (coin == "btc"){
     uri = "bitcoin:"
     str_amount = "amount"
     symbol = "bitcoin"
+  } else {
+    uri = "wownero:"
+    str_amount = "tx_amount"
+    symbol = "monero"
   }
   price = getPriceSingle(symbol)
 

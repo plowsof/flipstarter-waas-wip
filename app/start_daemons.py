@@ -295,6 +295,7 @@ def save_prices():
         p_xmr = float(getPrice("XMR"))    
         p_btc = float(getPrice("BTC"))
         p_bch = float(getPrice("BCH"))
+        p_wow = float(getPrice("WOW"))
 
         con = sqlite3.connect('./db/crypto_prices.db')
         cur = con.cursor()
@@ -302,16 +303,18 @@ def save_prices():
                                     data default 0,
                                     xmr integer,
                                     btc integer,
-                                    bch integer
+                                    bch integer,
+                                    wow integer
                                 ); """
         cur.execute(create_price_table)
         
         sql = ''' UPDATE crypto_prices
                   SET xmr = ?,
                       bch = ?,
-                      btc = ?
+                      btc = ?,
+                      wow =?
                   WHERE data = 0'''   
-        cur.execute(sql, (p_xmr,p_bch,p_btc))
+        cur.execute(sql, (p_xmr,p_bch,p_btc,p_wow))
         con.commit()
         con.close()
         #refresh price on front end

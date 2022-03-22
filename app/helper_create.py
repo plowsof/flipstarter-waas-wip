@@ -118,7 +118,7 @@ def wish_add(wish,config):
         pre_receipts_add(new_wish["xmr_address"],"xmr",wish_id)
         pre_receipts_add(new_wish["bch_address"],"bch",wish_id)
         pre_receipts_add(new_wish["btc_address"],"btc",wish_id)
-        pre_receipts_add(new_wish["xmr_address"],"xmr",wish_id)
+        pre_receipts_add(new_wish["wow_address"],"wow",wish_id)
         put_qr_code(new_wish["xmr_address"], "xmr")
         put_qr_code(new_wish["wow_address"], "wow")
 
