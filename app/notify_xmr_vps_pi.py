@@ -60,10 +60,10 @@ def main(tx_id,multi=0,wow=0):
     if not tx_data:
         return
     if wow != "WOW":
-        in_amount = formatAmount(tx_data["amount"])
+        in_amount = formatAmount(tx_data["amount"],12)
         ticker = "xmr"
     else:
-        in_amount = formatWOWamount(tx_data["amount"])
+        in_amount = formatAmount(tx_data["amount"],10)
         ticker = "wow"
 
     find_address = tx_data["address"]
@@ -348,15 +348,13 @@ def logit(text):
         f.write("\n")
     print(text)
 
-def formatWOWamount(amount):
-    print("wow has different atomic units")
 
-def formatAmount(amount):
+def formatAmount(amount,units):
     """decode cryptonote amount format to user friendly format.
     Based on C++ code:
     https://github.com/monero-project/bitmonero/blob/master/src/cryptonote_core/cryptonote_format_utils.cpp#L751
     """
-    CRYPTONOTE_DISPLAY_DECIMAL_POINT = 12
+    CRYPTONOTE_DISPLAY_DECIMAL_POINT = int(units)
     s = str(amount)
     if len(s) < CRYPTONOTE_DISPLAY_DECIMAL_POINT + 1:
         # add some trailing zeros, if needed, to have constant width
@@ -379,6 +377,6 @@ if __name__ == '__main__':
     tx_id = sys.argv[1]
     #tx_id = "457c710fdae5dd8adbd9925044eb95b3617e3b66bf56ab16d0fb6a8b12f89509"
     if len(sys.argv) > 2:
-        main_wow(tx_id,0,"WOW")
+        main(tx_id,0,"WOW")
     else:
         main(tx_id)

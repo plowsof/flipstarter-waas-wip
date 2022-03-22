@@ -42,7 +42,8 @@ def main(config):
           "monero": "#f26822",
           "bitcoin-cash": "#0ac18e",
           "bitcoin": "#f7931a",
-          "usd": "#85bb65"
+          "usd": "#85bb65",
+          "wow": "pink"
         }
         sort = list(sortme.keys())
         one = colours[sort[0]]
@@ -60,8 +61,12 @@ def main(config):
         prc3 = sortme[sort[3]]
         prc3 += prc2
         four += f" {prc2}% {prc3}%"
-        end = f"{prc3}%"
-        htmlSegment = wish_html(one,two,three,four,end,total,wish)
+        five = colours[sort[4]]
+        prc4 = sortme[sort[4]]
+        prc4 += prc3
+        five += f" {prc3}% {prc4}%"
+        end = f"{prc4}%"
+        htmlSegment = wish_html(one,two,three,four,five,end,total,wish)
         html += htmlSegment
     replacement = ""
     #pprint.pprint(wishlist["wishlist"])
@@ -119,6 +124,8 @@ def comments_html(comments):
             ticker = "bitcoin-cash"
         elif comments[i]["ticker"] == "btc":
             ticker = "bitcoin"
+        elif comments[i]["ticker"] == "wow":
+            ticker = "wownero"
         comments[i]["usd_value"] = (float(comments[i]["amount"]) * float(prices[ticker]))
     #sort comments from high -> low
     #pprint.pprint(comments)
@@ -153,7 +160,7 @@ def comments_html(comments):
 
     return html_comments
 
-def wish_html(one,two,three,four,end,total,wish):
+def wish_html(one,two,three,four,five,end,total,wish):
     funded = ""
     total = '%.2f' % float(total)
     wish["goal_usd"] = '%.2f' % float(wish["goal_usd"]) 
@@ -170,7 +177,7 @@ def wish_html(one,two,three,four,end,total,wish):
                     color:#fff;
                     font-size:20px;
                     background: linear-gradient(to right,
-                        {one}, {two}, {three}, {four}, transparent {end});
+                        {one}, {two}, {three}, {four}, {five}, transparent {end});
                     }}
                     .crypto_donate_{wish["id"]}{{
                         display:none;
@@ -193,6 +200,7 @@ def wish_html(one,two,three,four,end,total,wish):
         img_xmr = f'<img id="crypto_ticker" src="/donate/static/images/xmr.png" alt="xmr" height="20px" width="20px">'
         img_bch = f'<img id="crypto_ticker" src="/donate/static/images/bch.png" alt="bch" height="20px" width="20px">'
         img_btc = f'<img id="crypto_ticker" src="/donate/static/images/btc.png" alt="btc" height="20px" width="20px">'
+        img_wow = f'<img id="crypto_ticker" src="/donate/static/images/wow.png" alt="btc" height="20px" width="20px">'
         wish_html+= f"""
                           <label for="reveal-donate_{wish["id"]}" class="btn">Donate</label>
                           <input type="checkbox" class="checkbox_{wish["id"]}" id="reveal-donate_{wish["id"]}" role="button">
@@ -209,6 +217,10 @@ def wish_html(one,two,three,four,end,total,wish):
                             <p>
                                 <span class="njs_ticker">{img_btc} Bitcoin <a href="{wish["qr_img_url_btc"]}">[QRcode]</a></span></br>
                                 <span class="btc_address">bitcoin:{wish["btc_address"]}</span>
+                            </p>
+                            <p>
+                                <span class="njs_ticker">{img_wow} WOWnero <a href="{wish["qr_img_url_wow"]}">[QRcode]</a></span></br>
+                                <span class="btc_address">wownero:{wish["wow_address"]}</span>
                             </p>
                         </span>
                           </div>
@@ -228,7 +240,8 @@ def get_total(wish):
         "monero": "xmr_total",
         "bitcoin": "btc_total",
         "bitcoin-cash": "bch_total",
-        "usd": "usd_total"
+        "usd": "usd_total",
+        "wownero": "wow_total"
     }
 
     returnme = {}
@@ -236,7 +249,8 @@ def get_total(wish):
     "monero": 0,
     "bitcoin-cash": 0,
     "bitcoin": 0,
-    "usd": 0
+    "usd": 0,
+    "wownero": 0
     }
 
     total_usd = 0
