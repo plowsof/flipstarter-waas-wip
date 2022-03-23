@@ -151,7 +151,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None,
         ]
     print(rpc_args)
     #wownero no stage/testnet?
-    if xmr_wow == "monero":
+    if xmr_wow == "monero" or xmr_wow == "xmr":
         if os.environ["waas_mainnet"] == "0":
             print("stagenet mode")
             rpc_args.append("--stagenet")

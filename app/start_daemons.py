@@ -94,17 +94,20 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,
         "--tx-notify"
     ]
     notify_string = f"/usr/local/bin/python3 /home/app/notify_xmr_vps_pi.py %s"
+    coin = "WOWnero"
     if wow_xmr != "monero":
         notify_string += " wow"
     rpc_args.append(notify_string)
     for x in rpc_args:
         print(x)
-    if os.environ["waas_mainnet"] == "0":
-        print("stagenet mode")
-        rpc_args.append("--stagenet")
+    if wow_xmr == "monero":
+        coin = "Monero"
+        if os.environ["waas_mainnet"] == "0":
+            print("stagenet mode")
+            rpc_args.append("--stagenet")
     monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
     kill_daemon = 0
-    print("Starting Monero rpc...")
+    print(f"Starting {coin} rpc...")
     for line in iter(monero_daemon.stdout.readline,''):
         print(str(line.rstrip()))
         time.sleep(1)
@@ -321,7 +324,6 @@ def save_prices():
             except:
                 pass
         p_wow = float(wow_btc_price) * p_btc
-        p_wow = wow_price_resp.json()["usd"]
         con = sqlite3.connect('./db/crypto_prices.db')
         cur = con.cursor()
         create_price_table = """ CREATE TABLE IF NOT EXISTS crypto_prices (
