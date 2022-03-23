@@ -276,7 +276,7 @@ def create_monero_wallet(config,remote_node,ticker):
     auto_create = 0
     mnemonic = ""
     seed = ""
-    monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,None,remote_node)
+    monero_daemon = start_monero_rpc(monero_wallet_rpc,rpc_port,rpc_url,None,remote_node,ticker)
     rpc_connection = AuthServiceProxy(service_url=rpc_url)
     if prompt_wallet_create(ticker):
         #--------------------------------------
@@ -342,9 +342,10 @@ def create_monero_wallet(config,remote_node,ticker):
         "--offline",
         "--generate-from-json", json_path
         ]
-        if os.environ["waas_mainnet"] == "0":
-            print("stagenet mode")
-            rpc_args.append("--stagenet")
+        if ticker == "xmr":
+            if os.environ["waas_mainnet"] == "0":
+                print("stagenet mode")
+                rpc_args.append("--stagenet")
         monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
         print_msg(f"Creating the view-only {coin} wallet..")
         #wallet_rpc_server.cpp:4509 Error creating wallet: failed to parse view key secret key

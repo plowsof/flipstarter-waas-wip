@@ -63,7 +63,7 @@ def main(tx_id,multi=0,wow=0):
         in_amount = formatAmount(tx_data["amount"],12)
         ticker = "xmr"
     else:
-        in_amount = formatAmount(tx_data["amount"],10)
+        in_amount = formatAmount(tx_data["amount"],11)
         ticker = "wow"
 
     find_address = tx_data["address"]
