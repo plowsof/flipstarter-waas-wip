@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   waas:
-    image: plowsof/waas-rucknium:latest
+    image: websockets
     container_name: fresh
     volumes:
       - waas-db:/home/app/db
@@ -25,12 +25,17 @@ services:
       - waas_RSS_TITLE="Ruckniums Funding Page"
       - waas_RSS_DESC="Help support my projects and running costs"
       - waas_RSS_LINK="https://rucknium.me" 
-      - waas_remote_node_1="nodex.monerujo.io:18081"
-      - waas_remote_node_2="node.sethforprivacy.com:18089"
-      - waas_remote_node_3="xmr-node-usa-east.cakewallet.com:18081"
-      - waas_remote_node_4="electroncash.dk:18089"
-      - waas_remote_node_5="node.community.rino.io:18081"
-      - waas_mainnet=1
+      - waas_remote_node_1="node.sethforprivacy.com:38089"
+      - waas_remote_node_2="node.sethforprivacy.com:38089"
+      - waas_remote_node_3="node.sethforprivacy.com:38089"
+      - waas_remote_node_4="node.sethforprivacy.com:38089"
+      - waas_remote_node_5="node.sethforprivacy.com:38089"
+      - waas_wow_remote_node_1="eu-west-3.wow.xmr.pm:34568"
+      - waas_wow_remote_node_2="wow.bot.tips:34568"
+      - waas_wow_remote_node_3="eu-west-4.wow.xmr.pm:34568"
+      - waas_wow_remote_node_4="wownero.fyi:34568"
+      - waas_wow_remote_node_5="nimiq.wangyp.eu.org:34568"
+      - waas_mainnet=0
 volumes:
   waas-db:
   waas-wallets:
