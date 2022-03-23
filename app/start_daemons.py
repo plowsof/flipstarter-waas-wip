@@ -42,7 +42,7 @@ def monero_rpc_open_wallet(rpc_url,wallet_file):
         print(e)
         sys.exit(1)
 
-def find_working_node(node_list):
+def find_working_node(node_list,xmr_wow="monero"):
     #if we're in stagenet mode, then throw error if node is mainnet
     max_retries = 30
     num_retries = 0
@@ -56,14 +56,15 @@ def find_working_node(node_list):
             rpc_connection = AuthServiceProxy(service_url=rpc_url)
             info = rpc_connection.get_info()
             print(info["nettype"])
-            if os.environ["waas_mainnet"] == "1":
-                if info["nettype"] != "mainnet":
-                    print_err("You are connecting to a stagenet node. Please add a monero mainnet node to docker-compose.yml [restart required].")
-                    sys.exit(1)
-            else:
-                if info["nettype"] != "stagenet":
-                    print_err("You are connecting to a mainnet node. Please add a Monero stagenet node to docker-compose.yml [restart required].")
-                    sys.exit(1)
+            if xmr_wow == "monero":
+                if os.environ["waas_mainnet"] == "1":
+                    if info["nettype"] != "mainnet":
+                        print_err("You are connecting to a stagenet node. Please add a monero mainnet node to docker-compose.yml [restart required].")
+                        sys.exit(1)
+                else:
+                    if info["nettype"] != "stagenet":
+                        print_err("You are connecting to a mainnet node. Please add a Monero stagenet node to docker-compose.yml [restart required].")
+                        sys.exit(1)
             if info["status"] != "OK":
                 print_msg("Retrying another node")
                 continue
@@ -226,7 +227,7 @@ def main(config):
     for i in range(int(fallback_remote_nodes)):
         num = (i+1)
         list_remote_nodes.append(config["wow"][f"remote_node_{num}"])
-    wow_remote_node = find_working_node(list_remote_nodes)
+    wow_remote_node = find_working_node(list_remote_nodes,"wow")
     if remote_node:
         start_monero_rpc(rpc_bin_file,wow_rpc_port,wow_rpc_url,wow_remote_node,wallet_file,"wow")
     else:
@@ -387,7 +388,7 @@ def recover_crash(xmr_wow,config,remote_node):
         num = (i+1)
         list_remote_nodes.append(config[xmr_wow][f"remote_node_{num}"])
 
-    remote_node = find_working_node(list_remote_nodes)
+    remote_node = find_working_node(list_remote_nodes,xmr_wow)
     if xmr_wow == "monero":
         rpc_bin_file = "bin/monero-wallet-rpc"
     else:

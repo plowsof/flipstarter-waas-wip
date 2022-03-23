@@ -128,7 +128,7 @@ def create_new_wishlist(config):
     init_wishlist()
     wish_prompt(config)
 
-def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None):
+def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None,xmr_wow="monero"):
     global wallet_dir
     if not wallet_file:
         rpc_args = [ 
@@ -150,9 +150,11 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None)
             "--offline"
         ]
     print(rpc_args)
-    if os.environ["waas_mainnet"] == "0":
-        print("stagenet mode")
-        rpc_args.append("--stagenet")
+    #wownero no stage/testnet?
+    if xmr_wow == "monero":
+        if os.environ["waas_mainnet"] == "0":
+            print("stagenet mode")
+            rpc_args.append("--stagenet")
     monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
 
     kill_daemon = 0
@@ -616,7 +618,7 @@ def main(config):
         num = (i+1)
         list_remote_nodes.append(config["wow"][f"remote_node_{num}"])
 
-    wow_remote_node = "http://" + str(start_daemons.find_working_node(list_remote_nodes))
+    wow_remote_node = "http://" + str(start_daemons.find_working_node(list_remote_nodes,"wow"))
     if not remote_node:
         print_err("Error Wownero remote unreachable")
         sys.exit(1)
@@ -630,7 +632,7 @@ def main(config):
         #we still need to start the rpc up
 
         if wow_remote_node:
-            wownero_daemon = start_monero_rpc(wownero_wallet_rpc,rpc_port,rpc_url,wallet_file,remote_node)
+            wownero_daemon = start_monero_rpc(wownero_wallet_rpc,rpc_port,rpc_url,wallet_file,remote_node,"wow")
         else:
             print_err("Error Wownero remote unreachable")
             return
