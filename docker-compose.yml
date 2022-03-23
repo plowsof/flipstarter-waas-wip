@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   waas:
-    image: websockets
+    image: plowsof/waas-wow:latest
     container_name: fresh
     volumes:
       - waas-db:/home/app/db
