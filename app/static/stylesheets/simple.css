@@ -34,6 +34,13 @@
   background-color: yellow;
 }
 
+img#wow{
+  width:200px;
+  height:auto;
+  position: relative;
+  top: -10px
+}
+
 .btc_address:hover, div .anon_address_btc:hover {
   background-color: gray;
 }
