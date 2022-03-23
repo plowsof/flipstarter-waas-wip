@@ -202,6 +202,20 @@ def put_qr_code(address, xmr_btc):
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
     www_root = config["wishlist"]["www_root"]
+    if xmr_btc != "xmr" or != "wow":
+        qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=7,
+        border=4,
+        )
+    else:
+        qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=7,
+        border=4,
+    )
     if xmr_btc == "xmr":
         uri = "monero"
         logo = "xmr.png"
@@ -216,12 +230,7 @@ def put_qr_code(address, xmr_btc):
         logo = "wow.png"
 
     thumnail = (60, 60)
-    qr = qrcode.QRCode(
-    version=None,
-    error_correction=qrcode.constants.ERROR_CORRECT_M,
-    box_size=7,
-    border=4,
-    )
+
     try:
         if not os.path.isdir(os.path.join(www_root,'images')):
             os.mkdir(os.path.join(www_root,"images"))

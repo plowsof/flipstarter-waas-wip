@@ -323,7 +323,8 @@ def save_prices():
                 wow_btc_price = x["BTC-WOW"]["price"]
             except:
                 pass
-        p_wow = float(wow_btc_price) * p_btc
+        p_wow = float(wow_btc_price) * float(p_btc)
+        p_wow = float("{:.2f}".format(p_wow))
         con = sqlite3.connect('./db/crypto_prices.db')
         cur = con.cursor()
         create_price_table = """ CREATE TABLE IF NOT EXISTS crypto_prices (
