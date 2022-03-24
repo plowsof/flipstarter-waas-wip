@@ -375,8 +375,8 @@ def create_monero_wallet(config,remote_node,ticker):
             monero_daemon.terminate()
             monero_daemon.communicate()
             break
-    config["monero"]["viewkey"] = view_key
-    config["monero"]["mainaddress"] = main_address
+    config[coin.lower()]["viewkey"] = view_key
+    config[coin.lower()]["mainaddress"] = main_address
     print_msg("Success.")
     #we've launched the daemon with --wallet-dir , so the filename , not full path is required
     rpc_connection.open_wallet({"filename": wallet_fname, "password" :""})

@@ -23,6 +23,8 @@ def init_wishlist():
     config.read('./db/wishlist.ini')
     viewkey = config["monero"]["viewkey"]
     main_address = config["monero"]["mainaddress"]
+    wow_main_address = config["wow"]["mainaddress"]
+    wow_viewkey = config["wow"]["viewkey"]
     thetime = datetime.now()
     total = {
         "xmr_total": 0,
@@ -37,6 +39,8 @@ def init_wishlist():
         "url": "",
         "viewkey": viewkey,
         "main_address": main_address,
+        "wow_viewkey": wow_viewkey,
+        "wow_main_address": wow_main_address,
         "monero_status": "OK",
         "wownero_status": "OK",
         "protocol": "v3",
