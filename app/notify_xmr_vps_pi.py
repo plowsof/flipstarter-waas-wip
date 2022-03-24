@@ -21,21 +21,11 @@ cryptocompare.cryptocompare._set_api_key_parameter("-")
 
 wishlist = []
 #node_url = 'http://eeebox:18084/json_rpc'
+
+local_ip = "localhost"
 config = configparser.ConfigParser()
 config.read('./db/wishlist.ini')
-local_ip = "localhost"
-node_url = "http://" + str(local_ip) + ":" + config["monero"]["daemon_port"] + "/json_rpc"
-
 json_fname = os.path.join(config["wishlist"]['www_root'],"data","wishlist-data.json")
-
-
-
-def getPrice(crypto,offset):
-    data = cryptocompare.get_price(str(crypto), currency='USD', full=0)
-    #logit(f"[{crypto}]:{data[str(crypto)]['USD']}")
-    value = float(data[str(crypto)]["USD"])
-    #logit(f"value = {value}")
-    return(float(value) - (float(value) * float(offset)))
 
 def getJson():
     #must get the latest json as it may have been changed
@@ -45,27 +35,30 @@ def getJson():
         return data
 
 def main(tx_id,multi=0,wow=0):
-    global json_fname, node_url
+    #the rpc url should be passed using tx-notify instead, simpler.. todo
+    global json_fname
+    node_url = "http://" + str(local_ip) + ":" + config["monero"]["daemon_port"] + "/json_rpc"
+    wow_node_url = "http://" + str(local_ip) + ":" + config["wow"]["daemon_port"] + "/json_rpc"
     logit(f"node_url = {node_url}")
     logit(f"json fname = {json_fname}")
-    #check height
-    #logit("Get json")
+    if wow == 0:
+        atomic_units = 12
+        ticker = "xmr"
+    else:
+        ticker = "wow"
+        atomic_units = 11
+        node_url = wow_node_url
     saved_wishlist = getJson()
     #pprint.pprint(saved_wishlist)
     if multi == 0:
         #logit("multi = 0")
-        tx_data = checkHeight(tx_id)
+        tx_data = checkHeight(tx_id,node_url)
     else:
         tx_data = tx_id
     if not tx_data:
         return
-    if wow != "WOW":
-        in_amount = formatAmount(tx_data["amount"],12)
-        ticker = "xmr"
-    else:
-        in_amount = formatAmount(tx_data["amount"],11)
-        ticker = "wow"
 
+    in_amount = formatAmount(tx_data["amount"],atomic_units)
     find_address = tx_data["address"]
     updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist)
 
@@ -154,7 +147,7 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
                 db_comment = ""
 
             db_amount = rows[0][1]
-            if ticker != "xmr":
+            if ticker != "xmr" and ticker != "wow":
                 print(f"db_amount = {db_amount}\nbit_balance = {bit_balance}")
                 if float(db_amount) == float(bit_balance):
                     return
@@ -274,9 +267,7 @@ def dump_json(wishlist):
             json.dump(wishlist, f, indent=6,default=str)  
 
 #checks if exists in DB (checking height was from an old script)
-def checkHeight(tx_id):
-    global node_url
-    logit(node_url)
+def checkHeight(tx_id,xmr_wow_node):
     con = sqlite3.connect('./db/xmr_ids.db')
     cur = con.cursor()
     create_tx_ids_table = """ CREATE TABLE IF NOT EXISTS txids (
@@ -303,8 +294,8 @@ def checkHeight(tx_id):
     retries = 0
     while True:
         try:
-            logit(f"Trying to download from rpc {node_url}")
-            rpc_connection = AuthServiceProxy(service_url=node_url)
+            logit(f"Trying to download from rpc {xmr_wow_node}")
+            rpc_connection = AuthServiceProxy(service_url=xmr_wow_node)
             logit("after rpc con")
             logit(tx_id)
             params = {
@@ -312,17 +303,18 @@ def checkHeight(tx_id):
                       "in":True
                      }
             info = rpc_connection.get_transfers(params)
-            #pprint.pprint(info)
+            pprint.pprint(info)
             params = {
                       "account_index":0,
                       "txid":tx_id
                      }
             info = rpc_connection.get_transfer_by_txid(params)
-            #pprint.pprint(info)
+            pprint.pprint(info)
             break
         except (requests.HTTPError,
           requests.ConnectionError,
           JSONRPCException) as e:
+            print(e)
             if retries > 10:
                 logit("error: monero rpc connection failed")
                 break
@@ -367,10 +359,8 @@ def formatAmount(amount,units):
     return s
 
 if __name__ == '__main__':
-    #uid = uuid.uuid4().hex
-    #asyncio.run(ws_work_around(uid))
     tx_id = sys.argv[1]
-    #tx_id = "457c710fdae5dd8adbd9925044eb95b3617e3b66bf56ab16d0fb6a8b12f89509"
+    print(f"length of args = {len(sys.argv)}")
     if len(sys.argv) > 2:
         main(tx_id,0,"WOW")
     else:

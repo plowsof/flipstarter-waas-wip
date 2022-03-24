@@ -721,6 +721,7 @@ def main(config):
         open('/writable_proc/sys/vm/drop_caches','w').write("1\n")
     except:
         pass
+    #> > /dev/null 2>&1 &'
     os.system('nohup python3 start_daemons.py &')
 
 def stop_bit_daemon(daemon_dir):

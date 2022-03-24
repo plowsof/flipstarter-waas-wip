@@ -88,8 +88,13 @@ async function getPrice(){
       return null;
   }
   Object.keys(array_prices).forEach(function(symbol) {
+    if (price_info[symbol] == 0) {
+      return null;
+    }
     array_prices[symbol] = price_info[symbol]
   });
+  //don't redraw the list with any price == 0
+  async_getWishlist()
 }
 
 function getTotal(wish){
@@ -302,7 +307,7 @@ function init_wish(one,two,three,four,five,end,total,wish)
 function doit(){
   getPrice()
   //getWishlist()
-  async_getWishlist()
+  //async_getWishlist()
 }
 
 async function pagination(comments){
