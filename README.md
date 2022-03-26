@@ -73,7 +73,7 @@ If there are any errors then again, refer to the bottom of the guide to see how 
 
 At this point we need to ```cd``` to our ```/home``` folder and download the docker-compose file:
 ```
-curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/wownero/docker-compose.yml -o docker-compose.yml
+curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/main/docker-compose.yml -o docker-compose.yml
 ```
 Perfect. Now lets install docker and docker-compose with these handy install scripts:
 ```
