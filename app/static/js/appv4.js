@@ -28,6 +28,7 @@ function drawCryptoDonate(id){
     <option id="xmr_${wish["id"]}" value="xmr" rfund="Monero"><img src="/donate/static/images/xmr.png">Monero</option>
     <option id="bch_${wish["id"]}" value="bch" rfund="BitcoinCash"><img src="/donate/static/images/bch.png">BitcoinCash</option>
     <option id="btc_${wish["id"]}" value="btc" rfund="Bitcoin"><img src="/donate/static/images/btc.png">Bitcoin</option>
+    <option id="wow_${wish["id"]}" value="wow" rfund="WOWnero"><img src="/donate/static/images/wow.png">WOWnero</option>
   </select></br>
   <input type="radio" id="anon" name="choice" value="anon" checked="checked">
   <label for="anon">Anonymous</label></br>
@@ -43,6 +44,7 @@ function drawCryptoDonate(id){
   <div class="anon_address_bch" id="bch_${wish["id"]}">bitcoincash:${wish.bch_address}</div>
   <div class="anon_address_btc" id="btc_${wish["id"]}">bitcoin:${wish.btc_address}</div>
   <div class="anon_address_xmr" id="xmr_${wish["id"]}">monero:${wish.xmr_address}</div>
+  <div class="anon_address_wow" id="wow_${wish["id"]}">wownero:${wish.wow_address}</div>
   
 </form>
 </div>
@@ -86,8 +88,13 @@ async function getPrice(){
       return null;
   }
   Object.keys(array_prices).forEach(function(symbol) {
+    if (price_info[symbol] == "i") {
+      return null;
+    }
     array_prices[symbol] = price_info[symbol]
   });
+  //don't redraw the list with any price == 0
+  async_getWishlist()
 }
 
 function getTotal(wish){
@@ -95,14 +102,16 @@ function getTotal(wish){
         "monero": "xmr_total",
         "bitcoin": "btc_total",
         "bitcoin-cash": "bch_total",
-        "usd": "usd_total"
+        "usd": "usd_total",
+        "wownero": "wow_total"
     }
     let percentages = {
       "values": {
         "monero": 0,
         "bitcoin-cash": 0,
         "bitcoin": 0,
-        "usd": 0
+        "usd": 0,
+        "wownero": 0
       },
       "total_usd": 0
     }
@@ -199,7 +208,8 @@ function updateWishlist(data)
       "monero": "#f26822",
       "bitcoin-cash": "#0ac18e",
       "bitcoin": "#f7931a",
-      "usd": "#85bb65"
+      "usd": "#85bb65",
+      "wownero": "#FF6EC7"
     }
     one = colours[sortme[0]] 
     prc0 = percent_info["values"][sortme[0]]
@@ -219,16 +229,20 @@ function updateWishlist(data)
     four = colours[sortme[3]]
     prc3 = percent_info["values"][sortme[3]]
     prc3 += prc2
-
     four += ` ${prc2}% ${prc3}%`
 
-    end = `${prc3}%`
+    five = colours[sortme[4]]
+    prc4 = percent_info["values"][sortme[4]]
+    prc4 += prc3
+    five += ` ${prc3}% ${prc4}%`
+
+    end = `${prc4}%`
     wish = wishlist["wishlist"][i] 
     id = wishlist["wishlist"][i]["id"]
     len = $("div#"+id).length
     console.log(`num of divs with id ${id} = ${len}`)
     if ( len == 0 ){
-      $(".wishlist").append( init_wish(one,two,three,four,end,total,wish) )
+      $(".wishlist").append( init_wish(one,two,three,four,five,end,total,wish) )
     }
     //the wish is on the page
     //is it fully 'FUNDED' or revert title = title
@@ -247,7 +261,7 @@ function updateWishlist(data)
 
     //change progress bar style
     $('.progress_' + wish.id).css({
-    background: `linear-gradient(to right, ${one}, ${two}, ${three}, ${four}, transparent ${end})`
+    background: `linear-gradient(to right, ${one}, ${two}, ${three}, ${four}, ${five}, transparent ${end})`
     });
     //change raised total
     $(".raised_" + wish.id).text(total)
@@ -258,7 +272,7 @@ function updateWishlist(data)
   }
 }
 
-function init_wish(one,two,three,four,end,total,wish)
+function init_wish(one,two,three,four,five,end,total,wish)
 {
   total = Number(total).toFixed(2);
   wish.goal_usd = wish.goal_usd.toFixed(2);
@@ -273,7 +287,7 @@ function init_wish(one,two,three,four,end,total,wish)
     color:#fff;
     font-size:20px;
     background: linear-gradient(to right,
-       ${one}, ${two}, ${three}, ${four}, transparent ${end});
+       ${one}, ${two}, ${three}, ${four}, ${five}, transparent ${end});
     }
   </style>
   <div class="wish" id="${wish.id}">
@@ -293,7 +307,7 @@ function init_wish(one,two,three,four,end,total,wish)
 function doit(){
   getPrice()
   //getWishlist()
-  async_getWishlist()
+  //async_getWishlist()
 }
 
 async function pagination(comments){
@@ -306,8 +320,10 @@ async function pagination(comments){
       symbol = "monero"
     } else if (comments[i].ticker == "bch"){
       symbol = "bitcoin-cash"
-    } else {
+    } else if (comments[i].ticker == "btc"){
       symbol = "bitcoin"
+    } else {
+      symbol = "wownero"
     }
 
     comments[i].usd_value = (comments[i].amount * array_prices[symbol])
@@ -355,7 +371,7 @@ async function pagination(comments){
 
 //on page load - render the wishlist. set a 'time updated variable from the json' then loop compare
 //infinite loop
-var array_prices = {"bitcoin-cash": 0, "monero": 0, "bitcoin": 0};
+var array_prices = {"bitcoin-cash": "i", "monero": "i", "bitcoin": "i", "wownero": "i"};
 function main(){
   $("span#p_left").click(function() {
     console.log(comment_page)

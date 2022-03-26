@@ -21,21 +21,11 @@ cryptocompare.cryptocompare._set_api_key_parameter("-")
 
 wishlist = []
 #node_url = 'http://eeebox:18084/json_rpc'
+
+local_ip = "localhost"
 config = configparser.ConfigParser()
 config.read('./db/wishlist.ini')
-local_ip = "localhost"
-node_url = "http://" + str(local_ip) + ":" + config["monero"]["daemon_port"] + "/json_rpc"
-
 json_fname = os.path.join(config["wishlist"]['www_root'],"data","wishlist-data.json")
-
-
-
-def getPrice(crypto,offset):
-    data = cryptocompare.get_price(str(crypto), currency='USD', full=0)
-    #logit(f"[{crypto}]:{data[str(crypto)]['USD']}")
-    value = float(data[str(crypto)]["USD"])
-    #logit(f"value = {value}")
-    return(float(value) - (float(value) * float(offset)))
 
 def getJson():
     #must get the latest json as it may have been changed
@@ -44,24 +34,33 @@ def getJson():
         data = json.load(json_file)
         return data
 
-def main(tx_id,multi=0):
-    global json_fname, node_url
+def main(tx_id,multi=0,wow=0):
+    #the rpc url should be passed using tx-notify instead, simpler.. todo
+    global json_fname
+    node_url = "http://" + str(local_ip) + ":" + config["monero"]["daemon_port"] + "/json_rpc"
+    wow_node_url = "http://" + str(local_ip) + ":" + config["wow"]["daemon_port"] + "/json_rpc"
     logit(f"node_url = {node_url}")
     logit(f"json fname = {json_fname}")
-    #check height
-    #logit("Get json")
+    if wow == 0:
+        atomic_units = 12
+        ticker = "xmr"
+    else:
+        ticker = "wow"
+        atomic_units = 11
+        node_url = wow_node_url
     saved_wishlist = getJson()
     #pprint.pprint(saved_wishlist)
     if multi == 0:
         #logit("multi = 0")
-        tx_data = checkHeight(tx_id)
+        tx_data = checkHeight(tx_id,node_url)
     else:
         tx_data = tx_id
     if not tx_data:
         return
-    in_amount = formatAmount(tx_data["amount"])
+
+    in_amount = formatAmount(tx_data["amount"],atomic_units)
     find_address = tx_data["address"]
-    updateDatabaseJson(find_address,in_amount,"xmr",saved_wishlist)
+    updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist)
 
 def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=0,bit_con=0,bit_unc=0):
     now = int(time.time())
@@ -70,7 +69,7 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
     for i in range(len(saved_wishlist["wishlist"])):
         if saved_wishlist["wishlist"][i][f"{ticker}_address"] == find_address:
             found = 1
-            if ticker != "xmr":
+            if ticker != "xmr" and ticker != "wow":
                 bit_balance = float(bit_con) + float(bit_unc)
                 old_balance = float(saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"]) + float(saved_wishlist["wishlist"][i][f"{ticker}_confirmed"])
                 if old_balance >= bit_balance:
@@ -79,7 +78,6 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
                 in_amount = float(bit_balance) - float(old_balance)
                 saved_wishlist["wishlist"][i][f"{ticker}_confirmed"] = float(bit_con)
                 saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"] = float(bit_unc)
-            logit("we found the address in the list")
             saved_wishlist["wishlist"][i]["modified_date"] = now
             saved_wishlist["metadata"]["modified"] = now
             #db_set_time_wish(int(time.time()))
@@ -101,7 +99,6 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
             #Percent calculated by JS - or some timed script to periodically check         
             break
     if found == 0:
-        logit(f"We didnt find {find_address} this address in our wishlist")
         extra_xmr = float(in_amount)
         address = find_address
         #donation received on invalid wishlist
@@ -132,14 +129,12 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
 
         cur.execute(create_receipts_table)
          
-        logit(f"select * from where address = {address}")
         cur.execute('SELECT * FROM donations WHERE donation_address = ?',[address])
         rows = cur.fetchall()
         pprint.pprint(cur.fetchall())
         #its a new address. continue
         if len(rows) == 0:
             extra_xmr += float(bit_balance)
-            logit("this address doesnt even exist in receipts lol")
             saved_wishlist["metadata"][f"{ticker}_total"] += float(extra_xmr)
             saved_wishlist["metadata"]["contributors"] += 1
         else:
@@ -152,7 +147,7 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
                 db_comment = ""
 
             db_amount = rows[0][1]
-            if ticker != "xmr":
+            if ticker != "xmr" and ticker != "wow":
                 print(f"db_amount = {db_amount}\nbit_balance = {bit_balance}")
                 if float(db_amount) == float(bit_balance):
                     return
@@ -162,7 +157,6 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
                     print(f"in_amount = {in_amount}")
                     extra_xmr = float(bit_balance)
             extra_xmr += float(db_amount)
-            logit("We exist in reciepts")
             sql = ''' UPDATE donations
                       SET amount = ?,
                           date_time = ?,
@@ -194,14 +188,14 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
                 #logit(saved_wishlist[i])
                 if saved_wishlist["wishlist"][i]["id"] == db_wish_id:
                     found = 1
-                    logit("we found the wish id -> title")
+                    #logit("we found the wish id -> title")
                     db_wish_id = saved_wishlist["wishlist"][i]["title"]
                     saved_wishlist["metadata"]["modified"] = now
                     #db_set_time_wish(int(time.time()))
                     saved_wishlist["wishlist"][i]["modified_date"] = now
                     saved_wishlist["wishlist"][i]["contributors"] += 1
                     saved_wishlist["wishlist"][i][f"{ticker}_total"] += float(in_amount)
-                    if ticker != "xmr":
+                    if ticker != "xmr" and ticker != "wow":
                         saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"] = bit_unc
                         saved_wishlist["wishlist"][i][f"{ticker}_confirmed"] = bit_con
                     history_tx = {
@@ -264,40 +258,6 @@ async def ws_work_around(uid):
     con.close()
     requests.get(f'http://localhost:8000/push/{uid}')
 
-
-
-def db_set_time_comment(time_stamp):
-    con = sqlite3.connect('./db/modified.db')
-    cur = con.cursor()
-    create_modified_table = """ CREATE TABLE IF NOT EXISTS modified (
-                                data integer default 0,
-                                comment integer default 1,
-                                wishlist integer default 1
-                            ); """
-    cur.execute(create_modified_table)
-    sql = ''' UPDATE modified
-              SET comment = ?
-              WHERE data= ?'''   
-    cur.execute(sql, (time_stamp,0))
-    con.commit()
-    con.close()
-
-def db_set_time_wish(time_stamp):
-    con = sqlite3.connect('./db/modified.db')
-    cur = con.cursor()
-    create_modified_table = """ CREATE TABLE IF NOT EXISTS modified (
-                                data integer default 0,
-                                comment integer default 1,
-                                wishlist integer default 1
-                            ); """
-    cur.execute(create_modified_table)
-    sql = ''' UPDATE modified
-              SET wishlist = ?
-              WHERE data= ?'''   
-    cur.execute(sql, (time_stamp,0))
-    con.commit()
-    con.close()
-
 def dump_json(wishlist):
     global json_fname
     lock = json_fname + ".lock"
@@ -306,10 +266,8 @@ def dump_json(wishlist):
         with open(json_fname, 'w+') as f:
             json.dump(wishlist, f, indent=6,default=str)  
 
-# should be check - exists in database first - then dont lockup from rpc
-def checkHeight(tx_id):
-    global node_url
-    logit(node_url)
+#checks if exists in DB (checking height was from an old script)
+def checkHeight(tx_id,xmr_wow_node):
     con = sqlite3.connect('./db/xmr_ids.db')
     cur = con.cursor()
     create_tx_ids_table = """ CREATE TABLE IF NOT EXISTS txids (
@@ -336,8 +294,8 @@ def checkHeight(tx_id):
     retries = 0
     while True:
         try:
-            logit(f"Trying to download from rpc {node_url}")
-            rpc_connection = AuthServiceProxy(service_url=node_url)
+            logit(f"Trying to download from rpc {xmr_wow_node}")
+            rpc_connection = AuthServiceProxy(service_url=xmr_wow_node)
             logit("after rpc con")
             logit(tx_id)
             params = {
@@ -345,17 +303,18 @@ def checkHeight(tx_id):
                       "in":True
                      }
             info = rpc_connection.get_transfers(params)
-            #pprint.pprint(info)
+            pprint.pprint(info)
             params = {
                       "account_index":0,
                       "txid":tx_id
                      }
             info = rpc_connection.get_transfer_by_txid(params)
-            #pprint.pprint(info)
+            pprint.pprint(info)
             break
         except (requests.HTTPError,
           requests.ConnectionError,
           JSONRPCException) as e:
+            print(e)
             if retries > 10:
                 logit("error: monero rpc connection failed")
                 break
@@ -375,12 +334,14 @@ def logit(text):
         f.write("[DEBUG]" + text)
         f.write("\n")
     print(text)
-def formatAmount(amount):
+
+
+def formatAmount(amount,units):
     """decode cryptonote amount format to user friendly format.
     Based on C++ code:
     https://github.com/monero-project/bitmonero/blob/master/src/cryptonote_core/cryptonote_format_utils.cpp#L751
     """
-    CRYPTONOTE_DISPLAY_DECIMAL_POINT = 12
+    CRYPTONOTE_DISPLAY_DECIMAL_POINT = int(units)
     s = str(amount)
     if len(s) < CRYPTONOTE_DISPLAY_DECIMAL_POINT + 1:
         # add some trailing zeros, if needed, to have constant width
@@ -398,9 +359,9 @@ def formatAmount(amount):
     return s
 
 if __name__ == '__main__':
-    #uid = uuid.uuid4().hex
-    #asyncio.run(ws_work_around(uid))
     tx_id = sys.argv[1]
-    #tx_id = "457c710fdae5dd8adbd9925044eb95b3617e3b66bf56ab16d0fb6a8b12f89509"
-    main(tx_id)
-
+    print(f"length of args = {len(sys.argv)}")
+    if len(sys.argv) > 2:
+        main(tx_id,0,"WOW")
+    else:
+        main(tx_id)

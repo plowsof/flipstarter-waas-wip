@@ -25,7 +25,7 @@ def main():
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
     if not os.path.isfile("./static/data/wishlist-data.json"):
-        print("Error: please run make_wishlist.py first.")
+        print("Error: please run setup_wallets.py first.")
         sys.exit(1)
 
     with open("./static/data/wishlist-data.json", "r") as f:
@@ -111,17 +111,20 @@ def wish_edit(wishlist,edit_delete,www_root):
                 total_bch = wishlist["wishlist"][index]["bch_total"]
                 total_btc = wishlist["wishlist"][index]["btc_total"]
                 total_usd = wishlist["wishlist"][index]["usd_total"]
+                total_wow = wishlist["wishlist"][index]["wow_total"]
                 goal = wishlist["wishlist"][index]["goal_usd"]
-                choice = {"1": "xmr", "2": "bch", "3": "btc", "4": "usd"}
+                choice = {"1": "xmr", "2": "bch", "3": "btc", "4": "usd","5": "wow"}
                 print("Coin [total]")
                 print(f"1) XMR [{total_xmr}]")
                 print(f"2) BCH [{total_bch}]")
                 print(f"3) BTC [{total_btc}]")
                 print(f"4) USD [{total_usd}]")
-                print(f"5) 'Cash out' - Zero totals and set USD to [{goal}].")
-                while answer not in [1,2,3,4,5]:
+                print(f"5) WOW [{total_wow}]")
+                print(f"6) 'Cash out' - Zero totals and set USD to [{goal}].")
+                answer = 7
+                while answer not in [1,2,3,4,5,6]:
                     answer = int(input(">> "))
-                if answer != 5:
+                if answer != 6:
                     coin = choice[str(answer)]
                     while True:
                         try:
@@ -158,6 +161,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                         now_wishlist["wishlist"][i]["xmr_total"] = wishlist["wishlist"][index]["bch_total"]
                         now_wishlist["wishlist"][i]["btc_total"] = wishlist["wishlist"][index]["btc_total"]
                         now_wishlist["wishlist"][i]["usd_total"] = wishlist["wishlist"][index]["usd_total"]
+                        now_wishlist["wishlist"][i]["wow_total"] = wishlist["wishlist"][index]["wow_total"]
                         break
                 lock = FileLock(f"{data_json}.lock")
                 with lock:

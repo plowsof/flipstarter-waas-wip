@@ -10,6 +10,7 @@ prices = {}
 prices["monero"] = 0
 prices["bitcoin-cash"] = 0
 prices["bitcoin"] = 0
+prices["wownero"] = 0
 
 comments_per_page = 8
 
@@ -42,7 +43,8 @@ def main(config):
           "monero": "#f26822",
           "bitcoin-cash": "#0ac18e",
           "bitcoin": "#f7931a",
-          "usd": "#85bb65"
+          "usd": "#85bb65",
+          "wownero": "#FF6EC7"
         }
         sort = list(sortme.keys())
         one = colours[sort[0]]
@@ -60,8 +62,12 @@ def main(config):
         prc3 = sortme[sort[3]]
         prc3 += prc2
         four += f" {prc2}% {prc3}%"
-        end = f"{prc3}%"
-        htmlSegment = wish_html(one,two,three,four,end,total,wish)
+        five = colours[sort[4]]
+        prc4 = sortme[sort[4]]
+        prc4 += prc3
+        five += f" {prc3}% {prc4}%"
+        end = f"{prc4}%"
+        htmlSegment = wish_html(one,two,three,four,five,end,total,wish)
         html += htmlSegment
     replacement = ""
     #pprint.pprint(wishlist["wishlist"])
@@ -69,6 +75,7 @@ def main(config):
     count = len(wishlist["comments"]["comments"])
     pages = ceil( count / comments_per_page)
     intro = config["wishlist"]["intro"]
+    title = config["wishlist"]["title"]
     #print(f"the pages = {pages} count = {count}")
     with open(funding_template, 'r') as f:
         for line in f:
@@ -91,6 +98,8 @@ def main(config):
                     line=line.replace("{@_RSS_@}","")
             elif "{@_INTRO_@}" in line:
                 line = line.replace("{@_INTRO_@}",intro)
+            elif "{@_TITLE_@}" in line:
+                line = line.replace("{@_TITLE_@}",title)
 
             replacement += line
     lock = funding_template + ".lock"
@@ -119,6 +128,8 @@ def comments_html(comments):
             ticker = "bitcoin-cash"
         elif comments[i]["ticker"] == "btc":
             ticker = "bitcoin"
+        elif comments[i]["ticker"] == "wow":
+            ticker = "wownero"
         comments[i]["usd_value"] = (float(comments[i]["amount"]) * float(prices[ticker]))
     #sort comments from high -> low
     #pprint.pprint(comments)
@@ -153,7 +164,7 @@ def comments_html(comments):
 
     return html_comments
 
-def wish_html(one,two,three,four,end,total,wish):
+def wish_html(one,two,three,four,five,end,total,wish):
     funded = ""
     total = '%.2f' % float(total)
     wish["goal_usd"] = '%.2f' % float(wish["goal_usd"]) 
@@ -170,7 +181,7 @@ def wish_html(one,two,three,four,end,total,wish):
                     color:#fff;
                     font-size:20px;
                     background: linear-gradient(to right,
-                        {one}, {two}, {three}, {four}, transparent {end});
+                        {one}, {two}, {three}, {four}, {five}, transparent {end});
                     }}
                     .crypto_donate_{wish["id"]}{{
                         display:none;
@@ -193,6 +204,7 @@ def wish_html(one,two,three,four,end,total,wish):
         img_xmr = f'<img id="crypto_ticker" src="/donate/static/images/xmr.png" alt="xmr" height="20px" width="20px">'
         img_bch = f'<img id="crypto_ticker" src="/donate/static/images/bch.png" alt="bch" height="20px" width="20px">'
         img_btc = f'<img id="crypto_ticker" src="/donate/static/images/btc.png" alt="btc" height="20px" width="20px">'
+        img_wow = f'<img id="crypto_ticker" src="/donate/static/images/wow.png" alt="btc" height="20px" width="20px">'
         wish_html+= f"""
                           <label for="reveal-donate_{wish["id"]}" class="btn">Donate</label>
                           <input type="checkbox" class="checkbox_{wish["id"]}" id="reveal-donate_{wish["id"]}" role="button">
@@ -209,6 +221,10 @@ def wish_html(one,two,three,four,end,total,wish):
                             <p>
                                 <span class="njs_ticker">{img_btc} Bitcoin <a href="{wish["qr_img_url_btc"]}">[QRcode]</a></span></br>
                                 <span class="btc_address">bitcoin:{wish["btc_address"]}</span>
+                            </p>
+                            <p>
+                                <span class="njs_ticker">{img_wow} WOWnero <a href="{wish["qr_img_url_wow"]}">[QRcode]</a></span></br>
+                                <span class="wow_address">wownero:{wish["wow_address"]}</span>
                             </p>
                         </span>
                           </div>
@@ -228,7 +244,8 @@ def get_total(wish):
         "monero": "xmr_total",
         "bitcoin": "btc_total",
         "bitcoin-cash": "bch_total",
-        "usd": "usd_total"
+        "usd": "usd_total",
+        "wownero": "wow_total"
     }
 
     returnme = {}
@@ -236,7 +253,8 @@ def get_total(wish):
     "monero": 0,
     "bitcoin-cash": 0,
     "bitcoin": 0,
-    "usd": 0
+    "usd": 0,
+    "wownero": 0
     }
 
     total_usd = 0
@@ -272,7 +290,8 @@ def db_get_prices():
                                 data default 0,
                                 xmr integer,
                                 btc integer,
-                                bch integer
+                                bch integer,
+                                wow integer
                             ); """
     cur.execute(create_price_table)
     cur.execute('SELECT * FROM crypto_prices WHERE data = ?',[0])
@@ -282,14 +301,16 @@ def db_get_prices():
         return_me = {
         "bitcoin-cash": rows[0][3],
         "monero": rows[0][1],
-        "bitcoin": rows[0][2]
+        "wownero": rows[0][4],
+        "bitcoin": rows[0][2],
         }
         return return_me
     except:
         return_me = {
         "bitcoin-cash": 0,
         "monero": 0,
-        "bitcoin": 0
+        "bitcoin": 0,
+        "wownero": 0
         }
         return return_me
 

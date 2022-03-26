@@ -16,7 +16,7 @@ from urllib.parse import urlparse, parse_qs
 from html import escape
 import json
 from datetime import datetime
-import make_wishlist
+import setup_wallets
 from helper_create import bit_online, get_unused_address
 import sqlite3
 import time
@@ -152,7 +152,8 @@ def db_get_prices():
                                 data default 0,
                                 xmr integer,
                                 btc integer,
-                                bch integer
+                                bch integer,
+                                wow integer
                             ); """
     cur.execute(create_price_table)
     cur.execute('SELECT * FROM crypto_prices WHERE data = ?',[0])
@@ -162,7 +163,8 @@ def db_get_prices():
         return_me = {
         "bitcoin-cash": rows[0][3],
         "monero": rows[0][1],
-        "bitcoin": rows[0][2]
+        "bitcoin": rows[0][2],
+        "wownero": rows[0][4]
         }
         return return_me
     except:
@@ -222,26 +224,34 @@ async def handle_crypto_form(request: Request):
                 valid_coin = 1
             if ticker == "btc":
                 valid_coin = 1
+            if ticker == "wow":
+                valid_coin = 1
 
             if valid_coin == 0:
                 return
-            if ticker != "xmr":
+            if ticker == "bch":
                 bchuser = wish_config["bch"]["rpcuser"]
                 bchpass = wish_config["bch"]["rpcpassword"]
                 bchport = wish_config["bch"]["rpcport"]
+                if not bit_online(bchuser,bchpass,bchport):
+                    return
+            if ticker == "btc":
                 btcuser = wish_config["btc"]["rpcuser"]
                 btcpass = wish_config["btc"]["rpcpassword"]
                 btcport = wish_config["btc"]["rpcport"]
-                print("check is online")
-                if not bit_online(bchuser,bchpass,bchport):
-                    return
                 if not bit_online(btcuser,btcpass,btcport):
                     return
-            else:
+            if ticker == "xmr":
                 xmrport = wish_config["monero"]["daemon_port"]
                 rpc_url = "http://localhost:" + str(xmrport) + "/json_rpc"
-                if not make_wishlist.monero_rpc_online(rpc_url):
+                if not setup_wallets.monero_rpc_online(rpc_url):
                     return
+            if ticker == "wow":
+                wowport = wish_config["wow"]["daemon_port"]
+                rpc_url = "http://localhost:" + str(wowport) + "/json_rpc"
+                if not setup_wallets.monero_rpc_online(rpc_url):
+                    return
+
             address = get_unused_address(wish_config,ticker)
             if not address:
                 return
@@ -262,6 +272,8 @@ async def handle_crypto_form(request: Request):
                 ticker = "bitcoin-cash"
             elif ticker == "btc":
                 ticker = "bitcoin"
+            elif ticker == "wow":
+                ticker = "wownero"
             else:
                 ticket_valid = 0
 
@@ -414,7 +426,13 @@ if __name__ == "__main__":
     wish_config["monero"]["remote_node_3"] = os.environ['waas_remote_node_3'].replace('"','')
     wish_config["monero"]["remote_node_4"] = os.environ['waas_remote_node_4'].replace('"','')
     wish_config["monero"]["remote_node_5"] = os.environ['waas_remote_node_5'].replace('"','')
+    wish_config["wow"]["remote_node_1"] = os.environ['waas_wow_remote_node_1'].replace('"','')
+    wish_config["wow"]["remote_node_2"] = os.environ['waas_wow_remote_node_2'].replace('"','')
+    wish_config["wow"]["remote_node_3"] = os.environ['waas_wow_remote_node_3'].replace('"','')
+    wish_config["wow"]["remote_node_4"] = os.environ['waas_wow_remote_node_4'].replace('"','')
+    wish_config["wow"]["remote_node_5"] = os.environ['waas_wow_remote_node_5'].replace('"','')
     wish_config["wishlist"]["intro"] = os.environ['waas_INTRO'].replace('"','')
+    wish_config["wishlist"]["title"] = os.environ['waas_TITLE'].replace('"','')
     #start recurring fee loop
     th = threading.Thread(target=schedule_fee.schedule_main)
     th.start()
@@ -426,14 +444,7 @@ if __name__ == "__main__":
         th = threading.Thread(target=start_daemons.main, args=(wish_config,))
         th.start()
     else:
-        print("Run make_wishlist.py")
+        print("Run setup_wallets.py")
     #ssl certs should be in ./ssl folder 
-    if os.path.isfile("./ssl/privkey.pem") and os.path.isfile("./ssl/fullchain.pem"):
-        uvicorn.run("main:app", port=8000, host="0.0.0.0", ssl_keyfile="./ssl/privkey.pem", ssl_certfile="./ssl/fullchain.pem", reload=True)
-        #fullchain.pem  privkey.pem
-        #sudo screen -L -Logfile--ssl-keyfile rurucknium.me.crt sudo screen -L -Logfile uvicorn-output.txt uvicorn main:app --reload --ssl-keyfile rucknium.me.key --ssl-certfile rucknium.me.crt
-    else:
-        #print("Defaulting to http: place privkey.pem and fullchain.pem in ./ssl folder and restart for https")
-        #print("You will not have websocket / live update support")
-        uvicorn.run("main:app", port=8000, host="0.0.0.0", reload=True)
+    uvicorn.run("main:app", port=8000, host="0.0.0.0", reload=True)
 

@@ -49,10 +49,14 @@ async function form_validate() {
               uri = "bitcoincash:"
               str_amount = "amount"
               symbol = "bitcoin-cash"
-            } else {
+            } else if (the_coin == "btc"){
               uri = "bitcoin:"
               str_amount = "amount"
               symbol = "bitcoin"
+            } else {
+              uri = "wownero:"
+              str_amount = "amount"
+              symbol = "wownero"
             }
             
             //price of coin / amount

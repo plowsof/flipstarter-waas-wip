@@ -42,7 +42,7 @@ def monero_rpc_open_wallet(rpc_url,wallet_file):
         print(e)
         sys.exit(1)
 
-def find_working_node(node_list):
+def find_working_node(node_list,xmr_wow="monero"):
     #if we're in stagenet mode, then throw error if node is mainnet
     max_retries = 30
     num_retries = 0
@@ -56,14 +56,15 @@ def find_working_node(node_list):
             rpc_connection = AuthServiceProxy(service_url=rpc_url)
             info = rpc_connection.get_info()
             print(info["nettype"])
-            if os.environ["waas_mainnet"] == "1":
-                if info["nettype"] != "mainnet":
-                    print_err("You are connecting to a stagenet node. Please add a monero mainnet node to docker-compose.yml [restart required].")
-                    sys.exit(1)
-            else:
-                if info["nettype"] != "stagenet":
-                    print_err("You are connecting to a mainnet node. Please add a Monero stagenet node to docker-compose.yml [restart required].")
-                    sys.exit(1)
+            if xmr_wow == "monero":
+                if os.environ["waas_mainnet"] == "1":
+                    if info["nettype"] != "mainnet":
+                        print_err("You are connecting to a stagenet node. Please add a monero mainnet node to docker-compose.yml [restart required].")
+                        sys.exit(1)
+                else:
+                    if info["nettype"] != "stagenet":
+                        print_err("You are connecting to a mainnet node. Please add a Monero stagenet node to docker-compose.yml [restart required].")
+                        sys.exit(1)
             if info["status"] != "OK":
                 print_msg("Retrying another node")
                 continue
@@ -81,28 +82,35 @@ def find_working_node(node_list):
         print("found our node")
         return remote_node
 
-def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None):
+def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,wow_xmr="monero"):
     global wallet_dir
-
     rpc_args = [ 
-        f"{rpc_bin_file}", 
+        f"./{rpc_bin_file}", 
         "--wallet-file", wallet_file,
         "--rpc-bind-port", rpc_port,
         "--disable-rpc-login",
-        "--tx-notify", f"/usr/local/bin/python3 /home/app/notify_xmr_vps_pi.py %s",
         "--daemon-address", remote_node,
-        "--password", ""
+        "--password", "", 
+        "--tx-notify"
     ]
+    notify_string = f"/usr/local/bin/python3 /home/app/notify_xmr_vps_pi.py %s"
+    coin = "WOWnero"
+    if wow_xmr != "monero":
+        notify_string += " wow"
+    rpc_args.append(notify_string)
     for x in rpc_args:
         print(x)
-    if os.environ["waas_mainnet"] == "0":
-        print("stagenet mode")
-        rpc_args.append("--stagenet")
+    if wow_xmr == "monero":
+        coin = "Monero"
+        if os.environ["waas_mainnet"] == "0":
+            print("stagenet mode")
+            rpc_args.append("--stagenet")
     monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
     kill_daemon = 0
-    print("Starting Monero rpc...")
+    print(f"Starting {coin} rpc...")
     for line in iter(monero_daemon.stdout.readline,''):
         print(str(line.rstrip()))
+        time.sleep(1)
         if b"Error" in line.rstrip() or b"Failed" in line.rstrip() or b'specify --wallet-file' in line.rstrip() or b"failed" in line.rstrip():
             kill_daemon = 1
             break
@@ -168,12 +176,12 @@ def start_bit_daemon(bin_file,wallet_file,rpcuser,rpcpass,rpcport):
         start_daemon.append("--testnet")
         load_wallet.append("--testnet")
     run_cmd(stop_daemon)
-    run_cmd(rpc_user)
+    run_cmd(rpc_user) #defaults to user
     run_cmd(rpc_pass)
     run_cmd(rpc_port)
     run_cmd(start_daemon)
     run_cmd(load_wallet)
-    
+
 def run_cmd(list_args):
     bch_daemon = subprocess.Popen(list_args)
     bch_daemon.communicate()
@@ -187,32 +195,46 @@ def main(config):
     wallet_file = config["monero"]["wallet_file"]
     if os.environ["waas_mainnet"] == "1":
         if "test" in wallet_file:
-            print_err("You're using a Monero stagenet wallet in mainnet mode.\nConnect to this container and run make_wishlist.py to create a mainnet wallet")
+            print_err("You're using a Monero stagenet wallet in mainnet mode.\nConnect to this container and run setup_wallets.py to create a mainnet wallet")
             sys.exit(1)
     else:
         if "test" not in wallet_file:
-            print_err("Trying to use a Mainnet wallet in Stagenet mode!\nConnect to this container and run make_wishlist.py to create a stagenet wallet")
+            print_err("Trying to use a Mainnet wallet in Stagenet mode!\nConnect to this container and run setup_wallets.py to create a stagenet wallet")
             sys.exit(1)
+    #we have to force close the monero rpc because it was launched
+    #without tx-notify in setup_wallets
+    for proc in psutil.process_iter():
+        # check whether the process name matches
+        if "-rpc" in proc.name():
+            proc.kill()
     fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
     list_remote_nodes = []
     for i in range(int(fallback_remote_nodes)):
         num = (i+1)
         list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
-    #we have to force close the monero rpc because it was launched
-    #without tx-notify in make_wishlist
-    for proc in psutil.process_iter():
-        # check whether the process name matches
-        if "monero-wallet-rpc" in proc.name():
-            proc.kill()
     www_root = config["wishlist"]["www_root"]
     remote_node = find_working_node(list_remote_nodes)
-    if monero_rpc_online(rpc_url) != True:
-        #monero_rpc_close_wallet(rpc_url)
-        #monero_rpc_open_wallet(rpc_url,wallet_file)
-        if remote_node:
-            start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file)
-        else:
-            print("No monero remote node")
+    if remote_node:
+        start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file)
+    else:
+        print("No Monero remote node")
+
+    #WOW setup
+    list_remote_nodes = []
+    fallback_remote_nodes = config["wow"]["fallback_remote_nodes"]
+    wow_rpc_port = config["wow"]["daemon_port"]
+    wow_rpc_url = "http://" + str(local_ip) + ":" + str(wow_rpc_port) + "/json_rpc"
+    rpc_bin_file = "bin/wownero-wallet-rpc"
+    wallet_file = config["wow"]["wallet_file"]
+    list_remote_nodes = []
+    for i in range(int(fallback_remote_nodes)):
+        num = (i+1)
+        list_remote_nodes.append(config["wow"][f"remote_node_{num}"])
+    wow_remote_node = find_working_node(list_remote_nodes,"wow")
+    if remote_node:
+        start_monero_rpc(rpc_bin_file,wow_rpc_port,wow_rpc_url,wow_remote_node,wallet_file,"wow")
+    else:
+        print("No WOWnero remote node")
 
 
     electrum_path = config["btc"]["bin"]
@@ -223,7 +245,7 @@ def main(config):
     b_rpcport = config["btc"]["rpcport"]
     if os.environ["waas_mainnet"] == "1":
         if "test" in btc_wallet_path or not bch_wallet_path:
-            print_err("You're using a testnet wallet in mainnet mode. Run make_wishlist.py to create mainnet walelts.")
+            print_err("You're using a testnet wallet in mainnet mode. Run setup_wallets.py to create mainnet walelts.")
             sys.exit(1)
     electron_path = config["bch"]["bin"]
     
@@ -232,7 +254,7 @@ def main(config):
     rpcport = config["bch"]["rpcport"]
     if os.environ["waas_mainnet"] == "1":
         if "test" in bch_wallet_path or not bch_wallet_path:
-            print_err("You're using a testnet wallet in mainnet mode. Run make_wishlist.py to create mainnet walelts.")
+            print_err("You're using a testnet wallet in mainnet mode. Run setup_wallets.py to create mainnet walelts.")
             sys.exit(1)
     threads = []
     t = threading.Thread(target=start_bit_daemon, args=(electrum_path,btc_wallet_path,b_rpcuser,b_rpcpass,b_rpcport,))
@@ -258,7 +280,7 @@ def main(config):
             address = wish["bch_address"]
             rpc_notify(rpcuser,rpcpass,rpcport,address,http_server)
 
-    th = threading.Thread(target=refresh_html_loop, args=(remote_node,rpc_url,config,))
+    th = threading.Thread(target=refresh_html_loop, args=(remote_node,rpc_url,wow_remote_node,wow_rpc_url,config,))
     th.start()
     th = threading.Thread(target=delete_clicks_db)
     th.start()
@@ -295,23 +317,32 @@ def save_prices():
         p_xmr = float(getPrice("XMR"))    
         p_btc = float(getPrice("BTC"))
         p_bch = float(getPrice("BCH"))
-
+        wow_btc_price = requests.get("https://tradeogre.com/api/v1/markets")
+        for x in wow_btc_price.json():
+            try:
+                wow_btc_price = x["BTC-WOW"]["price"]
+            except:
+                pass
+        p_wow = float(wow_btc_price) * float(p_btc)
+        p_wow = float("{:.2f}".format(p_wow))
         con = sqlite3.connect('./db/crypto_prices.db')
         cur = con.cursor()
         create_price_table = """ CREATE TABLE IF NOT EXISTS crypto_prices (
                                     data default 0,
                                     xmr integer,
                                     btc integer,
-                                    bch integer
+                                    bch integer,
+                                    wow integer
                                 ); """
         cur.execute(create_price_table)
         
         sql = ''' UPDATE crypto_prices
                   SET xmr = ?,
                       bch = ?,
-                      btc = ?
+                      btc = ?,
+                      wow =?
                   WHERE data = 0'''   
-        cur.execute(sql, (p_xmr,p_bch,p_btc))
+        cur.execute(sql, (p_xmr,p_bch,p_btc,p_wow))
         con.commit()
         con.close()
         #refresh price on front end
@@ -331,93 +362,92 @@ def refresh_html_loop_1():
         os.system(f'python3 static/static_html_loop.py')
         time.sleep(5*60)
 
-def refresh_html_loop(remote_node,local_node,config):
+def local_health_check(wow_xmr,con_local,con_remote,url_remote,config):
+    try:
+        con_local.store()
+        return True
+    except Exception as e:
+        return False
+
+def remote_health_check(wow_xmr,node,config):
+    try:
+        info = rpc_connection.get_info()
+        if info["status"] != "OK":
+            wishlist["metadata"]["status"] = "remote"
+            not_ok = 1
+            return True
+    except:
+        return False
+
+def recover_crash(xmr_wow,config,remote_node):
+    for proc in psutil.process_iter():
+        #kill process
+        if f"{xmr_wow}-wallet-rpc" in proc.name():
+            proc.kill()
+
+    list_remote_nodes = []
+    fallback_remote_nodes = config[xmr_wow]["fallback_remote_nodes"]
+    for i in range(int(fallback_remote_nodes)):
+        num = (i+1)
+        list_remote_nodes.append(config[xmr_wow][f"remote_node_{num}"])
+
+    remote_node = find_working_node(list_remote_nodes,xmr_wow)
+    if xmr_wow == "monero":
+        rpc_bin_file = "bin/monero-wallet-rpc"
+    else:
+        rpc_bin_file = "bin/wownero-wallet-rpc"
+
+    rpc_port = config[xmr_wow]["daemon_port"]
+    wallet_file = config[xmr_wow]["wallet_file"]
+    rpc_url_local = "http://localhost" + "/json_rpc"
+
+    if remote_node:
+        start_monero_rpc(rpc_bin_file,rpc_port,rpc_url_local,remote_node,wallet_file,xmr_wow)
+        return remote_node
+
+def refresh_html_loop(remote_node,local_node,wow_remote_node,wow_local_node,config):
     global www_root
     local_ip = "localhost"
     print(f"remotenode: {remote_node}\n localnode : {local_node}")
     #static html refresh every 5 minutes
-    rpc_url = "http://" + str(remote_node) + "/json_rpc"
     counter = 1
+    www_root = config["wishlist"]["www_root"]
     while True: 
-        www_root = config["wishlist"]["www_root"]
+        rpc_url = "http://" + str(remote_node) + "/json_rpc"
+        wow_rpc_url =  "http://" + str(wow_remote_node) + "/json_rpc"  
         wishlist = getJson()
-        node_status = wishlist["metadata"]["status"]
+        node_status = wishlist["metadata"]["monero_status"]
+        wow_node_status = wishlist["metadata"]["wownero_status"]
         not_ok = 0
         list_modified = 0
+        recover_xmr = 0
+        recover_wow = 0
 
-        #save monero wallet file every 10 mins
-        rpc_connection = AuthServiceProxy(service_url=rpc_url)
-        rpc_local = AuthServiceProxy(service_url=local_node)
-
-
+        #each of these could time out
         try:
-            rpc_local.store()
+            rpc_connection = AuthServiceProxy(service_url=rpc_url)
+            rpc_local = AuthServiceProxy(service_url=local_node)
         except Exception as e:
-            print(e)
-            not_ok = 1
-            for proc in psutil.process_iter():
-                # check whether the process name matches
-                if "monero-wallet-rpc" in proc.name():
-                    proc.kill()
-            rpc_bin_file = config["monero"]["bin"]
-            rpc_port = config["monero"]["daemon_port"]
-            rpc_url_local = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
-            wallet_file = config["monero"]["wallet_file"]
-            list_remote_nodes = []
-            fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
-            for i in range(int(fallback_remote_nodes)):
-                num = (i+1)
-                list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
-
-            remote_node = find_working_node(list_remote_nodes)
-            if remote_node:
-                start_monero_rpc(rpc_bin_file,rpc_port,rpc_url_local,remote_node,wallet_file)
-                wishlist["metadata"]["status"] = "OK"
-            not_ok = 0
+            recover_xmr = 1
         try:
-            #sometimes the remote node is offline
-            info = rpc_connection.get_info()
-            #sometimes theres an issue with local rpc
-            #need to separate
-            if info["status"] != "OK":
-                wishlist["metadata"]["status"] = "remote"
-                not_ok = 1
-            else:
-                not_ok = 0
-        except Exception as e:
-            print(e)
-            print("error - remote")
-            wishlist["metadata"]["status"] = "remote"
-            not_ok = 1
-            list_remote_nodes = []
-            fallback_remote_nodes = config["monero"]["fallback_remote_nodes"]
-            for i in range(int(fallback_remote_nodes)):
-                num = (i+1)
-                list_remote_nodes.append(config["monero"][f"remote_node_{num}"])
+            wow_rpc_connection = AuthServiceProxy(service_url=wow_rpc_url)
+            wow_rpc_local = AuthServiceProxy(service_url=wow_local_node)
+        except:
+            recover_wow = 1
 
-            remote_node = find_working_node(list_remote_nodes)
-            if remote_node:
-                start_monero_rpc(rpc_bin_file,rpc_port,rpc_url_local,remote_node,wallet_file)
-                wishlist["metadata"]["status"] = "OK"
-
-
-        if not_ok == 1:
-            if node_status != "remote":
-               list_modified = 1
-        else:
-            if node_status != "OK":
-                wishlist["metadata"]["status"] = "OK"
-                list_modified = 1
-        if list_modified == 1:
-            wishlist_file  = os.path.join(www_root,"data","wishlist-data.json")
-            lock = wishlist_file + ".lock"
-            with FileLock(lock):
-                #print("Lock acquired.")
-                with open(wishlist_file, 'w+') as f:
-                    json.dump(wishlist, f, indent=6)
+        if not remote_health_check("wownero",wow_remote_node,config) or not local_health_check("wownero",wow_rpc_local,wow_rpc_connection,wow_remote_node,config):
+            revover_wow = 1
+        if not remote_health_check("monero",remote_node,config) or not local_health_check("monero",rpc_local,rpc_connection,remote_node,config):
+            recover_xmr = 1
         
+        if recover_xmr == 1:
+            wow_remote_node = recover_crash("wow",config,wow_remote_node)
+        if recover_wow == 1:
+            remote_node = recover_crash("monero",config,remote_node)
         del rpc_connection
         del rpc_local
+        del wow_rpc_local
+        del wow_rpc_connection
         time.sleep(60*10)
 
 if __name__ == '__main__':

@@ -23,11 +23,14 @@ def init_wishlist():
     config.read('./db/wishlist.ini')
     viewkey = config["monero"]["viewkey"]
     main_address = config["monero"]["mainaddress"]
+    wow_main_address = config["wow"]["mainaddress"]
+    wow_viewkey = config["wow"]["viewkey"]
     thetime = datetime.now()
     total = {
         "xmr_total": 0,
         "btc_total": 0,
         "bch_total": 0,
+        "wow_total": 0,
         "contributors": 0,
         "modified": str(thetime),
         "title": "",
@@ -36,7 +39,10 @@ def init_wishlist():
         "url": "",
         "viewkey": viewkey,
         "main_address": main_address,
-        "status": "OK",
+        "wow_viewkey": wow_viewkey,
+        "wow_main_address": wow_main_address,
+        "monero_status": "OK",
+        "wownero_status": "OK",
         "protocol": "v3",
     }
     the_wishlist = {}
@@ -81,8 +87,6 @@ def wish_add(wish,config):
         new_wish["btc_address"] = get_unused_address(config,"btc")
         put_qr_code(new_wish["btc_address"], "btc")
         rpc_port = config["monero"]["daemon_port"]
-        if rpc_port == "":
-            rpc_port = 18082
         rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
         wallet_path = os.path.basename(config['monero']['wallet_file'])
         retries = 0
@@ -97,14 +101,32 @@ def wish_add(wish,config):
                 time.sleep(10)
                 retries += 1
         new_wish["xmr_address"] = get_unused_address(config,"xmr")
+
+        #WOW
+        rpc_port = config["wow"]["daemon_port"]
+        rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
+        wallet_path = os.path.basename(config['wow']['wallet_file'])
+        retries = 0
+        while True:
+            if monero_rpc_online(rpc_url):
+                break
+            else:
+                print_err("Waiting for WOWnero daemon to come online")
+                if retries == 7:
+                    print_err("WOWnero not online after 40 seconds")
+                    sys.exit(1)
+                time.sleep(10)
+                retries += 1
+        new_wish["wow_address"] = get_unused_address(config,"wow")
         
         #insert the addresses into the database
         wish_id = new_wish["xmr_address"][0:12]
         pre_receipts_add(new_wish["xmr_address"],"xmr",wish_id)
         pre_receipts_add(new_wish["bch_address"],"bch",wish_id)
         pre_receipts_add(new_wish["btc_address"],"btc",wish_id)
+        pre_receipts_add(new_wish["wow_address"],"wow",wish_id)
         put_qr_code(new_wish["xmr_address"], "xmr")
-
+        put_qr_code(new_wish["wow_address"], "wow")
 
         orig_goal = wish["goal"]
         percent = int(config["wishlist"]["percent_buffer"]) / 100
@@ -128,17 +150,21 @@ def wish_add(wish,config):
                     "qr_img_url_xmr": f"static/images/{new_wish['xmr_address'][0:12]}.png",
                     "qr_img_url_btc": f"static/images/{new_wish['btc_address'][0:12]}.png",
                     "qr_img_url_bch": f"static/images/{new_wish['bch_address'][0:12]}.png",
+                    "qr_img_url_wow": f"static/images/{new_wish['wow_address'][0:12]}.png",
                     "title": wish["title"],
                     "btc_address": new_wish["btc_address"],
                     "bch_address": new_wish["bch_address"],
                     "xmr_address": new_wish["xmr_address"],
+                    "wow_address": new_wish["wow_address"],
                     "btc_total": 0,
                     "xmr_total": 0,
                     "bch_total": 0,
+                    "wow_total": 0,
                     "hour_goal": 0,
                     "xmr_history": [],
                     "bch_history": [],
                     "btc_history": [],
+                    "wow_history": [],
                     "btc_confirmed": 0,
                     "btc_unconfirmed": 0,
                     "bch_confirmed": 0,
@@ -180,37 +206,35 @@ def put_qr_code(address, xmr_btc):
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
     www_root = config["wishlist"]["www_root"]
-    if xmr_btc == "xmr":
-        uri = "monero"
-        logo = "xmr.png"
-        thumnail = (60, 60)
+    if xmr_btc != "xmr" or xmr_btc != "wow":
         qr = qrcode.QRCode(
         version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
         box_size=7,
         border=4,
+        )
+    else:
+        qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=7,
+        border=4,
     )
+    if xmr_btc == "xmr":
+        uri = "monero"
+        logo = "xmr.png"
     elif xmr_btc == "btc":
         uri = "bitcoin"
         logo = "btc.png"
-        thumnail = (60, 60)
-        qr = qrcode.QRCode(
-        version=None,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=7,
-        border=4,
-    )
-    else:
+    elif xmr_btc == "bch":
         uri = "bitcoincash"
-        
         logo = "bch.png"
-        thumnail = (60, 60)
-        qr = qrcode.QRCode(
-        version=None,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=7,
-        border=4,
-    )
+    else:
+        uri = "wownero"
+        logo = "wow.png"
+
+    thumnail = (60, 60)
+
     try:
         if not os.path.isdir(os.path.join(www_root,'images')):
             os.mkdir(os.path.join(www_root,"images"))
@@ -433,8 +457,11 @@ def get_unused_address(config,ticker,title=None):
             rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
             wallet_path = os.path.basename(config["monero"]["wallet_file"])
             address = get_xmr_subaddress(rpc_url,wallet_path,title)
-            valid_coin = 1
-            #notify qzr3duvhlknh9we5g8x3wvkj5qvh625tzv36ye9kwl http://127.0.1.1
+        elif ticker == "wow":
+            rpc_port = config["wow"]["daemon_port"]
+            rpc_url = "http://" + str(local_ip) + ":" + str(rpc_port) + "/json_rpc"
+            wallet_path = os.path.basename(config["wow"]["wallet_file"])
+            address = get_xmr_subaddress(rpc_url,wallet_path,title)
         else:
             wallet_path = config[ticker]["wallet_file"]
             bin_dir = config[ticker]["bin"]
@@ -480,7 +507,7 @@ def get_unused_address(config,ticker,title=None):
         rows = len(cur.fetchall())
         #its a used address. continue loop
         if rows == 0:
-            if ticker != "xmr":
+            if ticker != "xmr" and ticker != "wow":
                 th = threading.Thread(target=rpc_notify,args=(rpcuser,rpcpass,rpcport,address,port,))
                 th.start()
             break

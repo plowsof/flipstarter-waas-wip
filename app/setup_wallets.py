@@ -149,16 +149,18 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None,
             #"--daemon-address", remote_node,
             "--offline"
         ]
-    print(rpc_args)
+    #print(rpc_args)
     #wownero no stage/testnet?
+    coin = "WOWnero"
     if xmr_wow == "monero" or xmr_wow == "xmr":
+        coin = "Monero"
         if os.environ["waas_mainnet"] == "0":
             print("stagenet mode")
             rpc_args.append("--stagenet")
     monero_daemon = subprocess.Popen(rpc_args,stdout=subprocess.PIPE)
 
     kill_daemon = 0
-    print_msg("Starting Monero rpc...")
+    print_msg(f"Starting {coin} rpc...")
     for line in iter(monero_daemon.stdout.readline,''):
         #debug output
         #print(str(line.rstrip()))
@@ -192,17 +194,14 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,wallet_file,remote_node=None,
     while True:
         try:
             info = rpc_connection.get_version()
-            if "wow" in rpc_bin_file:
-                print_msg("WOWnero RPC server online.")
-            else:
-                print_msg("Monero RPC server online.")
+            print_msg(f"{coin} RPC server online.")
             return monero_daemon
         except Exception as e:
             print(e)
             print("Trying again..")
             if num_retries > 30:
                 #the lights are on but nobodys home, exit
-                print("Unable to communiucate with monero rpc server. Exiting")
+                print("Unable to communiucate with {coin} rpc server. Exiting")
                 sys.exit(1)
             time.sleep(5)
             num_retries += 1
@@ -375,6 +374,8 @@ def create_monero_wallet(config,remote_node,ticker):
             monero_daemon.terminate()
             monero_daemon.communicate()
             break
+    if coin == "WOWnero":
+        coin = "wow"
     config[coin.lower()]["viewkey"] = view_key
     config[coin.lower()]["mainaddress"] = main_address
     print_msg("Success.")
@@ -548,7 +549,7 @@ def testnet_check(wallet_file):
 def main(config):
     if os.path.isfile("./static/data/wishlist-data.json"):
         print_err("Wishlist already created. Please use edit_wishlist.py")
-        print_err("type: 'rm static/data/wishlist-data.json' to delete wishlist, and re-run make_wishlist")
+        print_err("type: 'rm static/data/wishlist-data.json' to delete wishlist, and re-run setup_wallets")
         sys.exit(1)
 
     print_msg("Wishlist As A Service wizard v1.0")
