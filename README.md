@@ -183,6 +183,7 @@ Switching back and forth is a litte tricky as you have to delete the wishlist te
 ### TODO
 This is still in beta so i must do some sanity checks 
 - [ ] sanity checks
+- [ ] Raspberry Pi docker image (64bit as the Pi Zero 2 will be supporting 64 bit 'out of the box' soon(tm))
 ### Support
 The initial funding for this project was obtained through Bitcoin-cash' crowdfunding system - FlipStarter.    
 I will not be asking for any donations for this particular projects further development until someone using this WaaS receives their first (mainnet)     donation / and i have fulfilled my FlipStarter promises. I think thats fair right? :)    
