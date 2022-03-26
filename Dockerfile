@@ -79,6 +79,6 @@ ENV PATH=/root/.local/bin:$PATH
 WORKDIR /home/app
 #main.py starts the /donate webpage/server
 CMD ["python3", "./main.py"]
-#users must then shell into the container and run the 'make_wishlist.py'
+#users must then shell into the container and run the 'setup_wallets.py'
 #sudo docker volume rm $(sudo docker volume ls -q)
 #certbot certonly --standalone -d <domaim> --staple-ocsp -m <email> --agree-tos
