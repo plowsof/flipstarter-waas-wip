@@ -1,7 +1,5 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/plowsof/flipstarter-waas-wip/graphs/contributors)    
-Currently, this will just create a mirror of the page @ rucknium.me/flask, however, i will eventually be making a generic version, and use the rucknium page as an example of installing a template (just copy and pasting a folder)    
-
-Also ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```make_wishlist.py``` e.g. wrongly select Restore from keys.   
+ ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```setup_wallets.py``` e.g. wrongly select Restore from keys.   
 
 ### Production / On a VPS
 
@@ -96,9 +94,9 @@ And get on the terminal inside it using:
 ```
 sudo docker exec -it fresh /bin/bash
 ```
-from here (you will already be in /home/app) you can run ```make_wishlist.py``` using:
+from here (you will already be in /home/app) you can run ```setup_wallets.py``` using:
 ```
-python3 make_wishlist.py
+python3 setup_wallets.py
 ```
 You can choose to paste your viewkeys or have wallets created for you (Write the seed words down though! else your money is gone forever)    
 when finished press ctrl+p then ctrl+q to detatch from the docker container     
@@ -180,7 +178,7 @@ server {
 ```
 ### Testing on stagenet/testnet
 All 5 of the remote nodes in ```docker-compose.yml``` must be replaced with stagenet ones, and then set ```waas_mainnet=0```.    
-Switching back and forth is a litte tricky as you have to delete the wishlist text file ```rm static/data/wishlist-data.json``` and run ```python3 make_wishlist.py``` again to create your wishlist/mainnet wallets.
+Switching back and forth is a litte tricky as you have to delete the wishlist text file ```rm static/data/wishlist-data.json``` and run ```python3 setup_wallets.py``` again to create your wishlist/mainnet wallets.
 
 ### TODO
 This is still in beta so i must do some sanity checks 
