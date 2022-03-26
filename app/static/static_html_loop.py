@@ -75,6 +75,7 @@ def main(config):
     count = len(wishlist["comments"]["comments"])
     pages = ceil( count / comments_per_page)
     intro = config["wishlist"]["intro"]
+    title = config["wishlist"]["title"]
     #print(f"the pages = {pages} count = {count}")
     with open(funding_template, 'r') as f:
         for line in f:
@@ -97,6 +98,8 @@ def main(config):
                     line=line.replace("{@_RSS_@}","")
             elif "{@_INTRO_@}" in line:
                 line = line.replace("{@_INTRO_@}",intro)
+            elif "{@_TITLE_@}" in line:
+                line = line.replace("{@_TITLE_@}",title)
 
             replacement += line
     lock = funding_template + ".lock"

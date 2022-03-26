@@ -176,7 +176,7 @@ def start_bit_daemon(bin_file,wallet_file,rpcuser,rpcpass,rpcport):
         start_daemon.append("--testnet")
         load_wallet.append("--testnet")
     run_cmd(stop_daemon)
-    run_cmd(rpc_user)
+    run_cmd(rpc_user) #defaults to user
     run_cmd(rpc_pass)
     run_cmd(rpc_port)
     run_cmd(start_daemon)
@@ -195,14 +195,14 @@ def main(config):
     wallet_file = config["monero"]["wallet_file"]
     if os.environ["waas_mainnet"] == "1":
         if "test" in wallet_file:
-            print_err("You're using a Monero stagenet wallet in mainnet mode.\nConnect to this container and run make_wishlist.py to create a mainnet wallet")
+            print_err("You're using a Monero stagenet wallet in mainnet mode.\nConnect to this container and run setup_wallets.py to create a mainnet wallet")
             sys.exit(1)
     else:
         if "test" not in wallet_file:
-            print_err("Trying to use a Mainnet wallet in Stagenet mode!\nConnect to this container and run make_wishlist.py to create a stagenet wallet")
+            print_err("Trying to use a Mainnet wallet in Stagenet mode!\nConnect to this container and run setup_wallets.py to create a stagenet wallet")
             sys.exit(1)
     #we have to force close the monero rpc because it was launched
-    #without tx-notify in make_wishlist
+    #without tx-notify in setup_wallets
     for proc in psutil.process_iter():
         # check whether the process name matches
         if "-rpc" in proc.name():
@@ -245,7 +245,7 @@ def main(config):
     b_rpcport = config["btc"]["rpcport"]
     if os.environ["waas_mainnet"] == "1":
         if "test" in btc_wallet_path or not bch_wallet_path:
-            print_err("You're using a testnet wallet in mainnet mode. Run make_wishlist.py to create mainnet walelts.")
+            print_err("You're using a testnet wallet in mainnet mode. Run setup_wallets.py to create mainnet walelts.")
             sys.exit(1)
     electron_path = config["bch"]["bin"]
     
@@ -254,7 +254,7 @@ def main(config):
     rpcport = config["bch"]["rpcport"]
     if os.environ["waas_mainnet"] == "1":
         if "test" in bch_wallet_path or not bch_wallet_path:
-            print_err("You're using a testnet wallet in mainnet mode. Run make_wishlist.py to create mainnet walelts.")
+            print_err("You're using a testnet wallet in mainnet mode. Run setup_wallets.py to create mainnet walelts.")
             sys.exit(1)
     threads = []
     t = threading.Thread(target=start_bit_daemon, args=(electrum_path,btc_wallet_path,b_rpcuser,b_rpcpass,b_rpcport,))

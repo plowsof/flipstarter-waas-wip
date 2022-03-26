@@ -25,7 +25,7 @@ def main():
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
     if not os.path.isfile("./static/data/wishlist-data.json"):
-        print("Error: please run make_wishlist.py first.")
+        print("Error: please run setup_wallets.py first.")
         sys.exit(1)
 
     with open("./static/data/wishlist-data.json", "r") as f:

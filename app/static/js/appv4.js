@@ -88,7 +88,7 @@ async function getPrice(){
       return null;
   }
   Object.keys(array_prices).forEach(function(symbol) {
-    if (price_info[symbol] == 0) {
+    if (price_info[symbol] == "i") {
       return null;
     }
     array_prices[symbol] = price_info[symbol]
@@ -371,7 +371,7 @@ async function pagination(comments){
 
 //on page load - render the wishlist. set a 'time updated variable from the json' then loop compare
 //infinite loop
-var array_prices = {"bitcoin-cash": 0, "monero": 0, "bitcoin": 0, "wownero": 0};
+var array_prices = {"bitcoin-cash": "i", "monero": "i", "bitcoin": "i", "wownero": "i"};
 function main(){
   $("span#p_left").click(function() {
     console.log(comment_page)
