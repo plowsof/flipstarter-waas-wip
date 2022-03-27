@@ -206,7 +206,7 @@ def put_qr_code(address, xmr_btc):
     config = configparser.ConfigParser()
     config.read('./db/wishlist.ini')
     www_root = config["wishlist"]["www_root"]
-    if xmr_btc != "xmr" or xmr_btc != "wow":
+    if xmr_btc == "xmr" or xmr_btc == "wow":
         qr = qrcode.QRCode(
         version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
