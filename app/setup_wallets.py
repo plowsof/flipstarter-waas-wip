@@ -375,17 +375,18 @@ def create_monero_wallet(config,remote_node,ticker):
             monero_daemon.communicate()
             break
     meta = ""
-    with open("./static/data/wishlist-data.json", "r") as f:
-        wishlist = json.load(f)
     if coin == "WOWnero":
         coin = "wow"
         meta = "wow_"
     config[coin.lower()]["viewkey"] = view_key
     config[coin.lower()]["mainaddress"] = main_address
-    wishlist["metadata"][f"{meta}viewkey"] = view_key
-    wishlist["metadata"][f"{meta}main_address"] = main_address
-    with open("./static/data/wishlist-data.json", "w") as f:
-        json.dump(wishlist, f, indent=6) 
+    if os.path.isfile("./static/data/wishlist-data.json"):
+        with open("./static/data/wishlist-data.json", "r") as f:
+            wishlist = json.load(f)
+        wishlist["metadata"][f"{meta}viewkey"] = view_key
+        wishlist["metadata"][f"{meta}main_address"] = main_address
+        with open("./static/data/wishlist-data.json", "w") as f:
+            json.dump(wishlist, f, indent=6) 
     print_msg("Success.")
     #we've launched the daemon with --wallet-dir , so the filename , not full path is required
     rpc_connection.open_wallet({"filename": wallet_fname, "password" :""})

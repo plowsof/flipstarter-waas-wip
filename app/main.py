@@ -456,8 +456,16 @@ if __name__ == "__main__":
     wish_config["monero"]["remote_node_3"] = os.environ['waas_remote_node_3'].replace('"','')
     wish_config["monero"]["remote_node_4"] = os.environ['waas_remote_node_4'].replace('"','')
     wish_config["monero"]["remote_node_5"] = os.environ['waas_remote_node_5'].replace('"','')
-    wish_config["wow"] = {}
+    try:
+        if wish_config["wow"]["wallet_file"]:
+            pass
+    except Exception as e:
+        wish_config["wow"] = {}
+        wish_config["wow"]["wallet_file"] = ""
+        wish_config["wow"]["bin"] = "bin/wownero-wallet-rpc"
+    
     wish_config["wow"]["fallback_remote_nodes"] = "5"
+    wish_config["wow"]["daemon_port"] = "15112"
     wish_config["wow"]["remote_node_1"] = os.environ['waas_wow_remote_node_1'].replace('"','')
     wish_config["wow"]["remote_node_2"] = os.environ['waas_wow_remote_node_2'].replace('"','')
     wish_config["wow"]["remote_node_3"] = os.environ['waas_wow_remote_node_3'].replace('"','')

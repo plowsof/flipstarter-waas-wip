@@ -106,16 +106,7 @@ def main(config):
     with FileLock(lock):
         with open(funding_file,'w') as f:
             f.write(replacement)
-'''
-{
-    "comment": "What do you think about the &#x27;Accepted-here&#x27; logos in the footer of this page?",
-    "comment_name": "HelloWorld",
-    "date_time": 1643551019,
-    "ticker": "xmr",
-    "amount": 0.006516356054,
-    "id": "VPS - 3 months"
-},
-'''
+
 def comments_html(comments):
     global prices
     html_comments = ""
