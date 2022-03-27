@@ -40,8 +40,9 @@ def main():
     print("1) Add a wish")
     print("2) Remove")
     print("3) Edit")
+    print("4) Delete Comments")
     answer = ""
-    while answer not in [1,2,3]:
+    while answer not in [1,2,3,4]:
         answer = int(input("Enter 1 2 or 3 >> "))
     if answer == 1:
         wish_prompt(config)
@@ -49,6 +50,8 @@ def main():
         wish_edit(wishlist,"Delete",config["wishlist"]["www_root"])
     if answer == 3:
         wish_edit(wishlist,"Edit",config["wishlist"]["www_root"])
+    if answer == 4:
+        delete_comments(wishlist)
 
     #blindly trigger a static html refresh
     static_main(config)
@@ -56,6 +59,41 @@ def main():
     #front end refreshes existing data - not redraws
     uid = uuid.uuid4().hex
     asyncio.run(notify_xmr_vps_pi.ws_work_around(uid))
+
+def delete_comments(wishlist):
+    total = 0
+    for x in wishlist["comments"]["comments"]:
+        print(x)
+    total = len(wishlist["comments"]["comments"])
+    if total == 0:
+        print("No comments to delete")
+        return
+    for i in range(total):
+        comment = wishlist["comments"]["comments"][i]
+        print(f"Comment number: {i}")
+        print(f'User: {comment["comment_name"]}')
+        print(f'Comment: {comment["comment"]}') 
+        print("------------------------------------------")
+    del_me = -1
+    while del_me not in range(0,total):
+        print(f"Enter comment number to delete:")
+        del_me = int(input(">> "))
+
+    
+    print("Delete this comment:")
+    print(wishlist["comments"]["comments"][int(del_me)]["comment"])
+    answer = ""
+    while "y" not in answer.lower() and "n" not in answer.lower():
+        answer = input("Yes/No >> ")
+        print(answer.lower())
+    if "y" in answer:
+        #delete 
+        wishlist["comments"]["comments"].pop(int(del_me))
+    else:
+        print("Ooops, run edit_wishlist.py again")
+
+    with open("./static/data/wishlist-data.json","w") as f:
+        json.dump(wishlist,f, indent=6)
 
 #find the matching wish and set the variables
 def wish_edit(wishlist,edit_delete,www_root):

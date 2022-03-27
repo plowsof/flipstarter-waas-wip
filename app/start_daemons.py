@@ -134,7 +134,18 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,
             print("Hello world")
             info = rpc_connection.get_version()
             print("Monero RPC server online.")
-            print(info)
+            if wow_xmr == "monero":
+                with open("./static/data/wishlist-data.json", "r") as f:
+                    wishlist = json.load(f)
+                if wishlist["metadata"]["main_address"] == "":
+                    result = rpc_connection.get_address()["address"]
+                    wishlist["metadata"]["main_address"] = result
+                if wishlist["metadata"]["viewkey"] == "":
+                    result = rpc_connection.query_key({"key_type": "view_key"})
+                    pprint.pprint(result)
+                    wishlist["metadata"]["viewkey"] = result["key"]
+                with open("./static/data/wishlist-data.json", "w") as f:
+                    json.dump(wishlist, f, indent=6) 
             return monero_daemon
         except Exception as e:
             print(e)

@@ -228,6 +228,7 @@ label.donate_button, label.btn, button{
   color: green;
   padding: 4px;
   border-radius: 3px;
+  cursor: pointer;
 }
 
 

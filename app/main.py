@@ -37,6 +37,8 @@ from starlette.responses import HTMLResponse
 from starlette.websockets import WebSocket, WebSocketDisconnect
 import subprocess
 import uuid 
+
+import rss_feed
 # To read your secret credentials
 #config = configparser.ConfigParser()
 #config.read("config.ini")
@@ -404,6 +406,32 @@ def logit(s):
     except Exception as e:
         raise e
 
+def rss_check(wish_config):
+    changed = 0
+    if wish_config["RSS"]["enable"] != os.environ['waas_RSS_ON']:
+        changed = 1
+    if wish_config["RSS"]["title"] != os.environ['waas_RSS_TITLE'].replace('"',''):
+        changed = 1
+    if wish_config["RSS"]["description"] != os.environ['waas_RSS_DESC'].replace('"',''):
+        changed = 1
+    if wish_config["RSS"]["link"] != os.environ['waas_RSS_LINK'].replace('"',''):
+        changed = 1
+    if changed == 1:
+        return True
+
+#if we have a list with no wownero addresses
+#we must run the wow_much_updates.py script to create wallet/add wishes
+def wow_check():
+    with open("./static/data/wishlist-data.json", "r") as f:
+        wishlist = json.load(f)
+    for wish in wishlist["wishlist"]:
+        try:
+            if wish["wow_address"]:
+                pass
+        except Exception as e:
+            return False
+    return True
+
 def db_receipts_add(data):
     con = sqlite3.connect('./db/receipts.db')
     cur = con.cursor()
@@ -417,6 +445,8 @@ if __name__ == "__main__":
     #old ini file! :'(
     wish_config = configparser.ConfigParser()
     wish_config.read("./db/wishlist.ini")
+    #create new rss feed if info is changed
+    remake_rss = rss_check(wish_config)
     wish_config["RSS"]["enable"] = os.environ['waas_RSS_ON']
     wish_config["RSS"]["title"] = os.environ['waas_RSS_TITLE'].replace('"','')
     wish_config["RSS"]["description"] = os.environ['waas_RSS_DESC'].replace('"','')
@@ -426,6 +456,8 @@ if __name__ == "__main__":
     wish_config["monero"]["remote_node_3"] = os.environ['waas_remote_node_3'].replace('"','')
     wish_config["monero"]["remote_node_4"] = os.environ['waas_remote_node_4'].replace('"','')
     wish_config["monero"]["remote_node_5"] = os.environ['waas_remote_node_5'].replace('"','')
+    wish_config["wow"] = {}
+    wish_config["wow"]["fallback_remote_nodes"] = "5"
     wish_config["wow"]["remote_node_1"] = os.environ['waas_wow_remote_node_1'].replace('"','')
     wish_config["wow"]["remote_node_2"] = os.environ['waas_wow_remote_node_2'].replace('"','')
     wish_config["wow"]["remote_node_3"] = os.environ['waas_wow_remote_node_3'].replace('"','')
@@ -433,6 +465,9 @@ if __name__ == "__main__":
     wish_config["wow"]["remote_node_5"] = os.environ['waas_wow_remote_node_5'].replace('"','')
     wish_config["wishlist"]["intro"] = os.environ['waas_INTRO'].replace('"','')
     wish_config["wishlist"]["title"] = os.environ['waas_TITLE'].replace('"','')
+    if remake_rss:
+        rss_feed.create_fresh_feed(wish_config)
+
     #start recurring fee loop
     th = threading.Thread(target=schedule_fee.schedule_main)
     th.start()
@@ -440,9 +475,12 @@ if __name__ == "__main__":
     with open('./db/wishlist.ini', 'w') as configfile:
         wish_config.write(configfile)
     #if wishlist file exists - assume we can start_daemons
-    if os.path.isfile("./static/data/wishlist-data.json"):        
-        th = threading.Thread(target=start_daemons.main, args=(wish_config,))
-        th.start()
+    if os.path.isfile("./static/data/wishlist-data.json"):   
+        if wow_check():
+            th = threading.Thread(target=start_daemons.main, args=(wish_config,))
+            th.start()
+        else:
+            print("Run wow_such_update.py to setup your WOWnero wallet")
     else:
         print("Run setup_wallets.py")
     #ssl certs should be in ./ssl folder 
