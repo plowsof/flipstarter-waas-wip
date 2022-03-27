@@ -1,7 +1,5 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/plowsof/flipstarter-waas-wip/graphs/contributors)    
-Currently, this will just create a mirror of the page @ rucknium.me/flask, however, i will eventually be making a generic version, and use the rucknium page as an example of installing a template (just copy and pasting a folder)    
-
-Also ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```make_wishlist.py``` e.g. wrongly select Restore from keys.   
+ ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```setup_wallets.py``` e.g. wrongly select Restore from keys.   
 
 ### Production / On a VPS
 
@@ -75,7 +73,7 @@ If there are any errors then again, refer to the bottom of the guide to see how 
 
 At this point we need to ```cd``` to our ```/home``` folder and download the docker-compose file:
 ```
-curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/wownero/docker-compose.yml -o docker-compose.yml
+curl https://raw.githubusercontent.com/plowsof/flipstarter-waas-wip/main/docker-compose.yml -o docker-compose.yml
 ```
 Perfect. Now lets install docker and docker-compose with these handy install scripts:
 ```
@@ -96,9 +94,9 @@ And get on the terminal inside it using:
 ```
 sudo docker exec -it fresh /bin/bash
 ```
-from here (you will already be in /home/app) you can run ```make_wishlist.py``` using:
+from here (you will already be in /home/app) you can run ```setup_wallets.py``` using:
 ```
-python3 make_wishlist.py
+python3 setup_wallets.py
 ```
 You can choose to paste your viewkeys or have wallets created for you (Write the seed words down though! else your money is gone forever)    
 when finished press ctrl+p then ctrl+q to detatch from the docker container     
@@ -180,11 +178,12 @@ server {
 ```
 ### Testing on stagenet/testnet
 All 5 of the remote nodes in ```docker-compose.yml``` must be replaced with stagenet ones, and then set ```waas_mainnet=0```.    
-Switching back and forth is a litte tricky as you have to delete the wishlist text file ```rm static/data/wishlist-data.json``` and run ```python3 make_wishlist.py``` again to create your wishlist/mainnet wallets.
+Switching back and forth is a litte tricky as you have to delete the wishlist text file ```rm static/data/wishlist-data.json``` and run ```python3 setup_wallets.py``` again to create your wishlist/mainnet wallets.
 
 ### TODO
 This is still in beta so i must do some sanity checks 
 - [ ] sanity checks
+- [ ] Raspberry Pi docker image (64bit as the Pi Zero 2 will be supporting 64 bit 'out of the box' soon(tm))
 ### Support
 The initial funding for this project was obtained through Bitcoin-cash' crowdfunding system - FlipStarter.    
 I will not be asking for any donations for this particular projects further development until someone using this WaaS receives their first (mainnet)     donation / and i have fulfilled my FlipStarter promises. I think thats fair right? :)    

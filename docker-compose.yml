@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   waas:
-    image: plowsof/waas-wow
+    image: plowsof/waas
     container_name: fresh
     volumes:
       - waas-db:/home/app/db
@@ -21,6 +21,7 @@ services:
       - apparmor:unconfined
     environment:
       - waas_RSS_ON=1
+      - waas_TITLE="Crowd Funding"
       - waas_INTRO="Welcome to my funding page!"
       - waas_RSS_TITLE="Ruckniums Funding Page"
       - waas_RSS_DESC="Help support my projects and running costs"
