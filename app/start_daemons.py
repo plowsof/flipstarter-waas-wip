@@ -109,8 +109,8 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,
     kill_daemon = 0
     print(f"Starting {coin} rpc...")
     for line in iter(monero_daemon.stdout.readline,''):
-        print(str(line.rstrip()))
-        time.sleep(1)
+        #print(str(line.rstrip()))
+        #time.sleep(1)
         if b"Error" in line.rstrip() or b"Failed" in line.rstrip() or b'specify --wallet-file' in line.rstrip() or b"failed" in line.rstrip():
             kill_daemon = 1
             break
@@ -133,7 +133,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,
         try:
             print("Hello world")
             info = rpc_connection.get_version()
-            print("Monero RPC server online.")
+            print(f"{coin} RPC server online.")
             if wow_xmr == "monero":
                 with open("./static/data/wishlist-data.json", "r") as f:
                     wishlist = json.load(f)
@@ -152,7 +152,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,
             print("Trying again..")
             if num_retries > 30:
                 #the lights are on but nobodys home, exit
-                print("Unable to communiucate with monero rpc server. Exiting")
+                print(f"Unable to communiucate with {coin} rpc server. Exiting")
                 sys.exit(1)
             time.sleep(1)
             num_retries += 1

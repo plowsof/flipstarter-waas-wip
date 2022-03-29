@@ -41,8 +41,9 @@ def main():
     print("2) Remove")
     print("3) Edit")
     print("4) Delete Comments")
+    print("5) Show 'wallet gap limits' (BCH/BTC)")
     answer = ""
-    while answer not in [1,2,3,4]:
+    while answer not in [1,2,3,4,5]:
         answer = int(input("Enter 1 2 or 3 >> "))
     if answer == 1:
         wish_prompt(config)
@@ -52,6 +53,8 @@ def main():
         wish_edit(wishlist,"Edit",config["wishlist"]["www_root"])
     if answer == 4:
         delete_comments(wishlist)
+    if answer == 5:
+        get_gap_limits()
 
     #blindly trigger a static html refresh
     static_main(config)
@@ -62,8 +65,6 @@ def main():
 
 def delete_comments(wishlist):
     total = 0
-    for x in wishlist["comments"]["comments"]:
-        print(x)
     total = len(wishlist["comments"]["comments"])
     if total == 0:
         print("No comments to delete")
@@ -94,6 +95,49 @@ def delete_comments(wishlist):
 
     with open("./static/data/wishlist-data.json","w") as f:
         json.dump(wishlist,f, indent=6)
+
+def get_gap_limits():
+    #count total number of addresses given
+    con = sqlite3.connect('./db/receipts.db')
+    cur = con.cursor()
+    create_receipts_table = """ CREATE TABLE IF NOT EXISTS donations (
+                                email text,
+                                amount integer default 0 not null,
+                                fname text,
+                                donation_address text PRIMARY KEY,
+                                zipcode text,
+                                address text,
+                                date_time text,
+                                refund_address text,
+                                crypto_ticker text,
+                                wish_id text,
+                                comment text,
+                                comment_name text,
+                                amount_expected integer default 0 not null,
+                                consent integer default 0,
+                                quantity integer default 0,
+                                type text,
+                                comment_bc integer default 0
+                            ); """
+
+    cur.execute(create_receipts_table)
+    cur.execute('SELECT * FROM donations WHERE crypto_ticker = ?',["bch"])
+    gap = len(cur.fetchall())
+    gap += 20
+    print(f"BCH gap limit : {gap}")
+    print(f"To see all donations enter this in the Electron-cash wallet console:")
+    print(f">> for i in range(0, {gap}): print(wallet.create_new_address(False))")
+    print(f"------------------------------------------------")
+    cur.execute('SELECT * FROM donations WHERE crypto_ticker = ?',["btc"])
+    gap = len(cur.fetchall())
+    gap += 20
+    print(f"BTC gap limit : {gap}")
+    print(f"To see all donations enter this in the Electrum wallet console:")
+    print(f">> for i in range(0, {gap}): print(wallet.create_new_address(False))")
+    print(f"------------------------------------------------")
+    con.commit()
+    con.close()
+
 
 #find the matching wish and set the variables
 def wish_edit(wishlist,edit_delete,www_root):

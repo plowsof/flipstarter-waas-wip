@@ -46,14 +46,18 @@ for i in range(len(wishlist["wishlist"])):
 	wish["wow_total"] = 0
 	wish["wow_history"] = []
 	wish["wow_address"] = helper_create.get_unused_address(config,"wow",title=None)
-	helper_create.put_qr_code(wish["wow_address"], "wow")
 	wish["qr_img_url_wow"] = f"static/images/{wish['wow_address'][0:12]}.png"
+	helper_create.put_qr_code(wish["wow_address"], "wow")
 	wishlist["wishlist"][i] = wish
 
 wishlist["metadata"]["wow_total"] = 0
 wishlist["metadata"]["wownero_status"] = "OK"
+wishlist["metadata"]["monero_status"] = "OK"
 with open("./static/data/wishlist-data.json", "w") as f:
     json.dump(wishlist, f, indent=6) 
+
+#delete the prices database, so a fresh one is created with a 'wow' column
+os.remove('db/crypto_prices')
 
 input("Press Enter to clear the console (last chance to write your seeds down!")
 os.system("clear")
