@@ -117,8 +117,8 @@ Then follow the instructions
 WaaS is based on these 3 wallets:
 - Monero GUI
 - Electron-cash
-- Electrum    
-Some donations may not appear in your wallet because of something called a gap limit. In Electron-cash / Electrum to go view -> console. And paste this line:
+- Electrum        
+Some donations may not appear in your wallet because of something called a gap limit. In Electron-cash / Electrum to go view -> console. And paste this line: (or you can get the exact number by runnning ```python3 edit_wishlist``` then selecting option ```5) Wallet Gap limits```)
 ```
 for i in range(0, 100): print(wallet.create_new_address(False))
 ```
@@ -128,9 +128,9 @@ Follow the instructions in the github readme of waas-templates. The only issue y
 ### Updating the backend
 The container must be stopped, image removed, and then the docker-compose file ran again to get the new version: (in the same dir as docker-compose.yml) 
 ```
-docker stop fresh && \
-docker rmi plowsof/waas-rucknium:latest --force && \
-docker-compose up -d
+sudo docker stop fresh && \
+sudo docker rmi plowsof/waas-rucknium:latest --force && \
+sudo docker-compose up -d
 ```
 If you run into issues, it must not be running in ```docker ps``` list, and you can use ```--force``` after the remove commands.    
 ```docker images``` will give you an image id to use if all else fails ```docker image rm <imageid> --force```. do not delete the docker compose image!   
