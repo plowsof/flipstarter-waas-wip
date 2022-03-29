@@ -62,26 +62,31 @@ def main(tx_id,multi=0,wow=0):
     find_address = tx_data["address"]
     updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist)
 
-def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=0,bit_con=0,bit_unc=0):
+def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=0):
     now = int(time.time())
     db_wish_id = ""
     found = 0
+    if ticker == "bch" or ticker == "btc":
+        #bit_balance = balance now for this address
+        #old balance = amount in database for this address
+        rows = query_address(find_address)
+        if len(rows) == 0:
+            old_balance = 0
+            in_amount = float(bit_balance)
+        else:
+            old_balance = rows[0][1]
+            in_amount = float(bit_balance) - float(old_balance)
+        print(f"oldbalance = {old_balance}")
+        if old_balance >= bit_balance:
+            return
+        if in_amount < 0:
+            print("[DEBUG]: in_amount negative****************")
+            return
     for i in range(len(saved_wishlist["wishlist"])):
         if saved_wishlist["wishlist"][i][f"{ticker}_address"] == find_address:
             found = 1
-            if ticker != "xmr" and ticker != "wow":
-                bit_balance = float(bit_con) + float(bit_unc)
-                old_balance = float(saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"]) + float(saved_wishlist["wishlist"][i][f"{ticker}_confirmed"])
-                if old_balance >= bit_balance:
-                    return
-                #print(f"old balance: {old_balance} new balance : {now_balance}")
-                in_amount = float(bit_balance) - float(old_balance)
-                saved_wishlist["wishlist"][i][f"{ticker}_confirmed"] = float(bit_con)
-                saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"] = float(bit_unc)
             saved_wishlist["wishlist"][i]["modified_date"] = now
             saved_wishlist["metadata"]["modified"] = now
-            #db_set_time_wish(int(time.time()))
-            #contributor += 1 
             saved_wishlist["wishlist"][i]["contributors"] += 1
             #total += amount
             saved_wishlist["wishlist"][i][f"{ticker}_total"] += float(in_amount)
@@ -99,43 +104,14 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
             #Percent calculated by JS - or some timed script to periodically check         
             break
     if found == 0:
-        extra_xmr = float(in_amount)
         address = find_address
-        #donation received on invalid wishlist
-        #Is this address in our 'kyc' database?
-        #get some uid from db
-        # uid (xmr address 1st x chars | email | address | amount)
-        con = sqlite3.connect('./db/receipts.db')
-        cur = con.cursor()
-        create_receipts_table = """ CREATE TABLE IF NOT EXISTS donations (
-                        email text,
-                        amount integer default 0 not null,
-                        fname text,
-                        donation_address text PRIMARY KEY,
-                        zipcode text,
-                        address text,
-                        date_time text,
-                        refund_address text,
-                        crypto_ticker text,
-                        wish_id text,
-                        comment text,
-                        comment_name text,
-                        amount_expected integer default 0 not null,
-                        consent text,
-                        quantity integer default 0,
-                        type text,
-                        comment_bc integer default 0
-                    ); """
-
-        cur.execute(create_receipts_table)
-         
-        cur.execute('SELECT * FROM donations WHERE donation_address = ?',[address])
-        rows = cur.fetchall()
-        pprint.pprint(cur.fetchall())
+        #rows is already set if bch/btc
+        if ticker != "bch" and ticker != "btc":
+            rows = query_address(address)
         #its a new address. continue
         if len(rows) == 0:
-            extra_xmr += float(bit_balance)
-            saved_wishlist["metadata"][f"{ticker}_total"] += float(extra_xmr)
+            #this metadata is useless - should remove -todo
+            saved_wishlist["metadata"][f"{ticker}_total"] += float(in_amount)
             saved_wishlist["metadata"]["contributors"] += 1
         else:
             db_comment_bc = rows[0][16]
@@ -146,27 +122,20 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
             else:
                 db_comment = ""
 
-            db_amount = rows[0][1]
-            if ticker != "xmr" and ticker != "wow":
-                print(f"db_amount = {db_amount}\nbit_balance = {bit_balance}")
-                if float(db_amount) == float(bit_balance):
-                    return
-                else:
-                    print("amount(balance) in db != balance(now)")
-                    in_amount = float(bit_balance) - float(db_amount)
-                    print(f"in_amount = {in_amount}")
-                    extra_xmr = float(bit_balance)
-            extra_xmr += float(db_amount)
+            db_amount = float(rows[0][1])
+            #bad variable names - this is == total(amount) += in_amount 
+            db_amount += float(in_amount)
+            con = sqlite3.connect('./db/receipts.db')
+            cur = con.cursor()
             sql = ''' UPDATE donations
                       SET amount = ?,
                           date_time = ?,
                           comment_bc = ?
                       WHERE donation_address = ?'''   
-            cur.execute(sql, (extra_xmr,datetime.now(),db_comment_bc,address))
+            cur.execute(sql, (db_amount,datetime.now(),db_comment_bc,address))
             con.commit()
             #address exists in the receipt db
             db_email = rows[0][0]
-            db_amount = extra_xmr
             db_fname = rows[0][2]
             db_crypto_addr = rows[0][3]
             db_zip = rows[0][4]
@@ -195,9 +164,6 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
                     saved_wishlist["wishlist"][i]["modified_date"] = now
                     saved_wishlist["wishlist"][i]["contributors"] += 1
                     saved_wishlist["wishlist"][i][f"{ticker}_total"] += float(in_amount)
-                    if ticker != "xmr" and ticker != "wow":
-                        saved_wishlist["wishlist"][i][f"{ticker}_unconfirmed"] = bit_unc
-                        saved_wishlist["wishlist"][i][f"{ticker}_confirmed"] = bit_con
                     history_tx = {
                     "amount":float(in_amount),
                     "date_time": now
@@ -257,6 +223,37 @@ async def ws_work_around(uid):
     con.commit()
     con.close()
     requests.get(f'http://localhost:8000/push/{uid}')
+
+
+def query_address(address):
+    con = sqlite3.connect('./db/receipts.db')
+    cur = con.cursor()
+    create_receipts_table = """ CREATE TABLE IF NOT EXISTS donations (
+                    email text,
+                    amount integer default 0 not null,
+                    fname text,
+                    donation_address text PRIMARY KEY,
+                    zipcode text,
+                    address text,
+                    date_time text,
+                    refund_address text,
+                    crypto_ticker text,
+                    wish_id text,
+                    comment text,
+                    comment_name text,
+                    amount_expected integer default 0 not null,
+                    consent text,
+                    quantity integer default 0,
+                    type text,
+                    comment_bc integer default 0
+                ); """
+
+    cur.execute(create_receipts_table)
+     
+    cur.execute('SELECT * FROM donations WHERE donation_address = ?',[address])
+    rows = cur.fetchall()
+    pprint.pprint(cur.fetchall())
+    return rows
 
 def dump_json(wishlist):
     global json_fname
