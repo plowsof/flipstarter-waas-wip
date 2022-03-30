@@ -74,6 +74,7 @@ class S(BaseHTTPRequestHandler):
         data_fname = "./static/data/wishlist-data.json"
         with open(data_fname, "r") as f:
             data_wishlist = json.load(f)
+        print(f"updateDatabaseJson({address},0,{ticker},data_wishlist,{bit_balance})")
         updateDatabaseJson(address,0,ticker,data_wishlist,bit_balance)
 
 def rpc_balance(rpcuser,rpcpass,rpcport,address):

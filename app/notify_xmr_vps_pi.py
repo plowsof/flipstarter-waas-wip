@@ -15,6 +15,7 @@ from static_html_loop import main as static_main
 import main as web_main
 import asyncio
 import uuid
+import helper_create
 #os.chdir(os.path.dirname(sys.argv[0]))
 
 cryptocompare.cryptocompare._set_api_key_parameter("-")
@@ -62,28 +63,91 @@ def main(tx_id,multi=0,wow=0):
     find_address = tx_data["address"]
     updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist)
 
+def insert_new(address,balance,ticker):
+    data = {
+    "email": "",
+    "amount": float(balance),
+    "fname": "",
+    "donation_address": address,
+    "zipcode": "",
+    "address": "",
+    "date_time":str(time.time()),
+    "refund_address":"",
+    "crypto_ticker": ticker, 
+    "wish_id": "Unknown",
+    "comment": "",
+    "comment_name": "",
+    "amount_expected":0,
+    "consent":"",
+    "quantity": "",
+    "type":""
+    }
+    helper_create.db_receipts_add(data)
+
 def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=0):
     now = int(time.time())
     db_wish_id = ""
     found = 0
-    if ticker == "bch" or ticker == "btc":
-        #bit_balance = balance now for this address
-        #old balance = amount in database for this address
-        rows = query_address(find_address)
-        if len(rows) == 0:
-            old_balance = 0
+    #bit_balance = balance now for this address
+    #old balance = amount in database for this address
+    rows = query_address(find_address)
+    if len(rows) == 0:
+        old_balance = 0
+        if ticker == "bch" or ticker == "btc":
             in_amount = float(bit_balance)
-        else:
-            old_balance = rows[0][1]
-            in_amount = float(bit_balance) - float(old_balance)
-        print(f"oldbalance = {old_balance}")
+        saved_wishlist["metadata"][f"{ticker}_total"] += float(in_amount)
+        saved_wishlist["metadata"]["contributors"] += 1
+        insert_new(find_address,in_amount,ticker)
+        dump_json(saved_wishlist)
+        return
+
+    old_balance = rows[0][1]
+    if ticker == "bch" or ticker == "btc":
         if old_balance >= bit_balance:
-            return
-        if in_amount < 0:
-            print("[DEBUG]: in_amount negative****************")
-            return
+             return
+        in_amount = float(bit_balance) - float(old_balance)
+    new_balance = float(old_balance) + float(in_amount)
+    db_comment_bc = rows[0][16]
+    db_comment = rows[0][10]
+    db_comment_name = rows[0][11]
+
+    if db_comment_bc == 0 and db_comment != "":
+        db_comment_bc = 1
+    else:
+        db_comment = ""
+    set_new_balance(new_balance,db_comment_bc,find_address)
+
+    db_wish_id = rows[0][9]
+    if db_wish_id == "Unknown":
+        return
+    data = add_amount_to_wish(saved_wishlist,db_wish_id,in_amount,ticker)
+    saved_wishlist = data["wishlist"]
+    saved_wishlist["metadata"]["modified"] = now
+    #this is just a global history
+    print(f"the comment = {db_comment}")
+    comment = {
+    "comment": db_comment,
+    "comment_name": db_comment_name,
+    "date_time": now,
+    "usd_value": "",
+    "ticker": ticker,
+    "amount": in_amount,
+    "id": data["title"]
+    }
+    saved_wishlist["comments"]["comments"].append(comment)
+    saved_wishlist["comments"]["modified"] = int(time.time())
+    #db_set_time_comment(int(time.time()))
+        
+    dump_json(saved_wishlist)
+    static_main(config)
+    uid = uuid.uuid4().hex
+    asyncio.run(ws_work_around(uid))
+
+def add_amount_to_wish(saved_wishlist,db_wish_id,in_amount,ticker):
+    now = int(time.time())
     for i in range(len(saved_wishlist["wishlist"])):
-        if saved_wishlist["wishlist"][i][f"{ticker}_address"] == find_address:
+        general_id = saved_wishlist["wishlist"][i]["id"]
+        if saved_wishlist["wishlist"][i]["id"] == db_wish_id:
             found = 1
             saved_wishlist["wishlist"][i]["modified_date"] = now
             saved_wishlist["metadata"]["modified"] = now
@@ -95,118 +159,15 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
             "date_time": now
             }
             saved_wishlist["wishlist"][i][f"{ticker}_history"].append(history_tx)
-            db_comment = ""
-            db_comment_name = ""
-            db_date_time = now
-            db_ticker = ticker
-            db_amount = in_amount
             db_wish_id = saved_wishlist["wishlist"][i]["title"]
             #Percent calculated by JS - or some timed script to periodically check         
             break
-    if found == 0:
-        address = find_address
-        #rows is already set if bch/btc
-        if ticker != "bch" and ticker != "btc":
-            rows = query_address(address)
-        #its a new address. continue
-        if len(rows) == 0:
-            #this metadata is useless - should remove -todo
-            saved_wishlist["metadata"][f"{ticker}_total"] += float(in_amount)
-            saved_wishlist["metadata"]["contributors"] += 1
-        else:
-            db_comment_bc = rows[0][16]
-            db_comment = rows[0][10]
-
-            if db_comment_bc == 0 and db_comment != "":
-                db_comment_bc = 1
-            else:
-                db_comment = ""
-
-            db_amount = float(rows[0][1])
-            #bad variable names - this is == total(amount) += in_amount 
-            db_amount += float(in_amount)
-            con = sqlite3.connect('./db/receipts.db')
-            cur = con.cursor()
-            sql = ''' UPDATE donations
-                      SET amount = ?,
-                          date_time = ?,
-                          comment_bc = ?
-                      WHERE donation_address = ?'''   
-            cur.execute(sql, (db_amount,datetime.now(),db_comment_bc,address))
-            con.commit()
-            #address exists in the receipt db
-            db_email = rows[0][0]
-            db_fname = rows[0][2]
-            db_crypto_addr = rows[0][3]
-            db_zip = rows[0][4]
-            db_address = rows[0][5]
-            db_date_time = now #is this a column in the db already?
-            db_refund_addr = rows[0][7]
-            db_ticker = rows[0][8]
-            db_wish_id = rows[0][9]
-            db_comment_name = rows[0][11]
-            db_amount_expected = rows[0][12]
-            db_consent = rows[0][13]
-            db_quantity = rows[0][14]
-            db_type = rows[0][15]
-            print(f"We are looking for wish id {db_wish_id}")
-            found = 0
-            
-            #we need db_wish_id -> wish title
-            for i in range(len(saved_wishlist["wishlist"])):
-                #logit(saved_wishlist[i])
-                if saved_wishlist["wishlist"][i]["id"] == db_wish_id:
-                    found = 1
-                    #logit("we found the wish id -> title")
-                    db_wish_id = saved_wishlist["wishlist"][i]["title"]
-                    saved_wishlist["metadata"]["modified"] = now
-                    #db_set_time_wish(int(time.time()))
-                    saved_wishlist["wishlist"][i]["modified_date"] = now
-                    saved_wishlist["wishlist"][i]["contributors"] += 1
-                    saved_wishlist["wishlist"][i][f"{ticker}_total"] += float(in_amount)
-                    history_tx = {
-                    "amount":float(in_amount),
-                    "date_time": now
-                    }
-                    saved_wishlist["wishlist"][i][f"{ticker}_history"].append(history_tx)   
-                    break
-
-            if found == 0:
-                #weird, maybe the wish was put into the archive before being deleted
-                print("Didnt find wish id")
-                db_wish_id = "An already funded wish"
-            #add to the total / history of that wish
-            #send an email / or start a 20~ min timer to check?
-
-    else:
-        #dont need to sort if it was added to total
-        #percent is not being set atm ~?
-        #saved_wishlist["wishlist"] = sorted(saved_wishlist["wishlist"], key=lambda k: k['percent'],reverse=True)
-        saved_wishlist["metadata"]["modified"] = now
-        #db_set_time_wish(int(time.time()))
-    if found == 1:
-        #this is just a global history
-        print(f"the comment = {db_comment}")
-        comment = {
-        "comment": db_comment,
-        "comment_name": db_comment_name,
-        "date_time": now,
-        "usd_value": "",
-        "ticker": db_ticker,
-        "amount": in_amount,
-        "id": db_wish_id
-        }
-        saved_wishlist["comments"]["comments"].append(comment)
-        saved_wishlist["comments"]["modified"] = int(time.time())
-        #db_set_time_comment(int(time.time()))
-        
-    else:
-        print("this address is unknown.. but still its probably crypto ++")
-
-    dump_json(saved_wishlist)
-    static_main(config)
-    uid = uuid.uuid4().hex
-    asyncio.run(ws_work_around(uid))
+    data = {}
+    data["wishlist"] = saved_wishlist
+    data["found"] = found
+    data["realid"] = general_id
+    data["title"] = db_wish_id
+    return data
 
 async def ws_work_around(uid):
     #set / export environ variable
@@ -224,6 +185,16 @@ async def ws_work_around(uid):
     con.close()
     requests.get(f'http://localhost:8000/push/{uid}')
 
+def set_new_balance(db_amount,db_comment_bc,address):
+    con = sqlite3.connect('./db/receipts.db')
+    cur = con.cursor()
+    sql = ''' UPDATE donations
+              SET amount = ?,
+                  date_time = ?,
+                  comment_bc = ?
+              WHERE donation_address = ?'''   
+    cur.execute(sql, (db_amount,datetime.now(),db_comment_bc,address))
+    con.commit()
 
 def query_address(address):
     con = sqlite3.connect('./db/receipts.db')
@@ -299,8 +270,8 @@ def checkHeight(tx_id,xmr_wow_node):
                       "account_index":0,
                       "in":True
                      }
-            info = rpc_connection.get_transfers(params)
-            pprint.pprint(info)
+            #info = rpc_connection.get_transfers(params)
+            #pprint.pprint(info)
             params = {
                       "account_index":0,
                       "txid":tx_id
@@ -362,3 +333,7 @@ if __name__ == '__main__':
         main(tx_id,0,"WOW")
     else:
         main(tx_id)
+
+#apt-get install sqlite3 && \
+#sqlite3 db/receipts.db 'update donations set amount = 0 where donation_address = "qpjnsuvyu9vmaetytr9qr7q724sx38lwn5p0dck3hk"'
+#updateDatabaseJson("qpjnsuvyu9vmaetytr9qr7q724sx38lwn5p0dck3hk",0,"bch",data_wishlist,0.1)
