@@ -3,7 +3,7 @@
             {
                   "goal_usd": 400,
                   "usd_total": 0,
-                  "contributors": 5,
+                  "contributors": 2,
                   "status": "",
                   "description": "Virtual Private Server costs for MoneroResearch.info, bchmempool.cash, and Rucknium.me hosted with privacy-focused 1984.is and Njalla.",
                   "percent": 0,
@@ -25,7 +25,7 @@
                   "wow_address": "WW4AyeJMJkTgA8bRzvGjNVDEPn3vDvhSn2csRKsKbxMScU5XPWnd8g6CrFMZQNe6yBF66yMjVNJzDixtP9YkJZ7d1adtkTUFN",
                   "btc_total": 0,
                   "xmr_total": 0.001,
-                  "bch_total": ,
+                  "bch_total": 0,
                   "wow_total": 1.0,
                   "hour_goal": 0,
                   "xmr_history": [
@@ -48,6 +48,7 @@
                               "date_time": 1648515524
                         }
                   ],
+                  "bch_history": [],
                   "btc_history": [],
                   "wow_history": [
                         {
@@ -126,6 +127,9 @@
                         "usd_value": "",
                         "ticker": "bch",
                         "amount": 2.698e-05,
+                        "usd_value": "",
+                        "ticker": "wow",
+                        "amount": "1.",
                         "id": "3 Months of Server Hosting"
                   }
             ],
