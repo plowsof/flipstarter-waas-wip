@@ -13,7 +13,7 @@ import string
 
 import configparser
 import sqlite3
-from notify_xmr_vps_pi import updateDatabaseJson,format_amount
+from notify_xmr_vps_pi import updateDatabaseJson,formatAmount
 
 #This file is run once to host the http server
 #values taken from a config file once
@@ -69,8 +69,8 @@ class S(BaseHTTPRequestHandler):
         list_outputs = get_amount(address,rpcuser,rpcpass,rpcport)
         if list_outputs:
             for in_amount in list_outputs:
-                in_amount = formatAmount(the_amount,8)
-                print(f"the amount is {the_amount}")
+                in_amount = formatAmount(in_amount,8)
+                print(f"the amount is {in_amount}")
                 # 0.00001 tBCH
                 #0.00001000
                 #should be an rpc call todo
@@ -86,7 +86,8 @@ def get_amount(address,rpcuser,rpcpass,rpcport):
     "address": address
     }
     address_history = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
-    recent = len(address_history) -= 1
+    recent = len(address_history)
+    recent -= 1
     txid = address_history[recent]["tx_hash"]
     #if txid exists in db return False
     #or insert
@@ -96,22 +97,20 @@ def get_amount(address,rpcuser,rpcpass,rpcport):
                                 id text PRIMARY KEY
                             ); """
     cur.execute(create_tx_ids_table)
-    cur.execute('SELECT * FROM txids WHERE id = ?',[tx_id])
+    cur.execute('SELECT * FROM txids WHERE id = ?',[txid])
     rows = len(cur.fetchall())
     if rows == 0:
-        logit("we dont exist")
         sql = ''' INSERT INTO txids(id)
                   VALUES(?) '''
-        cur.execute(sql, (tx_id,))
-        con.commit()
-        #continue ..
-    else:
-        logit("we already exist in the db")
+        cur.execute(sql, (txid,))
         con.commit()
         cur.close()
+        #continue ..
+    else:
+        con.commit()
+        cur.close()
+        print("Seen before")
         return False
-    con.commit()
-    cur.close()
     #gettransaction
     method = "gettransaction"
     params = {
@@ -158,7 +157,7 @@ def generic_rpc(method,params,rpcuser,rpcpass,rpcport):
         "id": "curltext",
     }
     returnme = requests.post(url, json=payload).json()
-    pprint.pprint(returnme)
+    #pprint.pprint(returnme)
     return returnme["result"]
 
 def run(server_class=HTTPServer, handler_class=S, port=8080, config=[]):
