@@ -13,7 +13,7 @@ import string
 
 import configparser
 import sqlite3
-from notify_xmr_vps_pi import updateDatabaseJson
+from notify_xmr_vps_pi import updateDatabaseJson,format_amount
 
 #This file is run once to host the http server
 #values taken from a config file once
@@ -66,16 +66,71 @@ class S(BaseHTTPRequestHandler):
         rpcpass = rpcinfo[ticker]["pass"]
         rpcport = rpcinfo[ticker]["port"]
         rpcuser = rpcinfo[ticker]["user"]
-        #should be an rpc call todo
-        output = rpc_balance(rpcuser,rpcpass,rpcport,address)
-        address_con = output["result"]["confirmed"]
-        address_unc = output["result"]["unconfirmed"]
-        bit_balance = float(address_con) + float(address_unc)
-        data_fname = "./static/data/wishlist-data.json"
-        with open(data_fname, "r") as f:
-            data_wishlist = json.load(f)
-        print(f"updateDatabaseJson({address},0,{ticker},data_wishlist,{bit_balance})")
-        updateDatabaseJson(address,0,ticker,data_wishlist,bit_balance)
+        list_outputs = get_amount(address,rpcuser,rpcpass,rpcport)
+        if list_outputs:
+            for in_amount in list_outputs:
+                in_amount = formatAmount(the_amount,8)
+                print(f"the amount is {the_amount}")
+                # 0.00001 tBCH
+                #0.00001000
+                #should be an rpc call todo
+                data_fname = "./static/data/wishlist-data.json"
+                with open(data_fname, "r") as f:
+                    data_wishlist = json.load(f)
+                updateDatabaseJson(address,in_amount,ticker,data_wishlist)
+
+def get_amount(address,rpcuser,rpcpass,rpcport):
+    #getaddresshistory
+    method = "getaddresshistory"
+    params = {
+    "address": address
+    }
+    address_history = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
+    recent = len(address_history) -= 1
+    txid = address_history[recent]["tx_hash"]
+    #if txid exists in db return False
+    #or insert
+    con = sqlite3.connect('./db/xmr_ids.db')
+    cur = con.cursor()
+    create_tx_ids_table = """ CREATE TABLE IF NOT EXISTS txids (
+                                id text PRIMARY KEY
+                            ); """
+    cur.execute(create_tx_ids_table)
+    cur.execute('SELECT * FROM txids WHERE id = ?',[tx_id])
+    rows = len(cur.fetchall())
+    if rows == 0:
+        logit("we dont exist")
+        sql = ''' INSERT INTO txids(id)
+                  VALUES(?) '''
+        cur.execute(sql, (tx_id,))
+        con.commit()
+        #continue ..
+    else:
+        logit("we already exist in the db")
+        con.commit()
+        cur.close()
+        return False
+    con.commit()
+    cur.close()
+    #gettransaction
+    method = "gettransaction"
+    params = {
+    "txid": txid
+    }
+    raw_data = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
+    hex_data = raw_data["hex"]
+    #deserialize
+    method = "deserialize"
+    params = {
+    "tx": hex_data
+    }
+    deserialized = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
+    #return a list of outputs for the chosen address (possible?)
+    list_outputs = []
+    for output in deserialized["outputs"]:
+        if output["address"] == address:
+            list_outputs.append(output["value"])
+    return list_outputs
 
 def rpc_balance(rpcuser,rpcpass,rpcport,address):
     local_ip = "localhost"
@@ -92,6 +147,19 @@ def rpc_balance(rpcuser,rpcpass,rpcport,address):
     returnme = requests.post(url, json=payload).json()
     return returnme
 
+def generic_rpc(method,params,rpcuser,rpcpass,rpcport):
+    local_ip = "localhost"
+    url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
+    print(url)
+    payload = {
+        "method": str(method),
+        "params": params,
+        "jsonrpc": "2.0",
+        "id": "curltext",
+    }
+    returnme = requests.post(url, json=payload).json()
+    pprint.pprint(returnme)
+    return returnme["result"]
 
 def run(server_class=HTTPServer, handler_class=S, port=8080, config=[]):
     #load some json stuff

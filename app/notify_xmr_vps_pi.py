@@ -84,7 +84,7 @@ def insert_new(address,balance,ticker):
     }
     helper_create.db_receipts_add(data)
 
-def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=0):
+def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist):
     now = int(time.time())
     db_wish_id = ""
     found = 0
@@ -93,8 +93,6 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
     rows = query_address(find_address)
     if len(rows) == 0:
         old_balance = 0
-        if ticker == "bch" or ticker == "btc":
-            in_amount = float(bit_balance)
         saved_wishlist["metadata"][f"{ticker}_total"] += float(in_amount)
         saved_wishlist["metadata"]["contributors"] += 1
         insert_new(find_address,in_amount,ticker)
@@ -102,10 +100,6 @@ def updateDatabaseJson(find_address,in_amount,ticker,saved_wishlist,bit_balance=
         return
 
     old_balance = rows[0][1]
-    if ticker == "bch" or ticker == "btc":
-        if old_balance >= bit_balance:
-             return
-        in_amount = float(bit_balance) - float(old_balance)
     new_balance = float(old_balance) + float(in_amount)
     db_comment_bc = rows[0][16]
     db_comment = rows[0][10]
