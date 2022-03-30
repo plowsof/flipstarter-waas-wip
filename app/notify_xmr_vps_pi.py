@@ -336,4 +336,4 @@ if __name__ == '__main__':
 
 #apt-get install sqlite3 && \
 #sqlite3 db/receipts.db 'update donations set amount = 0 where donation_address = "qpjnsuvyu9vmaetytr9qr7q724sx38lwn5p0dck3hk"'
-#updateDatabaseJson("qpjnsuvyu9vmaetytr9qr7q724sx38lwn5p0dck3hk",0,"bch",data_wishlist,0.1)
+#updateDatabaseJson("tb1q76wddhcqd5wf27urzfctpscq6p3p7s64jsf3a5",0,"btc",data_wishlist,0.1)
