@@ -226,7 +226,8 @@ def main(config):
     www_root = config["wishlist"]["www_root"]
     remote_node = find_working_node(list_remote_nodes)
     if remote_node:
-        start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file)
+        th = threading.Thread(target=start_monero_rpc, args=(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file,))
+        th.start()
     else:
         print("No Monero remote node")
 
@@ -243,7 +244,8 @@ def main(config):
         list_remote_nodes.append(config["wow"][f"remote_node_{num}"])
     wow_remote_node = find_working_node(list_remote_nodes,"wow")
     if remote_node:
-        start_monero_rpc(rpc_bin_file,wow_rpc_port,wow_rpc_url,wow_remote_node,wallet_file,"wow")
+        th = threading.Thread(target=start_monero_rpc, args=(rpc_bin_file,wow_rpc_port,wow_rpc_url,wow_remote_node,wallet_file,"wow",))
+        th.start()
     else:
         print("No WOWnero remote node")
 
