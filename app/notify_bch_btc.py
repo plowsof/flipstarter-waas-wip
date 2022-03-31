@@ -80,6 +80,7 @@ class S(BaseHTTPRequestHandler):
                 updateDatabaseJson(address,in_amount,ticker,data_wishlist)
 
 def get_amount(address,rpcuser,rpcpass,rpcport,ticker):
+    print("Hello world")
     #getaddresshistory
     method = "getaddresshistory"
     params = {
@@ -90,55 +91,74 @@ def get_amount(address,rpcuser,rpcpass,rpcport,ticker):
     if recent == 0:
         return
     recent -= 1
-    txid = address_history[recent]["tx_hash"]
-    #if txid exists in db return False
-    #or insert
-    con = sqlite3.connect('./db/xmr_ids.db')
-    cur = con.cursor()
-    create_tx_ids_table = """ CREATE TABLE IF NOT EXISTS txids (
-                                id text PRIMARY KEY
-                            ); """
-    cur.execute(create_tx_ids_table)
-    cur.execute('SELECT * FROM txids WHERE id = ?',[txid])
-    rows = len(cur.fetchall())
-    if rows == 0:
-        sql = ''' INSERT INTO txids(id)
-                  VALUES(?) '''
-        cur.execute(sql, (txid,))
-        con.commit()
-        cur.close()
-        #continue ..
-    else:
-        con.commit()
-        cur.close()
-        print("Seen before")
-        return False
-    #gettransaction
-    method = "gettransaction"
-    params = {
-    "txid": txid
+    #pprint.pprint(address_history)
+    for tx in address_history:
+        txid = tx["tx_hash"]
+        #print(f"the id is {txid}")
+        #if txid exists in db return False
+        #or insert
+        con = sqlite3.connect('./db/xmr_ids.db')
+        cur = con.cursor()
+        create_tx_ids_table = """ CREATE TABLE IF NOT EXISTS txids (
+                                    id text PRIMARY KEY
+                                ); """
+        cur.execute(create_tx_ids_table)
+        cur.execute('SELECT * FROM txids WHERE id = ?',[txid])
+        rows = len(cur.fetchall())
+        if rows == 0:
+            sql = ''' INSERT INTO txids(id)
+                      VALUES(?) '''
+            cur.execute(sql, (txid,))
+            con.commit()
+            cur.close()
+            #continue ..
+        else:
+            con.commit()
+            cur.close()
+            print("Seen before")
+            continue
+            
+        #gettransaction
+        method = "gettransaction"
+        params = {
+        "txid": txid
+        }
+        raw_data = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
+        #pprint.pprint(raw_data)
+        if ticker == "btc":
+            hex_data = raw_data
+            value = "value_sats"
+        else:
+            hex_data = raw_data["hex"]
+            value = "value"
+        #deserialize
+        method = "deserialize"
+        params = {
+        "tx": hex_data
+        }
+        deserialized = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
+        #pprint.pprint(deserialized)
+        #return a list of outputs for the chosen address (possible?)
+        list_outputs = []
+        for output in deserialized["outputs"]:
+            if output["address"] == address:
+                list_outputs.append(output[value])
+        return list_outputs
+
+def rpc_balance(rpcuser,rpcpass,rpcport,address):
+    local_ip = "localhost"
+    url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
+    print(url)
+    payload = {
+        "method": "getaddressbalance",
+        "params": {
+        "address": address
+        },
+        "jsonrpc": "2.0",
+        "id": "curltext",
     }
-    raw_data = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
-    #pprint.pprint(raw_data)
-    if ticker == "btc":
-        hex_data = raw_data
-        value = "value_sats"
-    else:
-        hex_data = raw_data["hex"]
-        value = "value"
-    #deserialize
-    method = "deserialize"
-    params = {
-    "tx": hex_data
-    }
-    deserialized = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
-    #pprint.pprint(deserialized)
-    #return a list of outputs for the chosen address (possible?)
-    list_outputs = []
-    for output in deserialized["outputs"]:
-        if output["address"] == address:
-            list_outputs.append(output[value])
-    return list_outputs
+    returnme = requests.post(url, json=payload).json()
+    return returnme
 
 def generic_rpc(method,params,rpcuser,rpcpass,rpcport):
     local_ip = "localhost"
