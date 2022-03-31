@@ -119,7 +119,7 @@ def get_amount(address,rpcuser,rpcpass,rpcport,ticker):
     "txid": txid
     }
     raw_data = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
-    pprint.pprint(raw_data)
+    #pprint.pprint(raw_data)
     if ticker == "btc":
         hex_data = raw_data
         value = "value_sats"
@@ -132,28 +132,13 @@ def get_amount(address,rpcuser,rpcpass,rpcport,ticker):
     "tx": hex_data
     }
     deserialized = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
-    pprint.pprint(deserialized)
+    #pprint.pprint(deserialized)
     #return a list of outputs for the chosen address (possible?)
     list_outputs = []
     for output in deserialized["outputs"]:
         if output["address"] == address:
             list_outputs.append(output[value])
     return list_outputs
-
-def rpc_balance(rpcuser,rpcpass,rpcport,address):
-    local_ip = "localhost"
-    url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
-    print(url)
-    payload = {
-        "method": "getaddressbalance",
-        "params": {
-        "address": address
-        },
-        "jsonrpc": "2.0",
-        "id": "curltext",
-    }
-    returnme = requests.post(url, json=payload).json()
-    return returnme
 
 def generic_rpc(method,params,rpcuser,rpcpass,rpcport):
     local_ip = "localhost"
