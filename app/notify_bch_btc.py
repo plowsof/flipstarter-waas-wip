@@ -66,7 +66,7 @@ class S(BaseHTTPRequestHandler):
         rpcpass = rpcinfo[ticker]["pass"]
         rpcport = rpcinfo[ticker]["port"]
         rpcuser = rpcinfo[ticker]["user"]
-        list_outputs = get_amount(address,rpcuser,rpcpass,rpcport)
+        list_outputs = get_amount(address,rpcuser,rpcpass,rpcport,ticker)
         if list_outputs:
             for in_amount in list_outputs:
                 in_amount = formatAmount(in_amount,8)
@@ -79,7 +79,7 @@ class S(BaseHTTPRequestHandler):
                     data_wishlist = json.load(f)
                 updateDatabaseJson(address,in_amount,ticker,data_wishlist)
 
-def get_amount(address,rpcuser,rpcpass,rpcport):
+def get_amount(address,rpcuser,rpcpass,rpcport,ticker):
     #getaddresshistory
     method = "getaddresshistory"
     params = {
@@ -87,6 +87,8 @@ def get_amount(address,rpcuser,rpcpass,rpcport):
     }
     address_history = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
     recent = len(address_history)
+    if recent == 0:
+        return
     recent -= 1
     txid = address_history[recent]["tx_hash"]
     #if txid exists in db return False
@@ -117,18 +119,25 @@ def get_amount(address,rpcuser,rpcpass,rpcport):
     "txid": txid
     }
     raw_data = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
-    hex_data = raw_data["hex"]
+    pprint.pprint(raw_data)
+    if ticker == "btc":
+        hex_data = raw_data
+        value = "value_sats"
+    else:
+        hex_data = raw_data["hex"]
+        value = "value"
     #deserialize
     method = "deserialize"
     params = {
     "tx": hex_data
     }
     deserialized = generic_rpc(method,params,rpcuser,rpcpass,rpcport)
+    pprint.pprint(deserialized)
     #return a list of outputs for the chosen address (possible?)
     list_outputs = []
     for output in deserialized["outputs"]:
         if output["address"] == address:
-            list_outputs.append(output["value"])
+            list_outputs.append(output[value])
     return list_outputs
 
 def rpc_balance(rpcuser,rpcpass,rpcport,address):
