@@ -90,7 +90,6 @@ def get_amount(address,rpcuser,rpcpass,rpcport,ticker):
     recent = len(address_history)
     if recent == 0:
         return
-    recent -= 1
     #pprint.pprint(address_history)
     for tx in address_history:
         txid = tx["tx_hash"]
