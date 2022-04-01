@@ -273,17 +273,20 @@ def get_total(wish,i):
         #fully funded - set hardcoded values in wishlist-data.json
         for x in returnme["values"]:
             returnme["values"][x] = (returnme["values"][x] / total_percent) * 100
-        full_funded = 1
+        fully_funded = 1
 
     returnme["total_usd"] = round(total_usd,2)
     #get the json 
-    with open("static/data/wishlist-data.json",'r') as f:
-        wishlist = json.load(f)
-    wishlist["wishlist"][i]["is_funded"] = 1
-    wishlist["wishlist"][i]["funded_percents"] = {}
-    wishlist["wishlist"][i]["funded_percents"] = returnme
-    with open("static/data/wishlist-data.json",'w') as f:
-        json.dump(wishlist, f, indent=2) 
+    if fully_funded == 1:
+        with open("static/data/wishlist-data.json",'r') as f:
+            wishlist = json.load(f)
+        wishlist["wishlist"][i]["is_funded"] = 1
+        wishlist["wishlist"][i]["funded_percents"] = {}
+        wishlist["wishlist"][i]["funded_percents"] = returnme
+        lock = "static/data/wishlist-data.json.lock"
+        with FileLock(lock):
+            with open("static/data/wishlist-data.json",'w') as f:
+                f.write(wishlist)
     return returnme
 
 def db_get_prices():
