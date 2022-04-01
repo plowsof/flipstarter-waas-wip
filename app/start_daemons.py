@@ -338,6 +338,7 @@ def save_prices():
                 pass
         p_wow = float(wow_btc_price) * float(p_btc)
         p_wow = float("{:.2f}".format(p_wow))
+        print(f"XMR:{p_xmr}\nBTC:{p_btc}BCH:{p_bch}WOW:{p_wow}")
         con = sqlite3.connect('./db/crypto_prices.db')
         cur = con.cursor()
         create_price_table = """ CREATE TABLE IF NOT EXISTS crypto_prices (
@@ -361,7 +362,7 @@ def save_prices():
         #refresh price on front end
         uid = uuid.uuid4().hex
         asyncio.run(notify_xmr_vps_pi.ws_work_around(uid))
-        time.sleep(60*5)
+        time.sleep(10)
 
 def delete_clicks_db():
     while True:

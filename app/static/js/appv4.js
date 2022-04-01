@@ -191,6 +191,10 @@ function updateWishlist(data)
   wishlist = data
   for (var i = wishlist["wishlist"].length - 1; i >= 0; i--) 
   {
+    //leave this wish alone if it is fully funded
+    //the backend / static page will show the frozen values
+    if wish["is_funded"] == 1:
+      continue
     wish = wishlist["wishlist"][i]
     let percent_info = getTotal(wish)
     let sortme = percent_info["values"]
