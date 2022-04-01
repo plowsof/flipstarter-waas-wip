@@ -143,22 +143,7 @@ def get_amount(address,rpcuser,rpcpass,rpcport,ticker):
             if output["address"] == address:
                 list_outputs.append(output[value])
         return list_outputs
-
-def rpc_balance(rpcuser,rpcpass,rpcport,address):
-    local_ip = "localhost"
-    url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
-    print(url)
-    payload = {
-        "method": "getaddressbalance",
-        "params": {
-        "address": address
-        },
-        "jsonrpc": "2.0",
-        "id": "curltext",
-    }
-    returnme = requests.post(url, json=payload).json()
-    return returnme
-
+    
 def generic_rpc(method,params,rpcuser,rpcpass,rpcport):
     local_ip = "localhost"
     url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
