@@ -5,6 +5,7 @@ import json
 import pprint
 from math import ceil
 import sqlite3
+import math
 
 prices = {}
 prices["monero"] = 0
@@ -32,15 +33,17 @@ def main(config):
     i = len(wishlist["wishlist"])
     for x in range(len(wishlist["wishlist"])):
         i-=1
+        wish = wishlist["wishlist"][i]
         try:
-            wish = wishlist["wishlist"][i]
             if wish["is_funded"] == 1:
                 our_data = wish["funded_percents"]
+                total = "%.2f" % (wish["goal_usd"])
             else:
+                total = "%.2f" % (our_data["total_usd"])
                 our_data = get_total(wish,i)
         except:
             our_data = get_total(wish,i)
-        total = "%.2f" % (our_data["total_usd"])
+        
         sortme = our_data["values"]
         sortme = dict(sorted(sortme.items(), key=lambda item: item[1]))
         #pprint.pprint(sortme)
@@ -258,16 +261,10 @@ def get_total(wish,i):
     total_percent = 0
     for x in ticker_var:
         if x != "usd":
-
             coin = ticker_var[x]
-            print(f"coin is {coin}")
             usd = prices[x]
-            print(f"usd val of coin: {usd}")
-            print(f"amount we have: {wish[coin]}")
             this_coin = usd * wish[coin]
-            print(f"value of donations : {this_coin}")
             percent = (float(this_coin) / float(wish["goal_usd"])) * 100
-            print(f"percent of total: {percent}")
             total_percent += percent
             #print(f"this_coin = {this_coin} \n wish goal = {wish['goal_usd']}\n percent = {percent}")
             returnme["values"][x] = percent
@@ -278,12 +275,13 @@ def get_total(wish,i):
             returnme["values"]["usd"] = usd_percent 
             total_percent += usd_percent
     fully_funded = 0
+    if math.ceil(total_percent) == 100:
+        fully_funded = 1
     if total_percent >= 100:
         #fully funded - set hardcoded values in wishlist-data.json
         for x in returnme["values"]:
             returnme["values"][x] = (returnme["values"][x] / total_percent) * 100
-        fully_funded = 1
-
+        
     returnme["total_usd"] = round(total_usd,2)
     #get the json 
     if fully_funded == 1:

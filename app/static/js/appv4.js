@@ -189,6 +189,7 @@ function updateWishlist(data)
 {
   let something = {}
   wishlist = data
+  let total = 0
   percent_info = {}
   for (var i = wishlist["wishlist"].length - 1; i >= 0; i--) 
   {
@@ -198,12 +199,15 @@ function updateWishlist(data)
     if (wish["is_funded"] != undefined && wish["is_funded"] == 1){
       //alert(`funded title:${wish['title']}`)
       percent_info = wish["funded_percents"]
+      total = wish["goal_usd"]
     } else {
       //alert(`not funded title:${wish["title"]}`)
+      wish["is_funded"] = 0
       percent_info = getTotal(wish)
+      total = percent_info["total_usd"]
     }
     let sortme = percent_info["values"]
-    let total = percent_info["total_usd"]
+    
     sortme = getSortedKeys(sortme)
     //xmr_history = get_history(wish.xmr_history)
     //bch_history = get_history(wish.bch_history)
@@ -255,7 +259,7 @@ function updateWishlist(data)
     }
     //the wish is on the page
     //is it fully 'FUNDED' or revert title = title
-    if (Number(total) >= Number(wish.goal_usd)){
+    if (Number(total) >= Number(wish.goal_usd) || wish["is_funded"] == 1){
       console.log(`fully funded ${wish.title}`)
       $(".prog_" + wish.id).text("FUNDED")
       $(`.main_buttons_${wish.id}`).hide()
@@ -273,6 +277,7 @@ function updateWishlist(data)
     background: `linear-gradient(to right, ${one}, ${two}, ${three}, ${four}, ${five}, transparent ${end})`
     });
     //change raised total
+    total = Number(total).toFixed(2)
     $(".raised_" + wish.id).text(total)
     wish["goal_usd"] = Number(wish["goal_usd"]).toFixed(2)
     $(".goal_" + wish.id).text(wish["goal_usd"])
