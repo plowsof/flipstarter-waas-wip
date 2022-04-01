@@ -43,6 +43,7 @@ def main(config):
                 our_data = get_total(wish,i)
         except:
             our_data = get_total(wish,i)
+            total = "%.2f" % (our_data["total_usd"])
         
         sortme = our_data["values"]
         sortme = dict(sorted(sortme.items(), key=lambda item: item[1]))
