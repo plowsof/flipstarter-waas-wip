@@ -197,7 +197,6 @@ function updateWishlist(data)
     wish = wishlist["wishlist"][i]
     if (wish["is_funded"] != undefined && wish["is_funded"] == 1){
       //alert(`funded title:${wish['title']}`)
-      continue
       percent_info = wish["funded_percents"]
     } else {
       //alert(`not funded title:${wish["title"]}`)
@@ -275,7 +274,8 @@ function updateWishlist(data)
     });
     //change raised total
     $(".raised_" + wish.id).text(total)
-    $(".goal_" + wish.id).text(wish.goal_usd)
+    wish["goal_usd"] = Number(wish["goal_usd"]).toFixed(2)
+    $(".goal_" + wish.id).text(wish["goal_usd"])
     //set num contributors
     $("span#" + wish.id + ".contributors").text("Contributors: " + wish.contributors)
 
