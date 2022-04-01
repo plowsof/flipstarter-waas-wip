@@ -2,6 +2,7 @@ from feedgen.feed import FeedGenerator
 import pickle
 import configparser
 import os
+import datetime
 
 def create_fresh_feed(config):
     rss_link = config["RSS"]["link"]

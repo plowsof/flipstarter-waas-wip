@@ -24,7 +24,7 @@ def main(config):
     funding_file = funding_page
     json_file = os.path.join("static","data","wishlist-data.json")
     #get the json 
-    with open(json_file,'r') as f:
+    with open("static/data/wishlist-data.json",'r') as f:
         wishlist = json.load(f)
     html = ""
     comments = ""
@@ -32,10 +32,13 @@ def main(config):
     i = len(wishlist["wishlist"])
     for x in range(len(wishlist["wishlist"])):
         i-=1
-        wish = wishlist["wishlist"][i]
-        if wish["is_funded"] == 1:
-            our_data = wish["funded_percents"]
-        else:
+        try:
+            wish = wishlist["wishlist"][i]
+            if wish["is_funded"] == 1:
+                our_data = wish["funded_percents"]
+            else:
+                our_data = get_total(wish,i)
+        except:
             our_data = get_total(wish,i)
         total = "%.2f" % (our_data["total_usd"])
         sortme = our_data["values"]
@@ -255,10 +258,16 @@ def get_total(wish,i):
     total_percent = 0
     for x in ticker_var:
         if x != "usd":
+
             coin = ticker_var[x]
+            print(f"coin is {coin}")
             usd = prices[x]
+            print(f"usd val of coin: {usd}")
+            print(f"amount we have: {wish[coin]}")
             this_coin = usd * wish[coin]
+            print(f"value of donations : {this_coin}")
             percent = (float(this_coin) / float(wish["goal_usd"])) * 100
+            print(f"percent of total: {percent}")
             total_percent += percent
             #print(f"this_coin = {this_coin} \n wish goal = {wish['goal_usd']}\n percent = {percent}")
             returnme["values"][x] = percent
@@ -286,7 +295,7 @@ def get_total(wish,i):
         lock = "static/data/wishlist-data.json.lock"
         with FileLock(lock):
             with open("static/data/wishlist-data.json",'w') as f:
-                f.write(wishlist)
+                json.dump(wishlist, f, indent=2) 
     return returnme
 
 def db_get_prices():

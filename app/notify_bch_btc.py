@@ -143,7 +143,7 @@ def get_amount(address,rpcuser,rpcpass,rpcport,ticker):
             if output["address"] == address:
                 list_outputs.append(output[value])
         return list_outputs
-    
+        
 def generic_rpc(method,params,rpcuser,rpcpass,rpcport):
     local_ip = "localhost"
     url = f"http://{rpcuser}:{rpcpass}@{local_ip}:{rpcport}"
