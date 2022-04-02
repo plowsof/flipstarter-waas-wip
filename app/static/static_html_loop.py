@@ -29,6 +29,7 @@ def main(config):
         wishlist = json.load(f)
     html = ""
     comments = ""
+    init_funded = 0
     set_global_prices()
     i = len(wishlist["wishlist"])
     for x in range(len(wishlist["wishlist"])):
@@ -37,16 +38,22 @@ def main(config):
         try:
             if wish["is_funded"] == 1:
                 our_data = wish["funded_percents"]
+                our_data["funded"] = 1
                 total = "%.2f" % int(wish["goal_usd"])
             else:
+                init_funded = 1
                 total = "%.2f" % (our_data["total_usd"])
                 our_data = get_total(wish,i)
         except Exception as e: 
             print(e)
+            init_funded = 1
             our_data = get_total(wish,i)
             total = "%.2f" % (our_data["total_usd"])
-        if our_data["funded"] == 1:
+        if our_data["funded"] == 1 and init_funded == 1:
+            #we're newly funded, use the re-ordered wishlist
             wish["is_funded"] = 1
+            with open("static/data/wishlist-data.json",'r') as f:
+                wishlist = json.load(f)
         sortme = our_data["values"]
         sortme = dict(sorted(sortme.items(), key=lambda item: item[1]))
         #pprint.pprint(sortme)
