@@ -41,7 +41,7 @@ def main(config):
             else:
                 total = "%.2f" % (our_data["total_usd"])
                 our_data = get_total(wish,i)
-        except:
+        except Exception as e: 
             our_data = get_total(wish,i)
             total = "%.2f" % (our_data["total_usd"])
         
@@ -168,6 +168,11 @@ def comments_html(comments):
 def wish_html(one,two,three,four,five,end,total,wish):
     funded = ""
     total = '%.2f' % float(total)
+    try:
+        if wish["is_funded"] == 1:
+            total = '%.2f' % float(wish["goal_usd"]) 
+    except:
+        pass
     wish["goal_usd"] = '%.2f' % float(wish["goal_usd"]) 
     if float(total) >= float(wish["goal_usd"]):
         funded = "FUNDED"
@@ -276,8 +281,9 @@ def get_total(wish,i):
             returnme["values"]["usd"] = usd_percent 
             total_percent += usd_percent
     fully_funded = 0
-    if math.ceil(total_percent) == 100:
+    if math.ceil(total_percent) >= 100:
         fully_funded = 1
+
     if total_percent >= 100:
         #fully funded - set hardcoded values in wishlist-data.json
         for x in returnme["values"]:
@@ -286,11 +292,16 @@ def get_total(wish,i):
     returnme["total_usd"] = round(total_usd,2)
     #get the json 
     if fully_funded == 1:
+        print("Its now funded")
         with open("static/data/wishlist-data.json",'r') as f:
             wishlist = json.load(f)
         wishlist["wishlist"][i]["is_funded"] = 1
         wishlist["wishlist"][i]["funded_percents"] = {}
         wishlist["wishlist"][i]["funded_percents"] = returnme
+
+        demoted = wishlist["wishlist"][i]
+        wishlist["wishlist"].pop(i)
+        wishlist["wishlist"].insert(0,demoted)
         lock = "static/data/wishlist-data.json.lock"
         with FileLock(lock):
             with open("static/data/wishlist-data.json",'w') as f:

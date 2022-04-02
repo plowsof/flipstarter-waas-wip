@@ -244,7 +244,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                 break
     if edit_delete == "Delete":
         while True:
-            answer = input(f"Delete: {wishlist['wishlist'][i]['title']} \n Are you sure?")
+            answer = input(f"Delete: {wishlist['wishlist'][index]['title']} \n Are you sure?")
             if "y" in answer.lower():
                 wishlist = delete_wish(wishlist,index)
                 break

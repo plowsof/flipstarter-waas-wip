@@ -290,7 +290,7 @@ function updateWishlist(data)
 function init_wish(one,two,three,four,five,end,total,wish)
 {
   total = Number(total).toFixed(2);
-  wish.goal_usd = wish.goal_usd.toFixed(2);
+  wish.goal_usd = Number(wish.goal_usd).toFixed(2);
   let htmlSegment = `
   <style>
     .progress_${wish["id"]} {
