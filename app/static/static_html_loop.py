@@ -37,11 +37,12 @@ def main(config):
         try:
             if wish["is_funded"] == 1:
                 our_data = wish["funded_percents"]
-                total = "%.2f" % (wish["goal_usd"])
+                total = "%.2f" % int(wish["goal_usd"])
             else:
                 total = "%.2f" % (our_data["total_usd"])
                 our_data = get_total(wish,i)
         except Exception as e: 
+            print(e)
             our_data = get_total(wish,i)
             total = "%.2f" % (our_data["total_usd"])
         
@@ -246,6 +247,7 @@ def set_global_prices():
         prices[ticker] = data[ticker]
 
 def get_total(wish,i):
+    print("a wish")
     ticker_var = {
         "monero": "xmr_total",
         "bitcoin": "btc_total",
