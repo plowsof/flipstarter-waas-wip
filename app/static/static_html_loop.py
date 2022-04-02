@@ -45,7 +45,8 @@ def main(config):
             print(e)
             our_data = get_total(wish,i)
             total = "%.2f" % (our_data["total_usd"])
-        
+        if our_data["funded"] == 1:
+            wish["is_funded"] = 1
         sortme = our_data["values"]
         sortme = dict(sorted(sortme.items(), key=lambda item: item[1]))
         #pprint.pprint(sortme)
@@ -257,6 +258,7 @@ def get_total(wish,i):
     }
 
     returnme = {}
+    returnme["funded"] = 0
     returnme["values"] = {
     "monero": 0,
     "bitcoin-cash": 0,
@@ -294,6 +296,7 @@ def get_total(wish,i):
     returnme["total_usd"] = round(total_usd,2)
     #get the json 
     if fully_funded == 1:
+        returnme["funded"] = 1
         print("Its now funded")
         with open("static/data/wishlist-data.json",'r') as f:
             wishlist = json.load(f)
