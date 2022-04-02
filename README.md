@@ -129,7 +129,7 @@ Follow the instructions in the github readme of waas-templates. The only issue y
 The container must be stopped, image removed, and then the docker-compose file ran again to get the new version: (in the same dir as docker-compose.yml) 
 ```
 sudo docker stop fresh && \
-sudo docker rmi plowsof/waas-rucknium:latest --force && \
+sudo docker rmi plowsof/waas:latest --force && \
 sudo docker-compose up -d
 ```
 If you run into issues, it must not be running in ```docker ps``` list, and you can use ```--force``` after the remove commands.    
