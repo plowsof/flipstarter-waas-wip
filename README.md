@@ -37,8 +37,8 @@ sudo /etc/init.d/nginx restart
 
 Lets get certs. I find snap to be most helpful in this process. I use it to install ```certbot``` which is going to give us the SSL keys. It's basically going to create some files on our webserver to prove that we own it, and the certificate authority confirms this, then issues us our SSL certs.
 ```
-apt install snapd
-snap install --classic certbot
+sudo apt-get update && sudo apt-get install snapd 
+sudo snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
 ``` 
 To run through a menu, use ```sudo certbot``` only. (remember that you must run it twice, for the www. url also)    
