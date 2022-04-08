@@ -456,9 +456,9 @@ def refresh_html_loop(remote_node,local_node,wow_remote_node,wow_local_node,conf
         if not remote_health_check("monero",remote_node,config) or not local_health_check("monero",rpc_local,rpc_connection,remote_node,config):
             recover_xmr = 1
         
-        if recover_xmr == 1:
-            wow_remote_node = recover_crash("wow",config,wow_remote_node)
         if recover_wow == 1:
+            wow_remote_node = recover_crash("wow",config,wow_remote_node)
+        if recover_xmr == 1:
             remote_node = recover_crash("monero",config,remote_node)
         del rpc_connection
         del rpc_local
