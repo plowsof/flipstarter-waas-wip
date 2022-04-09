@@ -1,7 +1,7 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/plowsof/flipstarter-waas-wip/graphs/contributors)    
  ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```setup_wallets.py``` e.g. wrongly select Restore from keys.  
  
-If you wish to create your own wallets and supply the pub keys then i recommend:
+If you wish to create your own wallets and supply the pub keys then i recommend: if not, this tool will create them all for you and you can just write the seed phrases down.
 - Electrum (Bitcoin)
 - Electron-cash (Bitcoin-cash)
 - Feather Wallet (Electrum style Monero wallet)
