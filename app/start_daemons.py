@@ -378,19 +378,19 @@ def refresh_html_loop_1():
         os.system(f'python3 static/static_html_loop.py')
         time.sleep(5*60)
 
-def local_health_check(wow_xmr,con_local,con_remote,url_remote,config):
+def local_health_check(con_local):
     try:
         con_local.store()
         return True
     except Exception as e:
         return False
 
-def remote_health_check(wow_xmr,node,config):
+def remote_health_check(con_remote):
     try:
-        info = rpc_connection.get_info()
+        info = con_remote.get_info()
         if info["status"] != "OK":
-            wishlist["metadata"]["status"] = "remote"
-            not_ok = 1
+            return False
+        else:
             return True
     except:
         return False
@@ -398,7 +398,12 @@ def remote_health_check(wow_xmr,node,config):
 def recover_crash(xmr_wow,config,remote_node):
     for proc in psutil.process_iter():
         #kill process
-        if f"{xmr_wow}-wallet-rpc" in proc.name():
+        bin_name = "monero"
+        rpc_bin_file = "bin/monero-wallet-rpc"
+        if xmr_wow == "wow":
+            bin_name = "wownero"
+            rpc_bin_file = "bin/wownero-wallet-rpc"
+        if f"{bin_name}-wallet-rpc" in proc.name():
             proc.kill()
 
     list_remote_nodes = []
@@ -408,14 +413,10 @@ def recover_crash(xmr_wow,config,remote_node):
         list_remote_nodes.append(config[xmr_wow][f"remote_node_{num}"])
 
     remote_node = find_working_node(list_remote_nodes,xmr_wow)
-    if xmr_wow == "monero":
-        rpc_bin_file = "bin/monero-wallet-rpc"
-    else:
-        rpc_bin_file = "bin/wownero-wallet-rpc"
 
     rpc_port = config[xmr_wow]["daemon_port"]
     wallet_file = config[xmr_wow]["wallet_file"]
-    rpc_url_local = "http://localhost" + "/json_rpc"
+    rpc_url_local = f"http://localhost:{rpc_port}/json_rpc"
 
     if remote_node:
         start_monero_rpc(rpc_bin_file,rpc_port,rpc_url_local,remote_node,wallet_file,xmr_wow)
@@ -451,9 +452,9 @@ def refresh_html_loop(remote_node,local_node,wow_remote_node,wow_local_node,conf
         except:
             recover_wow = 1
 
-        if not remote_health_check("wownero",wow_remote_node,config) or not local_health_check("wownero",wow_rpc_local,wow_rpc_connection,wow_remote_node,config):
+        if not remote_health_check(wow_rpc_connection) or not local_health_check(wow_rpc_local):
             revover_wow = 1
-        if not remote_health_check("monero",remote_node,config) or not local_health_check("monero",rpc_local,rpc_connection,remote_node,config):
+        if not remote_health_check(rpc_connection) or not local_health_check(rpc_local):
             recover_xmr = 1
         
         if recover_wow == 1:
