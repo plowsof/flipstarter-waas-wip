@@ -202,11 +202,9 @@ def wish_edit(wishlist,edit_delete,www_root):
                 print(f"3) BTC [{total_btc}]")
                 print(f"4) USD [{total_usd}]")
                 print(f"5) WOW [{total_wow}]")
-                print(f"6) 'Cash out' - Zero totals and set USD to [{goal}].")
                 answer = 7
-                while answer not in [1,2,3,4,5,6]:
+                while answer not in [1,2,3,4,5]:
                     answer = int(input(">> "))
-                if answer != 6:
                     coin = choice[str(answer)]
                     while True:
                         try:
@@ -216,12 +214,6 @@ def wish_edit(wishlist,edit_delete,www_root):
                         except ValueError:
                             print("That's not an int!")
                     wishlist["wishlist"][index][f"{coin}_total"] = val
-                else:
-                    #zero values
-                    for x in choice:
-                        coin = choice[str(x)]
-                        wishlist["wishlist"][index][f"{coin}_total"] = 0
-                    wishlist["wishlist"][index]["usd_total"] = goal
 
             again = 0
             finish = ""
@@ -252,7 +244,7 @@ def wish_edit(wishlist,edit_delete,www_root):
                 break
     if edit_delete == "Delete":
         while True:
-            answer = input(f"Delete: {wishlist['wishlist'][i]['title']} \n Are you sure?")
+            answer = input(f"Delete: {wishlist['wishlist'][index]['title']} \n Are you sure?")
             if "y" in answer.lower():
                 wishlist = delete_wish(wishlist,index)
                 break

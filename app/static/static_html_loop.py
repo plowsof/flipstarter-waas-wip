@@ -5,6 +5,7 @@ import json
 import pprint
 from math import ceil
 import sqlite3
+import math
 
 prices = {}
 prices["monero"] = 0
@@ -24,17 +25,35 @@ def main(config):
     funding_file = funding_page
     json_file = os.path.join("static","data","wishlist-data.json")
     #get the json 
-    with open(json_file,'r') as f:
+    with open("static/data/wishlist-data.json",'r') as f:
         wishlist = json.load(f)
     html = ""
     comments = ""
+    init_funded = 0
     set_global_prices()
     i = len(wishlist["wishlist"])
     for x in range(len(wishlist["wishlist"])):
         i-=1
         wish = wishlist["wishlist"][i]
-        our_data = get_total(wish)
-        total = "%.2f" % (our_data["total_usd"])
+        try:
+            if wish["is_funded"] == 1:
+                our_data = wish["funded_percents"]
+                our_data["funded"] = 1
+                total = "%.2f" % int(wish["goal_usd"])
+            else:
+                init_funded = 1
+                total = "%.2f" % (our_data["total_usd"])
+                our_data = get_total(wish,i)
+        except Exception as e: 
+            print(e)
+            init_funded = 1
+            our_data = get_total(wish,i)
+            total = "%.2f" % (our_data["total_usd"])
+        if our_data["funded"] == 1 and init_funded == 1:
+            #we're newly funded, use the re-ordered wishlist
+            wish["is_funded"] = 1
+            with open("static/data/wishlist-data.json",'r') as f:
+                wishlist = json.load(f)
         sortme = our_data["values"]
         sortme = dict(sorted(sortme.items(), key=lambda item: item[1]))
         #pprint.pprint(sortme)
@@ -158,6 +177,11 @@ def comments_html(comments):
 def wish_html(one,two,three,four,five,end,total,wish):
     funded = ""
     total = '%.2f' % float(total)
+    try:
+        if wish["is_funded"] == 1:
+            total = '%.2f' % float(wish["goal_usd"]) 
+    except:
+        pass
     wish["goal_usd"] = '%.2f' % float(wish["goal_usd"]) 
     if float(total) >= float(wish["goal_usd"]):
         funded = "FUNDED"
@@ -230,7 +254,8 @@ def set_global_prices():
     for ticker in prices:
         prices[ticker] = data[ticker]
 
-def get_total(wish):
+def get_total(wish,i):
+    print("a wish")
     ticker_var = {
         "monero": "xmr_total",
         "bitcoin": "btc_total",
@@ -240,6 +265,7 @@ def get_total(wish):
     }
 
     returnme = {}
+    returnme["funded"] = 0
     returnme["values"] = {
     "monero": 0,
     "bitcoin-cash": 0,
@@ -265,13 +291,33 @@ def get_total(wish):
             usd_percent = (int(wish["usd_total"]) / int(wish["goal_usd"])) * 100
             returnme["values"]["usd"] = usd_percent 
             total_percent += usd_percent
+    fully_funded = 0
+    if math.ceil(total_percent) >= 100:
+        fully_funded = 1
 
     if total_percent >= 100:
-        #fully funded 
+        #fully funded - set hardcoded values in wishlist-data.json
         for x in returnme["values"]:
             returnme["values"][x] = (returnme["values"][x] / total_percent) * 100
-
+        
     returnme["total_usd"] = round(total_usd,2)
+    #get the json 
+    if fully_funded == 1:
+        returnme["funded"] = 1
+        print("Its now funded")
+        with open("static/data/wishlist-data.json",'r') as f:
+            wishlist = json.load(f)
+        wishlist["wishlist"][i]["is_funded"] = 1
+        wishlist["wishlist"][i]["funded_percents"] = {}
+        wishlist["wishlist"][i]["funded_percents"] = returnme
+
+        demoted = wishlist["wishlist"][i]
+        wishlist["wishlist"].pop(i)
+        wishlist["wishlist"].insert(0,demoted)
+        lock = "static/data/wishlist-data.json.lock"
+        with FileLock(lock):
+            with open("static/data/wishlist-data.json",'w') as f:
+                json.dump(wishlist, f, indent=2) 
     return returnme
 
 def db_get_prices():

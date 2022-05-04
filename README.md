@@ -1,5 +1,11 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/plowsof/flipstarter-waas-wip/graphs/contributors)    
- ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```setup_wallets.py``` e.g. wrongly select Restore from keys.   
+ ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```setup_wallets.py``` e.g. wrongly select Restore from keys.  
+ 
+If you wish to create your own wallets and supply the pub keys then i recommend: if not, this tool will create them all for you and you can just write the seed phrases down.
+- Electrum (Bitcoin)
+- Electron-cash (Bitcoin-cash)
+- Feather Wallet (Electrum style Monero wallet)
+- WOWlet (Electrum style WOWnero wallet)
 
 ### Production / On a VPS
 
@@ -37,8 +43,8 @@ sudo /etc/init.d/nginx restart
 
 Lets get certs. I find snap to be most helpful in this process. I use it to install ```certbot``` which is going to give us the SSL keys. It's basically going to create some files on our webserver to prove that we own it, and the certificate authority confirms this, then issues us our SSL certs.
 ```
-apt install snapd
-snap install --classic certbot
+sudo apt-get update && sudo apt-get install snapd 
+sudo snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
 ``` 
 To run through a menu, use ```sudo certbot``` only. (remember that you must run it twice, for the www. url also)    
@@ -129,7 +135,7 @@ Follow the instructions in the github readme of waas-templates. The only issue y
 The container must be stopped, image removed, and then the docker-compose file ran again to get the new version: (in the same dir as docker-compose.yml) 
 ```
 sudo docker stop fresh && \
-sudo docker rmi plowsof/waas-rucknium:latest --force && \
+sudo docker rmi plowsof/waas:latest --force && \
 sudo docker-compose up -d
 ```
 If you run into issues, it must not be running in ```docker ps``` list, and you can use ```--force``` after the remove commands.    
