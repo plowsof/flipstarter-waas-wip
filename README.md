@@ -1,11 +1,12 @@
+[GetWishlisted.xyz](https://getwishlisted.xyz)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/plowsof/flipstarter-waas-wip/graphs/contributors)    
  ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```setup_wallets.py``` e.g. wrongly select Restore from keys.  
  
 If you wish to create your own wallets and supply the pub keys then i recommend: if not, this tool will create them all for you and you can just write the seed phrases down.
-- Electrum (Bitcoin)
-- Electron-cash (Bitcoin-cash)
-- Feather Wallet (Electrum style Monero wallet)
-- WOWlet (Electrum style WOWnero wallet)
+- [Electrum](https://electrum.org/#home) (Bitcoin)
+- [Electron-cash](https://electroncash.org/) (Bitcoin-cash)
+- [Feather Wallet](https://featherwallet.org) (Electrum style Monero wallet)
+- [WOWlet](https://git.wownero.com/wowlet/wowlet/releases/tag/v3.1.0) (Electrum style WOWnero wallet)
 
 ### Production / On a VPS
 
@@ -121,7 +122,8 @@ Then follow the instructions
 
 ### Wallets / Seeing Donations
 WaaS is based on these 3 wallets:
-- Monero GUI
+- Feather Wallet
+- WOWlet
 - Electron-cash
 - Electrum        
 Some donations may not appear in your wallet because of something called a gap limit. In Electron-cash / Electrum to go view -> console. And paste this line: (or you can get the exact number by runnning ```python3 edit_wishlist``` then selecting option ```5) Wallet Gap limits```)
