@@ -47,7 +47,7 @@ def find_working_node(node_list,xmr_wow="monero"):
     max_retries = 30
     num_retries = 0
     node_online = 0
-    print_msg("Finding a Monero remote node.")
+    print_msg("Finding a {xmr_wow} remote node.")
     random.shuffle(node_list)
     for remote_node in node_list:
         try:
@@ -235,7 +235,7 @@ def main(config):
     list_remote_nodes = []
     fallback_remote_nodes = config["wow"]["fallback_remote_nodes"]
     wow_rpc_port = config["wow"]["daemon_port"]
-    wow_rpc_url = "http://" + str(local_ip) + ":" + str(wow_rpc_port) + "/json_rpc"
+    wow_rpc_url = f"http://localhost:{wow_rpc_port}/json_rpc"
     rpc_bin_file = "bin/wownero-wallet-rpc"
     wallet_file = config["wow"]["wallet_file"]
     list_remote_nodes = []
@@ -396,6 +396,7 @@ def remote_health_check(con_remote):
         return False
 
 def recover_crash(xmr_wow,config,remote_node):
+    print("Recover Crash")
     for proc in psutil.process_iter():
         #kill process
         bin_name = "monero"
@@ -453,13 +454,15 @@ def refresh_html_loop(remote_node,local_node,wow_remote_node,wow_local_node,conf
             recover_wow = 1
 
         if not remote_health_check(wow_rpc_connection) or not local_health_check(wow_rpc_local):
-            revover_wow = 1
+            recover_wow = 1
         if not remote_health_check(rpc_connection) or not local_health_check(rpc_local):
             recover_xmr = 1
         
         if recover_wow == 1:
+            print("recover wow")
             wow_remote_node = recover_crash("wow",config,wow_remote_node)
         if recover_xmr == 1:
+            print("recover xmr")
             remote_node = recover_crash("monero",config,remote_node)
         del rpc_connection
         del rpc_local
