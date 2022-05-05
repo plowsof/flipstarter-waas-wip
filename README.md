@@ -190,7 +190,7 @@ Switching back and forth is a litte tricky as you have to delete the wishlist te
 
 ### TODO
 This is still in beta so i must do some sanity checks 
-- [ ] sanity checks
+- [x] sanity checks
 - [ ] Raspberry Pi docker image (64bit as the Pi Zero 2 will be supporting 64 bit 'out of the box' soon(tm))
 ### Support
 The initial funding for this project was obtained through Bitcoin-cash' crowdfunding system - FlipStarter.    
