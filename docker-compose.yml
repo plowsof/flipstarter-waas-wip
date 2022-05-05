@@ -37,6 +37,11 @@ services:
       - waas_wow_remote_node_4="wownero.fyi:34568"
       - waas_wow_remote_node_5="nimiq.wangyp.eu.org:34568"
       - waas_mainnet=1
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/config.json:/config.json
 volumes:
   waas-db:
   waas-wallets:
