@@ -5,7 +5,7 @@ If you wish to create your own wallets and supply the pub keys then i recommend:
 - [Electrum](https://electrum.org/#home) (Bitcoin)
 - [Electron-cash](https://electroncash.org/) (Bitcoin-cash)
 - [Feather Wallet](https://featherwallet.org) (Electrum style Monero wallet)
-- [WOWlet]https://git.wownero.com/wowlet/wowlet/releases/tag/v3.1.0) (Electrum style WOWnero wallet)
+- [WOWlet](https://git.wownero.com/wowlet/wowlet/releases/tag/v3.1.0) (Electrum style WOWnero wallet)
 
 ### Production / On a VPS
 
