@@ -130,8 +130,8 @@ Some donations may not appear in your wallet because of something called a gap l
 ```
 for i in range(0, 100): print(wallet.create_new_address(False))
 ```
-You should be able to see any missing donations then. Repeat it if needed.   
-** You do not need to update the front end. by default it comes with one. everything to be edited (title etc) is inside the docker-compose.yml file**    
+You should be able to see any missing donations then. Repeat it if needed.       
+**You do not need to update the front end. by default it comes with one. everything to be edited (title etc) is inside the docker-compose.yml file**    
 
 
 ### Updating the front end using a template from [waas-templates](https://github.com/plowsof/waas-templates)
