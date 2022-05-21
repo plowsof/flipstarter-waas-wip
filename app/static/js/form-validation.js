@@ -39,24 +39,29 @@ async function form_validate() {
             let uri = ""
             let coin_price = ""
             let symbol = ""
+            let tofixed = 0
 
             if (the_coin == "xmr") {
               uri = "monero:"
               str_amount = "tx_amount"
               symbol = "monero"
+              tofixed = 12
               //?tx_amount=239
             } else if (the_coin == "bch"){
               uri = "bitcoincash:"
               str_amount = "amount"
               symbol = "bitcoin-cash"
+              tofixed = 8
             } else if (the_coin == "btc"){
               uri = "bitcoin:"
               str_amount = "amount"
               symbol = "bitcoin"
+              tofixed = 8
             } else {
               uri = "wownero:"
               str_amount = "amount"
               symbol = "wownero"
+              tofixed = 11
             }
             
             //price of coin / amount
@@ -64,7 +69,7 @@ async function form_validate() {
             total_coins = usd_amount / the_price 
             data = JSON.parse(data)
             //alert(data["address"])
-            payment_uri = uri + data.address + "?" + str_amount + "=" + total_coins.toFixed(12)
+            payment_uri = uri + data.address + "?" + str_amount + "=" + total_coins.toFixed(tofixed)
 
             var typeNumber = 0;
             var errorCorrectionLevel = 'L';
