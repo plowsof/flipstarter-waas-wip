@@ -44,34 +44,44 @@ def monero_rpc_open_wallet(rpc_url,wallet_file):
 
 def find_working_node(node_list,xmr_wow="monero"):
     #if we're in stagenet mode, then throw error if node is mainnet
-    max_retries = 30
-    num_retries = 0
+    max_try_loops = 30
+    num_try_loops = 0
     node_online = 0
-    print_msg("Finding a {xmr_wow} remote node.")
+    print_msg(f"Finding a {xmr_wow} remote node.")
     random.shuffle(node_list)
-    for remote_node in node_list:
+    i = 0
+    while True: #infinite loop ftw
+        if i == len(node_list):
+            num_try_loops += 1
+            if num_try_loops == max_try_loops:
+                return False
+            i = 0
+        remote_node = node_list[i]
         try:
             rpc_url = "http://" + str(remote_node) + "/json_rpc"
             #this will retry the url for 30 seconds (built in to monerorpc library)
             rpc_connection = AuthServiceProxy(service_url=rpc_url)
             info = rpc_connection.get_info()
-            print(info["nettype"])
-            if xmr_wow == "monero":
-                if os.environ["waas_mainnet"] == "1":
-                    if info["nettype"] != "mainnet":
-                        print_err("You are connecting to a stagenet node. Please add a monero mainnet node to docker-compose.yml [restart required].")
-                        sys.exit(1)
-                else:
-                    if info["nettype"] != "stagenet":
-                        print_err("You are connecting to a mainnet node. Please add a Monero stagenet node to docker-compose.yml [restart required].")
-                        sys.exit(1)
+            if os.environ["waas_mainnet"] == "1":
+                if info["nettype"] != "mainnet":
+                    print_err("You are connecting to a stagenet node. Please add a monero mainnet node to docker-compose.yml [restart required].")
+                    i += 1
+                    continue
+            else:
+                if info["nettype"] != "stagenet":
+                    print_err("You are connecting to a mainnet node. Please add a Monero stagenet node to docker-compose.yml [restart required].")
+                    i += 1
+                    continue
             if info["status"] != "OK":
                 print_msg("Retrying another node")
+                i += 1
                 continue
             else:
                 node_online = 1
                 break
+            i += 1
         except Exception as e:
+            i += 1
             print(e)
             continue
 
@@ -482,4 +492,3 @@ Start the monero daemon with the correct tx-notify file / wallet (from config)
 Start the BCH / BTC daemons and set up notifys on each address.
 Start listen.py
 '''
-
