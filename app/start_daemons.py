@@ -62,16 +62,18 @@ def find_working_node(node_list,xmr_wow="monero"):
             #this will retry the url for 30 seconds (built in to monerorpc library)
             rpc_connection = AuthServiceProxy(service_url=rpc_url)
             info = rpc_connection.get_info()
-            if os.environ["waas_mainnet"] == "1":
-                if info["nettype"] != "mainnet":
-                    print_err("You are connecting to a stagenet node. Please add a monero mainnet node to docker-compose.yml [restart required].")
-                    i += 1
-                    continue
-            else:
-                if info["nettype"] != "stagenet":
-                    print_err("You are connecting to a mainnet node. Please add a Monero stagenet node to docker-compose.yml [restart required].")
-                    i += 1
-                    continue
+            #wownero only uses mainnet
+            if xmr_wow == "monero":
+                if os.environ["waas_mainnet"] == "1":
+                    if info["nettype"] != "mainnet":
+                        print_err("You are connecting to a stagenet node. Please add a monero mainnet node to docker-compose.yml [restart required].")
+                        i += 1
+                        continue
+                else:
+                    if info["nettype"] != "stagenet":
+                        print_err("You are connecting to a mainnet node. Please add a Monero stagenet node to docker-compose.yml [restart required].")
+                        i += 1
+                        continue
             if info["status"] != "OK":
                 print_msg("Retrying another node")
                 i += 1
