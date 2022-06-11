@@ -135,12 +135,9 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,
             monero_daemon.terminate()
             print_err(line.rstrip())
         if i > max_tries:
-            peturn
-        i+=1rint("No rpc today")
-            r
-
-
-
+            return
+        i+=1
+        
     #Starting rpc server successful. lets wait until its fully online
     print(rpc_url)
     print(wallet_file)
