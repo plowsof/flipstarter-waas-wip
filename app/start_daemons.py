@@ -421,28 +421,31 @@ def recover_crash(xmr_wow,config,remote_node):
         if f"{bin_name}-wallet-rpc" in proc.name():
             proc.kill()
 
-    list_remote_nodes = []
-    fallback_remote_nodes = config[xmr_wow]["fallback_remote_nodes"]
-    for i in range(int(fallback_remote_nodes)):
-        num = (i+1)
-        list_remote_nodes.append(config[xmr_wow][f"remote_node_{num}"])
-
-    remote_node = find_working_node(list_remote_nodes,xmr_wow)
-
     rpc_port = config[xmr_wow]["daemon_port"]
     wallet_file = config[xmr_wow]["wallet_file"]
     rpc_url_local = f"http://localhost:{rpc_port}/json_rpc"
 
-    if remote_node:
+    try:
         start_monero_rpc(rpc_bin_file,rpc_port,rpc_url_local,remote_node,wallet_file,xmr_wow)
-        return remote_node
-
+    except Exception as e:
+        raise e
+        
 def refresh_html_loop(remote_node,local_node,wow_remote_node,wow_local_node,config):
     global www_root
     local_ip = "localhost"
     print(f"remotenode: {remote_node}\n localnode : {local_node}")
     #static html refresh every 5 minutes
     counter = 1
+    list_wow_nodes = []
+    fallback_wow_nodes = config["wow"]["fallback_remote_nodes"]
+    for i in range(int(fallback_wow_nodes)):
+        num = (i+1)
+        list_wow_nodes.append(config["wow"][f"remote_node_{num}"])
+    list_xmr_nodes = []
+    fallback_xmr_nodes = config["monero"]["fallback_remote_nodes"]
+    for i in range(int(fallback_xmr_nodes)):
+        num = (i+1)
+        list_xmr_nodes.append(config["monero"][f"remote_node_{num}"])
     www_root = config["wishlist"]["www_root"]
     while True: 
         rpc_url = "http://" + str(remote_node) + "/json_rpc"
@@ -474,10 +477,13 @@ def refresh_html_loop(remote_node,local_node,wow_remote_node,wow_local_node,conf
         
         if recover_wow == 1:
             print("recover wow")
-            wow_remote_node = recover_crash("wow",config,wow_remote_node)
+            wow_remote_node = find_working_node(list_wow_nodes,"wow")
+            recover_crash("wow",config,wow_remote_node)
         if recover_xmr == 1:
             print("recover xmr")
-            remote_node = recover_crash("monero",config,remote_node)
+            xmr_remote_node = find_working_node(list_xmr_nodes,"monero")
+            recover_crash("monero",config,xmr_remote_node)
+            
         del rpc_connection
         del rpc_local
         del wow_rpc_local
