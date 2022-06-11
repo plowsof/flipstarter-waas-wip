@@ -1,3 +1,6 @@
+### Monero/Wownero support experimental
+These 2 coins may become unresponsive / require a docker image restart due to ongoing connectivity issues.    
+
 [GetWishlisted.xyz](https://getwishlisted.xyz)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/plowsof/flipstarter-waas-wip/graphs/contributors)    
  ```ctrl+z``` and starting the script again is your friend if something goes wrong during ```setup_wallets.py``` e.g. wrongly select Restore from keys.  
