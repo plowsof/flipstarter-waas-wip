@@ -127,6 +127,8 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,
         for line in iter(monero_daemon.stdout.readline,''):
             #print(str(line.rstrip()))
             #time.sleep(1)
+            if b"Error calling gettransactions daemon RPC: r 1, status <error>" in line.rstrip():
+                continue
             if b"Error" in line.rstrip() or b"Failed" in line.rstrip() or b'specify --wallet-file' in line.rstrip() or b"failed" in line.rstrip():
                 kill_daemon = 1
                 break
