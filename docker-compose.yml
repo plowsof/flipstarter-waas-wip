@@ -2,6 +2,7 @@ version: '3.3'
 services:
   waas:
     image: plowsof/waas:latest
+    restart: on-failure
     container_name: fresh
     volumes:
       - waas-db:/home/app/db
