@@ -1,7 +1,7 @@
 [GetWishlisted.xyz](https://getwishlisted.xyz)
 
 ### What is this?
-The wishlist as a service (WaaS) is 2 things ~ an interactive 0-confirmation donation page, and also a wallet creation service the the 4 cryptos being used.
+The wishlist as a service (WaaS) is 2 things ~ an interactive 0-confirmation donation page, and also a wallet creation service for the 4 cryptos being used.
  
 If you wish to create your own wallets and supply the pub keys then i recommend: if not, this tool will create them all for you and you can just write the seed phrases down.
 - [Electrum](https://electrum.org/#home) (Bitcoin)
