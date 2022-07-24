@@ -43,9 +43,11 @@ body:
     id: bch_mvk
     attributes:
       label: Bitcoin Cash Master Public Key 
-      description: In Electrum-cash -> Wallet -> Information
+      description: In Electron-cash -> Wallet -> Information
       placeholder: xpub....
   - type: input
     id: btc_mvk
     attributes:
-      label: Bitcoin Master View Key  
+      label: Bitcoin Master Public Key
+      description: In Electrum -> Wallet -> Information
+      placeholder: zpub....
