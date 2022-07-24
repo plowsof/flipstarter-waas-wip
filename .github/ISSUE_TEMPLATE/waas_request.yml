@@ -8,7 +8,28 @@ body:
   - type: markdown
     attributes:
       value: |
-        Hello world!
+        I am going to host WaaS pages for developers who are suffering from sub-par hardware and require some funding to increase their producitivity.  
+  - type: textarea
+    id: about
+    attributes:
+      label: Who are you?
+      description: Introduce yourself, what have you done / what are you doing
+    validations:
+      required: true
+  - type: textarea
+    id: wish
+    attributes:
+      label: What do you need?
+      description: Introduce yourself, what have you done / what are you doing now?
+    validations:
+      required: true
+  - type: textarea
+    id: wish
+    attributes:
+      label: What do you need donations for?
+      description: Describe your wish(es), how will they benefit you, and how much $ will they cost?
+    validations:
+      required: true
   - type: input
     id: xmr_svk
     attributes:
@@ -18,19 +39,18 @@ body:
     attributes:
       label: Monero Primary Address
   - type: input
+    id: xmr_svk
+    attributes:
+      label: Wownero Secret View Key
+  - type: input
+    id: xmr_pa
+    attributes:
+      label: Wownero Primary Address
+  - type: input
     id: bch_mvk
     attributes:
       label: Bitcoin Cash Master View Key 
   - type: input
     id: btc_mvk
     attributes:
-      label: Bitcoin Master View Key       
-  - type: textarea
-    id: what-happened
-    attributes:
-      label: What happened?
-      description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
-    validations:
-      required: true
+      label: Bitcoin Master View Key  
