@@ -10,13 +10,6 @@ body:
       value: |
         I am going to host WaaS pages for developers who are suffering from sub-par hardware and require some funding to increase their producitivity.  
   - type: textarea
-    id: about
-    attributes:
-      label: Who are you?
-      description: Introduce yourself, what have you done / what are you doing
-    validations:
-      required: true
-  - type: textarea
     id: intro
     attributes:
       label: What do you need?
