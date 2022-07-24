@@ -5,58 +5,38 @@ labels: ["WaaS"]
 assignees:
   - octocat
 body:
-  - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        I'm doing a beta test of the WaaS and would like to host donation pages for developers that are being held back by sub-par hardware or lack of disk space for example. Fill the form out below, let us know who you are / what you're doing and how people can help you. 
+  - type: textarea
+    id: about
+    attributes:
+      label: Who are you?
+      description: Introduce yourself, what you've been doing and what you plan on doing
+      placeholder: Hello world... i've done some things, and now i have an idea, and i need to compile monero from source, but my computer is a potato, I've seen a nice laptop on craigslist for $300 please help me thanks.
+    validations:
+      required: true
   - type: input
-    id: contact
+    id: xmr_vk
     attributes:
-      label: Contact Details
-      description: How can we get in touch with you if we need more info?
-      placeholder: ex. email@example.com
-    validations:
-      required: false
-  - type: textarea
-    id: what-happened
+      label: Monero Secret View Key
+   - type: input
+    id: xmr_pa
     attributes:
-      label: What happened?
-      description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
-    validations:
-      required: true
-  - type: dropdown
-    id: version
+      label: Monero Primary Address
+  - type: input
+    id: wow_vk
     attributes:
-      label: Version
-      description: What version of our software are you running?
-      options:
-        - 1.0.2 (Default)
-        - 1.0.3 (Edge)
-    validations:
-      required: true
-  - type: dropdown
-    id: browsers
+      label: WOWnero Secret View Key
+   - type: input
+    id: wow_pa
     attributes:
-      label: What browsers are you seeing the problem on?
-      multiple: true
-      options:
-        - Firefox
-        - Chrome
-        - Safari
-        - Microsoft Edge
-  - type: textarea
-    id: logs
+      label: WOWnero Primary Address
+   - type: input
+    id: bch_vk
     attributes:
-      label: Relevant log output
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
-      render: shell
-  - type: checkboxes
-    id: terms
+      label: Bitcoin Cash Master View Key
+   - type: input
+    id: btc_vk
     attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
-      options:
-        - label: I agree to follow this project's Code of Conduct
-          required: true
+      label: Bitcoin Master View Key
