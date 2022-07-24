@@ -42,7 +42,8 @@ body:
   - type: input
     id: bch_mvk
     attributes:
-      label: Bitcoin Cash Master View Key 
+      label: Bitcoin Cash Master Public Key 
+      description: In Electrum-cash -> Wallet -> Information
   - type: input
     id: btc_mvk
     attributes:
