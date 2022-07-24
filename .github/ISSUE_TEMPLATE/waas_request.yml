@@ -12,7 +12,7 @@ body:
   - type: textarea
     id: intro
     attributes:
-      label: What do you need?
+      label: Who are you?
       description: Introduce yourself, what have you done / what are you doing now?
     validations:
       required: true
