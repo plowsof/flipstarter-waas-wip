@@ -2,7 +2,7 @@ name: WaaS Request
 description: File a bug report
 title: "[WaaS Request]: "
 body:
-  - type: markdown
+   - type: markdown
     attributes:
       value: |
         I'm doing a beta test of the WaaS and would like to host donation pages for developers that are being held back by sub-par hardware or lack of disk space for example. Fill the form out below, let us know who you are / what you're doing and how people can help you. 
