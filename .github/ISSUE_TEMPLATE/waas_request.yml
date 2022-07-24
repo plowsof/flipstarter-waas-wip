@@ -1,7 +1,7 @@
 name: Bug Report
 description: File a bug report
 title: "[WaaS Request]: "
-labels: ["WaaS"]
+labels: "WaaS"
 assignees:
   - plowsof
 body:
