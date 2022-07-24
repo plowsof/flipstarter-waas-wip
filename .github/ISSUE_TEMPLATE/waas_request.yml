@@ -39,11 +39,11 @@ body:
     attributes:
       label: Monero Primary Address
   - type: input
-    id: xmr_svk
+    id: wow_svk
     attributes:
       label: Wownero Secret View Key
   - type: input
-    id: xmr_pa
+    id: wow_pa
     attributes:
       label: Wownero Primary Address
   - type: input
