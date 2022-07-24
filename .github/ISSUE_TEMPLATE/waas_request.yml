@@ -17,14 +17,14 @@ body:
     validations:
       required: true
   - type: textarea
-    id: wish
+    id: intro
     attributes:
       label: What do you need?
       description: Introduce yourself, what have you done / what are you doing now?
     validations:
       required: true
   - type: textarea
-    id: wish
+    id: wishes
     attributes:
       label: What do you need donations for?
       description: Describe your wish(es), how will they benefit you, and how much $ will they cost?
