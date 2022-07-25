@@ -8,7 +8,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        I am going to host WaaS pages for developers who are suffering from sub-par hardware and require some funding to increase their producitivity.  
+        I am going to host WaaS pages for developers who are suffering from sub-par hardware and require some funding to increase their producitivity. Ideally some way of proving the equipment was purchased after being funded.  
   - type: textarea
     id: intro
     attributes:
