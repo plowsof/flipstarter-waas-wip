@@ -8,7 +8,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        I am going to host WaaS pages for developers/contributors who are suffering from sub-par hardware and require some funding to increase their producitivity. Ideally some way of proving the equipment was purchased after being funded.  
+        I am going to host WaaS pages for developers/contributors who are suffering from sub-par hardware and require some funding to increase their producitivity. 
+        Ideally some way of proving the equipment was purchased after being funded.
+        Also if you leave any crypto's blank, ill have to create the wallet for you and pass you the keys (dont make me feel sus)
   - type: textarea
     id: intro
     attributes:
