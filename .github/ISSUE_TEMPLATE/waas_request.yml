@@ -12,17 +12,22 @@ body:
         Ideally some way of proving the equipment was purchased after being funded.
         Also if you leave any crypto's blank, ill have to create the wallet for you and pass you the keys (dont make me feel sus)
   - type: textarea
+    id: title
+    attributes:
+      label: Title
+      placeholder: John Does Funding Page
+  - type: textarea
     id: intro
     attributes:
-      label: Who are you?
-      description: Introduce yourself, what have you done / what are you doing now?
+      label: inrto
+      description: Short introduction about yourself, github link / what do you do?
     validations:
       required: true
   - type: textarea
     id: wishes
     attributes:
       label: What do you need donations for?
-      description: Describe your wish(es), how will they benefit you, and how much $ will they cost?
+      description: Describe your wish(es), how will they benefit you, and how much $ they require?
     validations:
       required: true
   - type: input
