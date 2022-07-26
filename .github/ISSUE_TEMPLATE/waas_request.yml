@@ -16,7 +16,7 @@ body:
     attributes:
       label: Title
       placeholder: John Does Funding Page
-   - type: input
+  - type: input
     id: url
     attributes:
       label: Homepage
