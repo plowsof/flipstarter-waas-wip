@@ -87,7 +87,7 @@ def delete_comments(wishlist):
     while "y" not in answer.lower() and "n" not in answer.lower():
         answer = input("Yes/No >> ")
         print(answer.lower())
-    if "y" in answer:
+    if "y" in answer.lower():
         #delete 
         wishlist["comments"]["comments"].pop(int(del_me))
     else:
