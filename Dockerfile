@@ -35,10 +35,10 @@ RUN gpg --status-fd=1 --verify electron-cash.asc 2>/dev/null | grep "GOODSIG 4FD
 RUN gpg --status-fd=1 --verify run_electrum.asc 2>/dev/null | grep "GOODSIG 2BD5824B7F9470E6 Thomas Voegtlin (https://electrum.org) <thomasv@electrum.org>" || exit 1
 RUN gpg --status-fd=1 --verify run_electrum.asc 2>/dev/null | grep "GOODSIG CA9EEEC43DF911DC SomberNight/ghost43 (Electrum RELEASE signing key) <somber.night@protonmail.com>" || exit 1
 RUN gpg --status-fd=1 --verify run_electrum.asc 2>/dev/null | grep "GOODSIG 3152347D07DA627C Stephan Oeste (it) <it@oeste.de>" || exit 1
-RUN [ "cf1c822dfef2377f79a48ebf51054441e152b71f06760f81a02613ffa1dc69b2  wownero-x86_64-linux-gnu-v0.10.1.0.tar.bz2" = "$(sha256sum  wownero-x86_64-linux-gnu-v0.10.1.0.tar.bz2)" ]
+RUN [ "dbbe79f2cf13f822b19a17d4711f177abb9feb1182141b7126d1a7d8efacfaa5  wownero-x86_64-linux-gnu-v0.11.tar.bz2" = "$(sha256sum  wownero-x86_64-linux-gnu-v0.11.tar.bz2)" ]
 
-RUN tar -xvjf wownero-x86_64-linux-gnu-v0.10.1.0.tar.bz2 wownero-x86_64-linux-gnu-v0.10.1.0/wownero-wallet-rpc && \
-cp wownero-x86_64-linux-gnu-v0.10.1.0/wownero-wallet-rpc wownero-wallet-rpc && \
+RUN tar -xvjf wownero-x86_64-linux-gnu-v0.11.tar.bz2 wownero-x86_64-linux-gnu-v0.11.tar.bz2/wownero-wallet-rpc && \
+cp wownero-x86_64-linux-gnu-v0.11.tar.bz2/wownero-wallet-rpc wownero-wallet-rpc && \
 rm *bz2 && rm -r *v0*
 
 FROM python:3.8-slim as dependencies
