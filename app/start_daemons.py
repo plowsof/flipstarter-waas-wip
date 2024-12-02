@@ -346,48 +346,57 @@ def rpc_notify(rpcuser,rpcpass,rpcport,address,callback):
     pprint.pprint(returnme)
 
 def getPrice(crypto):
-    data = cryptocompare.get_price(str(crypto), currency='USD', full=0)
-    return(data[str(crypto)]["USD"])
+    try:
+        data = cryptocompare.get_price(str(crypto), currency='USD', full=0)
+        return float(data[str(crypto)]["USD"])
+    except Exception as e:
+        print(f"Price fetch error for {crypto}: {e}")
+        return None
 
 def save_prices():
     while True:
         try:
-            p_xmr = float(getPrice("XMR"))    
+            p_xmr = float(getPrice("XMR"))
             p_btc = float(getPrice("BTC"))
             p_bch = float(getPrice("BCH"))
-            wow_btc_price = requests.get("https://tradeogre.com/api/v1/markets")
-            for x in wow_btc_price.json():
+            if p_xmr is None or p_btc is None or p_bch is None:
+                print("failed to fetch price from TO")
+                continue
+            # Add timeout to requests
+            wow_btc_price_response = requests.get("https://tradeogre.com/api/v1/markets", timeout=10)
+            for x in wow_btc_price_response.json():
                 try:
                     wow_btc_price = x["BTC-WOW"]["price"]
+                    break
                 except:
                     pass
             p_wow = float(wow_btc_price) * float(p_btc)
             p_wow = float("{:.2f}".format(p_wow))
-            con = sqlite3.connect('./db/crypto_prices.db')
-            cur = con.cursor()
-            create_price_table = """ CREATE TABLE IF NOT EXISTS crypto_prices (
-                                        data default 0,
-                                        xmr integer,
-                                        btc integer,
-                                        bch integer,
-                                        wow integer
-                                    ); """
-            cur.execute(create_price_table)
-            
-            sql = ''' UPDATE crypto_prices
-                      SET xmr = ?,
-                          bch = ?,
-                          btc = ?,
-                          wow =?
-                      WHERE data = 0'''   
-            cur.execute(sql, (p_xmr,p_bch,p_btc,p_wow))
-            con.commit()
-            con.close()
-            #refresh price on front end
+            # Add timeout to database connection
+            with sqlite3.connect('./db/crypto_prices.db', timeout=10) as con:
+                cur = con.cursor()
+                create_price_table = """ CREATE TABLE IF NOT EXISTS crypto_prices (
+                                            data default 0,
+                                            xmr integer,
+                                            btc integer,
+                                            bch integer,
+                                            wow integer
+                                        ); """
+                cur.execute(create_price_table)
+                sql = ''' UPDATE crypto_prices
+                          SET xmr = ?,
+                              bch = ?,
+                              btc = ?,
+                              wow =?
+                          WHERE data = 0'''   
+                cur.execute(sql, (p_xmr,p_bch,p_btc,p_wow))
+                con.commit()
+            # Add timeout to websocket
             uid = uuid.uuid4().hex
-            asyncio.run(notify_xmr_vps_pi.ws_work_around(uid))
-        except:
-            pass
+            asyncio.run(asyncio.wait_for(notify_xmr_vps_pi.ws_work_around(uid), timeout=10))
+        
+        except Exception as e:
+            print(f"Price update error: {e}")
         time.sleep(60*5)
 
 def delete_clicks_db():
