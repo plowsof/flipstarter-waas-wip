@@ -42,57 +42,54 @@ def monero_rpc_open_wallet(rpc_url,wallet_file):
         print(e)
         sys.exit(1)
 
-def find_working_node(node_list,xmr_wow="monero"):
-    #if we're in stagenet mode, then throw error if node is mainnet
+def find_working_node(node_list, xmr_wow="monero"):
     max_try_loops = 30
-    num_try_loops = 0
-    node_online = 0
     print_msg(f"Finding a {xmr_wow} remote node.")
+    
     random.shuffle(node_list)
-    i = 0
-    while True: #infinite loop ftw
-        if i == len(node_list):
-            num_try_loops += 1
-            if num_try_loops == max_try_loops:
-                return False
-            i = 0
-        remote_node = node_list[i]
-        try:
-            rpc_url = "http://" + str(remote_node) + "/json_rpc"
-            #this will retry the url for 30 seconds (built in to monerorpc library)
-            rpc_connection = AuthServiceProxy(service_url=rpc_url)
-            info = rpc_connection.get_info()
-            #wownero only uses mainnet
-            if xmr_wow == "monero":
-                if os.environ["waas_mainnet"] == "1":
-                    if info["nettype"] != "mainnet":
-                        print_err("You are connecting to a stagenet node. Please add a monero mainnet node to docker-compose.yml [restart required].")
-                        i += 1
-                        continue
-                else:
-                    if info["nettype"] != "stagenet":
-                        print_err("You are connecting to a mainnet node. Please add a Monero stagenet node to docker-compose.yml [restart required].")
-                        i += 1
-                        continue
-            if info["status"] != "OK":
-                print_msg("Retrying another node")
-                i += 1
-                continue
-            else:
-                node_online = 1
-                break
-            i += 1
-        except Exception as e:
-            i += 1
-            print(e)
-            continue
-
-    if node_online == 0:
-        print_err("Unable to connect to a Monero remote node.")
-        return False
-    else:
-        print("found our node")
-        return remote_node
+    
+    for loop_count in range(max_try_loops):
+        print_msg(f"Try loop {loop_count}")
+        for remote_node in node_list:
+            try:
+                # Direct GET request to the node's info endpoint
+                print_msg(f"Using node: {remote_node}")
+                rpc_url = f"http://{remote_node}/get_info"
+                response = requests.get(rpc_url, timeout=10)
+                
+                # Check if request was successful
+                if response.status_code == 200:
+                    info = response.json()
+                    print_msg(f"Node info: {info}")
+                    
+                    # Mainnet/Stagenet validation
+                    if xmr_wow == "monero":
+                        is_mainnet = os.environ.get("waas_mainnet") == "1"
+                        if is_mainnet and info.get("nettype") != "mainnet":
+                            print_msg(f"{rpc_url} is a stagenet node. Add a mainnet node to docker-compose.yml [restart required].")
+                            continue
+                        elif not is_mainnet and info.get("nettype") != "stagenet":
+                            print_msg(f"{rpc_url} is a mainnet node. Add a stagenet node to docker-compose.yml [restart required].")
+                            continue
+                    
+                    # Check node status
+                    if info.get("status", "").upper() == "OK":
+                        print_msg("Found working node")
+                        return remote_node
+                
+                print_msg("Node status not OK. Retrying another node")
+            
+            except requests.ConnectionError as e:
+                print_msg(f"Connection error with {remote_node}: {e}")
+            except requests.Timeout:
+                print_msg(f"Timeout error with {remote_node}")
+            except ValueError as e:  # JSON decoding error
+                print_msg(f"Invalid JSON response from {remote_node}: {e}")
+            except Exception as e:
+                print_msg(f"Unexpected error with {remote_node}: {e}")
+    
+    print_msg("Unable to connect to a Monero remote node.")
+    return False
 
 def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,wow_xmr="monero"):
     global wallet_dir
@@ -100,6 +97,7 @@ def start_monero_rpc(rpc_bin_file,rpc_port,rpc_url,remote_node,wallet_file=None,
         f"./{rpc_bin_file}", 
         "--wallet-file", wallet_file,
         "--rpc-bind-port", rpc_port,
+        "--no-initial-sync",
         "--disable-rpc-login",
         "--daemon-address", remote_node,
         "--password", "", 
