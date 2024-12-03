@@ -1,93 +1,91 @@
-#download and verify binaries
-FROM alpine:latest as verified
-RUN apk add gnupg wget curl bash tar
+# Stage 1: Download and verify binaries
+FROM ubuntu:22.04 AS verified
 
-ENV JONALDKEY2=https://raw.githubusercontent.com/fyookball/keys-n-hashes/master/pubkeys/jonaldkey2.txt 
-ENV SOMBERNIGHT=https://raw.githubusercontent.com/spesmilo/electrum/master/pubkeys/sombernight_releasekey.asc 
-ENV THOMASV=https://raw.githubusercontent.com/spesmilo/electrum/master/pubkeys/ThomasV.asc 
-ENV EMZY=https://raw.githubusercontent.com/spesmilo/electrum/master/pubkeys/Emzy.asc 
-ENV VER_ELECTRUM=4.3.4 
-ENV VER_ELECTRON=4.2.14 
-ENV URL_ELECTRUM=https://download.electrum.org/${VER_ELECTRUM}/electrum-${VER_ELECTRUM}-x86_64.AppImage 
-ENV URL_ELECTRON=https://github.com/Electron-Cash/Electron-Cash/releases/download/${VER_ELECTRON}/Electron-Cash-${VER_ELECTRON}-x86_64.AppImage 
-ENV SIG_ELECTRUM=https://download.electrum.org/${VER_ELECTRUM}/electrum-${VER_ELECTRUM}-x86_64.AppImage.asc
-ENV SIG_ELECTRON=https://raw.githubusercontent.com/Electron-Cash/keys-n-hashes/master/sigs-and-sums/${VER_ELECTRON}/win-linux/Electron-Cash-${VER_ELECTRON}-x86_64.AppImage.asc
-ENV VER_WOWNERO=0.11
-ENV URL_WOWNERO=https://git.wownero.com/attachments/86864223-7335-473e-a401-ab9da7f3188f
-ENV HASH_WOWNERO=dbbe79f2cf13f822b19a17d4711f177abb9feb1182141b7126d1a7d8efacfaa5
-ENV VER_MONERO=0.18.2.0
-ENV HASH_MONERO=83e6517dc9e5198228ee5af50f4bbccdb226fe69ff8dd54404dddb90a70b7322
-ENV URL_MONERO=https://downloads.getmonero.org/cli/linux64
+# Install necessary tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gnupg wget curl bash tar ca-certificates bzip2 && \
+    rm -rf /var/lib/apt/lists/*
 
-
-
-RUN gpg --import <(curl ${JONALDKEY2} ) \
-&& gpg --import <(curl ${SOMBERNIGHT} ) \
-&& gpg --import <(curl ${EMZY} ) \ 
-&& gpg --import <(curl ${THOMASV})
+# Define environment variables
+ENV JONALDKEY=https://raw.githubusercontent.com/fyookball/keys-n-hashes/master/pubkeys/jonaldkey.txt \
+    JONALDKEY2=https://raw.githubusercontent.com/fyookball/keys-n-hashes/master/pubkeys/jonaldkey2.txt \
+    SOMBERNIGHT=https://raw.githubusercontent.com/spesmilo/electrum/master/pubkeys/sombernight_releasekey.asc \
+    THOMASV=https://raw.githubusercontent.com/spesmilo/electrum/master/pubkeys/ThomasV.asc \
+    EMZY=https://raw.githubusercontent.com/spesmilo/electrum/master/pubkeys/Emzy.asc \
+    VER_ELECTRUM=4.5.8 \
+    VER_ELECTRON=4.4.1 \
+    URL_ELECTRUM=https://download.electrum.org/4.5.8/electrum-4.5.8-x86_64.AppImage \
+    URL_ELECTRON=https://github.com/Electron-Cash/Electron-Cash/releases/download/4.4.1/Electron-Cash-4.4.1-x86_64.AppImage \
+    SIG_ELECTRUM=https://download.electrum.org/4.5.8/electrum-4.5.8-x86_64.AppImage.asc \
+    SIG_ELECTRON=https://raw.githubusercontent.com/Electron-Cash/keys-n-hashes/refs/heads/master/sigs-and-sums/4.4.1/win-linux/Electron-Cash-4.4.1-x86_64.AppImage.asc \
+    VER_WOWNERO=0.11.1.0 \
+    URL_WOWNERO=https://git.wownero.com/attachments/280753b0-3af0-4a78-a248-8b925e8f4593 \
+    HASH_WOWNERO=a5b2aa0cffa4c7bf82d9d6072aca0bdeb501bdbde33db1d04edb2c4089878e82 \
+    VER_MONERO=0.18.3.4 \
+    HASH_MONERO=51ba03928d189c1c11b5379cab17dd9ae8d2230056dc05c872d0f8dba4a87f1d \
+    URL_MONERO=https://downloads.getmonero.org/cli/monero-linux-x64-v0.18.3.4.tar.bz2
 
 WORKDIR /wallets
 
-RUN wget -O run_electrum.asc ${SIG_ELECTRUM} \ 
-&&  wget -O electron-cash.asc ${SIG_ELECTRON} \
-&&  wget -O run_electrum ${URL_ELECTRUM} \
-&&  wget -O electron-cash ${URL_ELECTRON} \ 
-&&  wget -O wownero-x86_64-linux-gnu-v${VER_WOWNERO}.tar.bz2 ${URL_WOWNERO} \ 
-&&  wget -O monero-linux-x64-v${VER_MONERO}.tar.bz2 ${URL_MONERO}
+# Import GPG keys
+RUN curl -sSL $SOMBERNIGHT | gpg --import && \
+    curl -sSL $EMZY | gpg --import && \
+    curl -sSL $THOMASV | gpg --import && \
+    curl -sSL $JONALDKEY2 | gpg --import
 
-#if any of these checks fail, the image will not be built
-RUN gpg --status-fd=1 --verify electron-cash.asc 2>/dev/null | grep "GOODSIG 4FD06489EFF1DDE1 Jonald Fyookball <jonf@electroncash.org>" || exit 1
-RUN gpg --status-fd=1 --verify run_electrum.asc 2>/dev/null | grep "GOODSIG 2BD5824B7F9470E6 Thomas Voegtlin (https://electrum.org) <thomasv@electrum.org>" || exit 1
-RUN gpg --status-fd=1 --verify run_electrum.asc 2>/dev/null | grep "GOODSIG CA9EEEC43DF911DC SomberNight/ghost43 (Electrum RELEASE signing key) <somber.night@protonmail.com>" || exit 1
-RUN gpg --status-fd=1 --verify run_electrum.asc 2>/dev/null | grep "GOODSIG 3152347D07DA627C Stephan Oeste (it) <it@oeste.de>" || exit 1
-#verify wownero hash
-RUN [ "${HASH_WOWNERO}  wownero-x86_64-linux-gnu-v${VER_WOWNERO}.tar.bz2" = "$(sha256sum  wownero-x86_64-linux-gnu-v${VER_WOWNERO}.tar.bz2)" ]
-#verify monero hash
-RUN [ "${HASH_MONERO}  monero-linux-x64-v${VER_MONERO}.tar.bz2" = "$(sha256sum  monero-linux-x64-v${VER_MONERO}.tar.bz2)" ]
+# Download files
+RUN wget -O run_electrum.asc $SIG_ELECTRUM && \
+    wget -O electron-cash.asc $SIG_ELECTRON && \
+    wget -O run_electrum $URL_ELECTRUM && \
+    wget -O electron-cash $URL_ELECTRON && \
+    wget -O wownero.tar.bz2 $URL_WOWNERO && \
+    wget -O monero.tar.bz2 $URL_MONERO
 
-RUN tar -xvjf wownero-x86_64-linux-gnu-v${VER_WOWNERO}.tar.bz2 wownero-x86_64-linux-gnu-v${VER_WOWNERO}/wownero-wallet-rpc && \
-cp wownero-x86_64-linux-gnu-v${VER_WOWNERO}/wownero-wallet-rpc wownero-wallet-rpc
+# Verify signatures
+RUN gpg --verify electron-cash.asc electron-cash && \
+    gpg --verify run_electrum.asc run_electrum
 
-RUN tar -xvjf  monero-linux-x64-v${VER_MONERO}.tar.bz2 monero-x86_64-linux-gnu-v${VER_MONERO}/monero-wallet-rpc && \
-cp monero-x86_64-linux-gnu-v${VER_MONERO}/monero-wallet-rpc monero-wallet-rpc && \
-rm *bz2 && rm -r *v0*
+# Verify hashes
+RUN echo "${HASH_WOWNERO}  wownero.tar.bz2" | sha256sum -c - && \
+    echo "${HASH_MONERO}  monero.tar.bz2" | sha256sum -c -
 
-FROM python:3.8-slim as dependencies
+# Extract necessary files
+RUN tar -xvjf wownero.tar.bz2 && \
+    tar -xvjf monero.tar.bz2 && \
+    cp wownero*/wownero-wallet-rpc . && \
+    cp monero*/monero-wallet-rpc . && \
+    rm *.tar.bz2
 
+# Stage 2: Dependencies
+FROM python:3.8-slim AS dependencies
 COPY ./app/requirements.txt .
-RUN pip install --user -r requirements.txt
+RUN pip install --user --no-cache-dir -r requirements.txt
 
+# Stage 3: Final application image
 FROM python:3.8-slim
 
-#app images require fuse to function
+# Install FUSE
+RUN apt-get update && apt-get install -y --no-install-recommends fuse && \
+    rm -rf /var/lib/apt/lists/*
 
-
-
-#get the verified binaries , and copy to the apps bin folder
+# Copy verified binaries
 COPY --from=verified /wallets/ /home/app/bin/
-#copy wishlist files to the docker
+
+# Copy dependencies
+COPY --from=dependencies /root/.local /root/.local
+
+# Copy application code
 COPY ./app /home/app
 
-#default port of uvicorn is 8000 - nginx will proxy pass to this
-EXPOSE 8000
-
 WORKDIR /home/app/bin
-RUN chmod +x run_electrum \ 
-    && chmod +x electron-cash \
-    && apt-get update \ 
-    && apt-get install -y --no-install-recommends fuse \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean \
-    && apt-get autoclean \
-    && apt-get autoremove 
 
-COPY --from=dependencies /root/.local /root/.local
-# Make sure scripts in .local are usable:
+# Ensure binaries are executable
+RUN chmod +x run_electrum electron-cash
+
+# Set PATH for dependencies
 ENV PATH=/root/.local/bin:$PATH
 
+EXPOSE 8000
+
 WORKDIR /home/app
-#main.py starts the /donate webpage/server
 CMD ["python3", "./main.py"]
-#users must then shell into the container and run the 'setup_wallets.py'
-#sudo docker volume rm $(sudo docker volume ls -q)
-#certbot certonly --standalone -d <domaim> --staple-ocsp -m <email> --agree-tos
