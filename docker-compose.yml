@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   waas:
-    image: plowsof/waas:latest
+    image: plowsof/waas:get_price_1
     restart: on-failure
     container_name: fresh
     volumes:

@@ -366,12 +366,13 @@ def save_prices():
             wow_btc_price_response = requests.get("https://tradeogre.com/api/v1/markets", timeout=10)
             for x in wow_btc_price_response.json():
                 try:
-                    wow_btc_price = x["BTC-WOW"]["price"]
-                    break
+                    wow_btc_price = x["WOW-BTC"]["price"]
                 except:
                     pass
+
             p_wow = float(wow_btc_price) * float(p_btc)
             p_wow = float("{:.2f}".format(p_wow))
+
             # Add timeout to database connection
             with sqlite3.connect('./db/crypto_prices.db', timeout=10) as con:
                 cur = con.cursor()
